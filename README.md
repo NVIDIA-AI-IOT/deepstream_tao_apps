@@ -99,6 +99,9 @@ make
     -i: H264 or JPEG input file
     -b: batch size, this will override the value of "baitch-size" in pgie config file
     -d: enable display, otherwise dump to output H264 or JPEG file
+ 
+ e.g.
+ ./deepstream-custom  -c pgie_frcnn_tlt_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
 ```
 
 ## Information for Customization
