@@ -118,7 +118,9 @@ The TensorRT engine file is hardware dependent, while the `.etlt` model is not. 
 ### Label Files
 
 The label file includes the list of class names for a model, which content varies for different models.  
-User can find the detailed label information for the MODEL in the README.md and the label file under *nvdsinfer_customparser_$(MODEL)_tlt/*, e.g. ssd label informantion under *nvdsinfer_customparser_ssd_tlt/*
+User can find the detailed label information for the MODEL in the README.md and the label file under *nvdsinfer_customparser_$(MODEL)_tlt/*, e.g. ssd label informantion under *nvdsinfer_customparser_ssd_tlt/*  
+  
+Note, for FasterRCNN, DON'T forget to include "background" lable and change num-detected-classes in pgie configure file accordingly 
 
 ### DeepStream configuration file
 
@@ -157,9 +159,9 @@ The model has the following three outputs:
 
 - **dense_regress_td/BiasAdd**: A [batchSize, R, C*4] tensor containing the bounding box regression
 - **dense_class_td/Softmax**:  A [batchSize, R, C+1] tensor containing the class id and scores
-- **proposal**:  A [batchSize, R, 4] tensor containing the rois
-  R = post NMS top N (usually 300)
-  C = class numbers (+1 means background)
+- **proposal**:  A [batchSize, R, 4] tensor containing the rois  
+  R = post NMS top N (usually 300)  
+  C = class numbers (+1 means background)  
 
 ### TRT Plugins Requirements
 
