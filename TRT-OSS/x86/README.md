@@ -56,8 +56,10 @@ After building ends successfully, libnvinfer_plugin.so* will be generated under 
 ### 3. Replace "libnvinfer_plugin.so*"
 
 ```
-sudo mv /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.7.x.y ${HOME}/libnvinfer_plugin.so.7.x.y.bak   // backup original libnvinfer_plugin.so.x.y
-sudo cp $TRT_SOURCE/`pwd`/out/libnvinfer_plugin.so.7.m.n  /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.7.x.y
+// backup original libnvinfer_plugin.so.x.y, e.g. libnvinfer_plugin.so.7.0.0
+sudo mv /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.7.p.q ${HOME}/libnvinfer_plugin.so.7.p.q.bak
+// only replace the real file, don't touch the link files, e.g. libnvinfer_plugin.so, libnvinfer_plugin.so.7
+sudo cp $TRT_SOURCE/`pwd`/out/libnvinfer_plugin.so.7.m.n  /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.7.p.q
 sudo ldconfig
 ```
 
