@@ -10,3 +10,4 @@ models/frcnn/faster_rcnn_resnet10.etlt filter=lfs diff=lfs merge=lfs -text
 models/detectnet_v2/detectnetv2_resnet18.etlt filter=lfs diff=lfs merge=lfs -text
 TRT-OSS/x86/libnvinfer_plugin.so.7.0.0.1 filter=lfs diff=lfs merge=lfs -text
 TRT-OSS/Jetson/libnvinfer_plugin.so.7.0.0.1 filter=lfs diff=lfs merge=lfs -text
+models/mrcnn/mask_rcnn_resnet50.etlt filter=lfs diff=lfs merge=lfs -text
