@@ -1,0 +1,32 @@
+# Build Jetson TensorRT OSS Plugin
+
+libnvinfer_plugin.so.7.1.3_nano_tx2_xavier_nx supports  NANO/TX1, TX2 and Xavier/NX.
+
+For TRT OSS 7.1 release, There is an issue that BatchTilePlugin is removed  from plugin lib, however
+(ssd/dssd/retinanet/yolov3) depend on this OP, follo below steps to fix the issue:
+
+1.Apply the change on TRT OSS 7.1 release
+
+diff --git a/plugin/InferPlugin.cpp b/plugin/InferPlugin.cpp
+index f973bb8..a75b4a1 100644
+--- a/plugin/InferPlugin.cpp
++++ b/plugin/InferPlugin.cpp
+@@ -167,6 +167,7 @@ bool initLibNvInferPlugins(void* logger, const char* libNamespace)
+     initializePlugin<nvinfer1::plugin::FlattenConcatPluginCreator>(logger, libNamespace);
+     initializePlugin<nvinfer1::plugin::CropAndResizePluginCreator>(logger, libNamespace);
+     initializePlugin<nvinfer1::plugin::DetectionLayerPluginCreator>(logger, libNamespace);
++    initializePlugin<nvinfer1::plugin::BatchTilePluginCreator>(logger, libNamespace);
+     initializePlugin<nvinfer1::plugin::ProposalPluginCreator>(logger, libNamespace);
+     initializePlugin<nvinfer1::plugin::ProposalLayerPluginCreator>(logger, libNamespace);
+     initializePlugin<nvinfer1::plugin::PyramidROIAlignPluginCreator>(logger, libNamespace);
+
+2.Rebuild the libnvinfer_plugin.so
+
+git clone -b release/7.1 https://github.com/nvidia/TensorRT
+cd TensorRT/
+git submodule update --init --recursive
+export TRT_SOURCE=`pwd`
+cd $TRT_SOURCE
+mkdir -p build && cd build
+/usr/local/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
+make nvinfer_plugin -j$(nproc)
