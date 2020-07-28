@@ -3,13 +3,7 @@ models/yolov3/yolo_resnet18.etlt filter=lfs diff=lfs merge=lfs -text
 models/retinanet/retinanet_resnet18.etlt filter=lfs diff=lfs merge=lfs -text
 models/detectnet_v2/resnet18_trafficnet.etlt filter=lfs diff=lfs merge=lfs -text
 models/ssd/ssd_resnet18.etlt filter=lfs diff=lfs merge=lfs -text
-TRT-OSS/x86/libnvinfer_plugin.so.7.0.0 filter=lfs diff=lfs merge=lfs -text
-TRT-OSS/arch64/libnvinfer_plugin.so.7.0.0.1 filter=lfs diff=lfs merge=lfs -text
 models/dssd/dssd_resnet18.etlt filter=lfs diff=lfs merge=lfs -text
 models/frcnn/faster_rcnn_resnet10.etlt filter=lfs diff=lfs merge=lfs -text
 models/detectnet_v2/detectnetv2_resnet18.etlt filter=lfs diff=lfs merge=lfs -text
-TRT-OSS/x86/libnvinfer_plugin.so.7.0.0.1 filter=lfs diff=lfs merge=lfs -text
-TRT-OSS/Jetson/libnvinfer_plugin.so.7.0.0.1 filter=lfs diff=lfs merge=lfs -text
 models/mrcnn/mask_rcnn_resnet50.etlt filter=lfs diff=lfs merge=lfs -text
-TRT-OSS/Jetson/TRT7.1/libnvinfer_plugin.so.7.1.3 filter=lfs diff=lfs merge=lfs -text
-TRT-OSS/Jetson/TRT7.1/libnvinfer_plugin.so.7.1.3_nano_tx2_xavier_nx filter=lfs diff=lfs merge=lfs -text
