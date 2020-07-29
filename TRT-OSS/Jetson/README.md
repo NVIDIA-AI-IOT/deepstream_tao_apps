@@ -34,14 +34,13 @@ sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 ### 2. Build TensorRT OSS Plugin
 
 ```
-git clone -b release/7.0 https://github.com/nvidia/TensorRT
+git clone -b release/7.0 https://github.com/nvidia/TensorRT        // replease with release/7.1 for  TensorRT 7.1
 cd TensorRT/
 git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
 cd $TRT_SOURCE
 mkdir -p build && cd build
-### NOTE: below -DGPU_ARCHS=72 is for Xavier or NX, for other Jetson platform, please change "72" referring to below "GPU_ARCH" section
-/usr/local/bin/cmake .. -DGPU_ARCHS=72  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
+/usr/local/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
 make nvinfer_plugin -j$(nproc)
 ```
 
