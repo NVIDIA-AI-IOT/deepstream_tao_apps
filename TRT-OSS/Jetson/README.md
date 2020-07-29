@@ -10,6 +10,10 @@ Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT) 
 > Jetson Xavier  
 > Jetpack4.4DP (CUDA-10.2, cuDNN v8.0, TensorRT 7.1.0.16)
 
+**Note**
+
+You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/ezrjriq08q8fy8tvqcswgi0u6yn0bomg.1 -O libnvinfer_plugin.so.7.0.0.1` if you met some LFS issue.
+
 ## Build TensorRT OSS Plugin - libnvinfer_plugin.so
 
 ### 1. Upgrade Cmake

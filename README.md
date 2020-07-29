@@ -185,3 +185,10 @@ trtexec --batch=2 --useSpinWait --loadEngine=yolo_resnet18.etlt_b2_gpu0_fp16.eng
 
 ## Known issues
 
+
+* LFS bandwidth issue
+
+    * `wget https://nvidia.box.com/shared/static/8k0zpe9gq837wsr0acoy4oh3fdf476gq.zip -O models.zip` to get the models
+    * for prebuilt lib issues, you can refer the README under ./TRT-OSS
+
+

@@ -12,6 +12,10 @@ Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT) 
 > cuDNN 7.6.5  
 > TensorRT 7.0.0.11
 
+**Note**
+
+You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/o4gt2b50qfga71qd3kognf0v9iv6o2hx.1 -O libnvinfer_plugin.so.7.0.0.1` if you met some LFS issue.
+
 If the environment is different from above, you **MUST** build the TRT OSS plugin by yourself. 
 
 ## Build TensorRT OSS Plugin - libnvinfer_plugin.so
