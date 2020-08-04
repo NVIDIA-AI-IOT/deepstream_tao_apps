@@ -26,7 +26,7 @@
 
 ## Description
 
-This repository provides a DeepStream sample application based on [NVIDIA DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) to run six TLT models (**DetectNet_v2** / **Faster-RCNN** / **YoloV3** / **SSD** / **DSSD** / **RetinaNet**) with below files:
+This repository provides a DeepStream sample application based on [NVIDIA DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) to run six TLT models (**DetectNet_v2** / **Faster-RCNN** / **YoloV3** / **SSD** / **DSSD** / **RetinaNet**/ **MaskRCNN**) with below files:
 
 - **deepstream_custom.c**: sample application main file
 - **pgie_$(MODEL)_tlt_config.txt**: DeepStream nvinfer configure file
@@ -163,11 +163,20 @@ The model has the following three outputs:
   R = post NMS top N (usually 300)  
   C = class numbers (+1 means background)  
 
+### 7. MaskRCNN
+
+The model has the following two outputs:
+
+- **generate_detections**: A [batchSize, keepTopK, C*6] tensor containing the bounding box, class id, score
+- **mask_head/mask_fcn_logits/BiasAdd**:  A [batchSize, keepTopK, C+1, 28*28] tensor containing the masks
+
 ### TRT Plugins Requirements
 
 > **FasterRCNN**: cropAndResizePlugin,  proposalPlugin    
 > **SSD/DSSD/RetinaNet**:  batchTilePlugin, nmsPlugin   
 > **YOLOV3**:  batchTilePlugin, resizeNearestPlugin, batchedNMSPlugin
+
+> **MaskRCNN**:  generateDetectionPlugin, MultilevelCropAndResize, MultilevelProposeROI
 
 ## FAQ
 
