@@ -4,8 +4,7 @@
       * [Description](#description)
       * [Prerequisites](#prerequisites)
       * [Download](#download)
-         * [1. Install <a href="https://github.com/git-lfs/git-lfs/wiki/Installation">git-lfs</a> (git &gt;= 1.8.2)](#1-install-git-lfs-git--182)
-         * [2. Download Source Code with SSH or HTTPS](#2-download-source-code-with-ssh-or-https)
+         * [1. Download Source Code with SSH or HTTPS](#2-download-source-code-with-ssh-or-https)
       * [Build](#build)
          * [1. Build TRT OSS Plugin](#1-build-trt-oss-plugin)
          * [2. Build Sample Application](#2-build-sample-application)
@@ -53,17 +52,7 @@ The pipeline of this sample is:
 
 ## Download
 
-### 1. Install [git-lfs](https://github.com/git-lfs/git-lfs/wiki/Installation) (git >= 1.8.2)
-
-*Need git-lfs to support downloading the >5MB model files.*  
-
-```
-curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-sudo apt-get install git-lfs
-git lfs install
-```
-
-### 2. Download Source Code with SSH or HTTPS
+### 1. Download Source Code with SSH or HTTPS
 
 ```
 // SSH
