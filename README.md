@@ -60,6 +60,12 @@ git clone git@github.com:NVIDIA-AI-IOT/deepstream_tlt_apps.git
 // or HTTPS
 git clone https://github.com/NVIDIA-AI-IOT/deepstream_tlt_apps.git
 ```
+### 2. Download Models
+```
+wget https://nvidia.box.com/shared/static/8k0zpe9gq837wsr0acoy4oh3fdf476gq.zip -O models.zip
+unzip models.zip
+rm models.zip
+```
 
 ## Build
 
