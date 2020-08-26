@@ -1,4 +1,3 @@
-[[_TOC_]]
 # Build x86 TensorRT OSS Plugin
 
 Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT)  for Jetson libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
