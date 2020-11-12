@@ -53,3 +53,7 @@ sudo mv /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y ${HOME}/libnvinfer
 sudo cp `pwd`/out/libnvinfer_plugin.so.7.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y
 sudo ldconfig
 ```
+
+### Known issues
+
+If you ran into "[ERROR] IPluginV2DynamicExt requires network without implicit batch dimension" while running yolov3 model, please try to use the libnvinfer_plugin.so.7.1.3_nano_tx2_xavier_nx_for_yolov3
