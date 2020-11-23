@@ -48,7 +48,7 @@ The pipeline of this sample is:
 
 * [TensorRT OSS (release/7.x branch)](https://github.com/NVIDIA/TensorRT/tree/release/7.0)
 
-  This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet* and *YOLOV3* models because BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
+  This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet*, *YOLOV3* and *MaskRCNN* models because some TRT plugins such as BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
 
 ## Download
 
