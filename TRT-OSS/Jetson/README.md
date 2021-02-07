@@ -21,9 +21,9 @@ TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 
 
 ```
 sudo apt remove --purge --auto-remove cmake
-wget https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5.tar.gz
-tar xvf cmake-3.13.5.tar.gz
-cd cmake-3.13.5/
+wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
+tar xvf cmake-3.19.4.tar.gz
+cd cmake-3.19.4/
 ./configure
 make -j$(nproc)
 sudo make install
