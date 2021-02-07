@@ -50,7 +50,7 @@ cd $TRT_SOURCE
 mkdir -p build && cd build
 ## NOTE: as mentioned above, please make sure your GPU_ARCHS in TRT OSS CMakeLists.txt
 ## if GPU_ARCHS is not in TRT OSS CMakeLists.txt, add -DGPU_ARCHS=xy as below, for xy, refer to below "How to Get GPU_ARCHS" section
-/usr/local/bin/cmake .. -DGPU_ARCHS=xy  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
+/usr/local/bin/cmake .. -DGPU_ARCHS=xy  -DTRT_LIB_DIR=/usr/lib/x86_64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
 make nvinfer_plugin -j$(nproc)
 ```
 

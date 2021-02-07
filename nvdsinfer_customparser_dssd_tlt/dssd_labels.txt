@@ -1,1 +1,0 @@
-../nvdsinfer_customparser_ssd_tlt/ssd_labels.txt

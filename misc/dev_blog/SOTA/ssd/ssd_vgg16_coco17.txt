@@ -1,0 +1,397 @@
+################################################################################
+# The MIT License (MIT)
+#
+# Copyright (c) 2019-2021 NVIDIA CORPORATION
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+ssd_config {
+  aspect_ratios: "[[1.0, 2.0, 0.5],  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],  [1.0, 2.0, 0.5],  [1.0, 2.0, 0.5]]"
+  scales: "[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05]"
+  two_boxes_for_ar1: true
+  clip_boxes: true
+  variances: "[0.1, 0.1, 0.2, 0.2]"
+  arch: "vgg"
+  nlayers: 16
+  freeze_bn: false
+}
+training_config {
+  batch_size_per_gpu: 32
+  num_epochs: 95
+  learning_rate {
+    soft_start_annealing_schedule {
+      min_learning_rate: 1e-5
+      max_learning_rate: 0.001
+      soft_start: 0.01
+      annealing: 0.7
+    }
+  }
+  regularizer {
+    type: L2
+    weight: 0.0005
+  }
+}
+eval_config {
+  validation_period_during_training: 10
+  average_precision_mode: SAMPLE
+  batch_size: 1
+  matching_iou_threshold: 0.5
+}
+nms_config {
+  confidence_threshold: 0.01
+  clustering_iou_threshold: 0.45
+  top_k: 200
+}
+augmentation_config {
+    output_channel: 3
+    output_height: 300
+    output_width: 300
+}
+dataset_config {
+  data_sources: {
+    label_directory_path: "/workspace/tlt-experiments/data/coco2017/KITTI/train2017"
+    image_directory_path: "/workspace/tlt-experiments/data/coco2017/images/train2017"
+  }
+  include_difficult_in_training: true 
+  target_class_mapping {
+    key: "person"
+    value: "person"
+  }
+  target_class_mapping {
+    key: "car"
+    value: "car"
+  }
+  target_class_mapping {
+    key: "chair"
+    value: "chair"
+  }
+  target_class_mapping {
+    key: "book"
+    value: "book"
+  }
+  target_class_mapping {
+    key: "bottle"
+    value: "bottle"
+  }
+  target_class_mapping {
+    key: "cup"
+    value: "cup"
+  }
+  target_class_mapping {
+    key: "diningtable"
+    value: "diningtable"
+  }
+  target_class_mapping {
+    key: "bowl"
+    value: "bowl"
+  }
+  target_class_mapping {
+    key: "trafficlight"
+    value: "trafficlight"
+  }
+  target_class_mapping {
+    key: "handbag"
+    value: "handbag"
+  }
+  target_class_mapping {
+    key: "umbrella"
+    value: "umbrella"
+  }
+  target_class_mapping {
+    key: "boat"
+    value: "boat"
+  }
+  target_class_mapping {
+    key: "bird"
+    value: "bird"
+  }
+  target_class_mapping {
+    key: "truck"
+    value: "truck"
+  }
+  target_class_mapping {
+    key: "banana"
+    value: "banana"
+  }
+  target_class_mapping {
+    key: "bench"
+    value: "bench"
+  }
+  target_class_mapping {
+    key: "sheep"
+    value: "sheep"
+  }
+  target_class_mapping {
+    key: "kite"
+    value: "kite"
+  }
+  target_class_mapping {
+    key: "backpack"
+    value: "backpack"
+  }
+  target_class_mapping {
+    key: "motorcycle"
+    value: "motorcycle"
+  }
+  target_class_mapping {
+    key: "pottedplant"
+    value: "pottedplant"
+  }
+  target_class_mapping {
+    key: "wineglass"
+    value: "wineglass"
+  }
+  target_class_mapping {
+    key: "knife"
+    value: "knife"
+  }
+  target_class_mapping {
+    key: "carrot"
+    value: "carrot"
+  }
+  target_class_mapping {
+    key: "cow"
+    value: "cow"
+  }
+  target_class_mapping {
+    key: "broccoli"
+    value: "broccoli"
+  }
+  target_class_mapping {
+    key: "bicycle"
+    value: "bicycle"
+  }
+  target_class_mapping {
+    key: "donut"
+    value: "donut"
+  }
+  target_class_mapping {
+    key: "horse"
+    value: "horse"
+  }
+  target_class_mapping {
+    key: "skis"
+    value: "skis"
+  }
+  target_class_mapping {
+    key: "vase"
+    value: "vase"
+  }
+  target_class_mapping {
+    key: "cake"
+    value: "cake"
+  }
+  target_class_mapping {
+    key: "orange"
+    value: "orange"
+  }
+  target_class_mapping {
+    key: "cellphone"
+    value: "cellphone"
+  }
+  target_class_mapping {
+    key: "sportsball"
+    value: "sportsball"
+  }
+  target_class_mapping {
+    key: "tie"
+    value: "tie"
+  }
+  target_class_mapping {
+    key: "apple"
+    value: "apple"
+  }
+  target_class_mapping {
+    key: "bus"
+    value: "bus"
+  }
+  target_class_mapping {
+    key: "spoon"
+    value: "spoon"
+  }
+  target_class_mapping {
+    key: "suitcase"
+    value: "suitcase"
+  }
+  target_class_mapping {
+    key: "clock"
+    value: "clock"
+  }
+  target_class_mapping {
+    key: "surfboard"
+    value: "surfboard"
+  }
+  target_class_mapping {
+    key: "couch"
+    value: "couch"
+  }
+  target_class_mapping {
+    key: "remote"
+    value: "remote"
+  }
+  target_class_mapping {
+    key: "skateboard"
+    value: "skateboard"
+  }
+  target_class_mapping {
+    key: "tv"
+    value: "tv"
+  }
+  target_class_mapping {
+    key: "pizza"
+    value: "pizza"
+  }
+  target_class_mapping {
+    key: "sink"
+    value: "sink"
+  }
+  target_class_mapping {
+    key: "elephant"
+    value: "elephant"
+  }
+  target_class_mapping {
+    key: "fork"
+    value: "fork"
+  }
+  target_class_mapping {
+    key: "airplane"
+    value: "airplane"
+  }
+  target_class_mapping {
+    key: "dog"
+    value: "dog"
+  }
+  target_class_mapping {
+    key: "giraffe"
+    value: "giraffe"
+  }
+  target_class_mapping {
+    key: "zebra"
+    value: "zebra"
+  }
+  target_class_mapping {
+    key: "teddybear"
+    value: "teddybear"
+  }
+  target_class_mapping {
+    key: "tennisracket"
+    value: "tennisracket"
+  }
+  target_class_mapping {
+    key: "laptop"
+    value: "laptop"
+  }
+  target_class_mapping {
+    key: "cat"
+    value: "cat"
+  }
+  target_class_mapping {
+    key: "sandwich"
+    value: "sandwich"
+  }
+  target_class_mapping {
+    key: "train"
+    value: "train"
+  }
+  target_class_mapping {
+    key: "toilet"
+    value: "toilet"
+  }
+  target_class_mapping {
+    key: "bed"
+    value: "bed"
+  }
+  target_class_mapping {
+    key: "baseballglove"
+    value: "baseballglove"
+  }
+  target_class_mapping {
+    key: "baseballbat"
+    value: "baseballbat"
+  }
+  target_class_mapping {
+    key: "oven"
+    value: "oven"
+  }
+  target_class_mapping {
+    key: "hotdog"
+    value: "hotdog"
+  }
+  target_class_mapping {
+    key: "keyboard"
+    value: "keyboard"
+  }
+  target_class_mapping {
+    key: "snowboard"
+    value: "snowboard"
+  }
+  target_class_mapping {
+    key: "refrigerator"
+    value: "refrigerator"
+  }
+  target_class_mapping {
+    key: "frisbee"
+    value: "frisbee"
+  }
+  target_class_mapping {
+    key: "mouse"
+    value: "mouse"
+  }
+  target_class_mapping {
+    key: "stopsign"
+    value: "stopsign"
+  }
+  target_class_mapping {
+    key: "firehydrant"
+    value: "firehydrant"
+  }
+  target_class_mapping {
+    key: "toothbrush"
+    value: "toothbrush"
+  }
+  target_class_mapping {
+    key: "microwave"
+    value: "microwave"
+  }
+  target_class_mapping {
+    key: "scissors"
+    value: "scissors"
+  }
+  target_class_mapping {
+    key: "bear"
+    value: "bear"
+  }
+  target_class_mapping {
+    key: "parkingmeter"
+    value: "parkingmeter"
+  }
+  target_class_mapping {
+    key: "toaster"
+    value: "toaster"
+  }
+  target_class_mapping {
+    key: "hairdrier"
+    value: "hairdrier"
+  }
+  validation_data_sources: {
+    label_directory_path: "/workspace/tlt-experiments/data/coco2017/KITTI/val2017"
+    image_directory_path: "/workspace/tlt-experiments/data/coco2017/images/val2017"
+  }
+}

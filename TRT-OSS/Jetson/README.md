@@ -20,7 +20,7 @@ You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/ez
 TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 18.04 is cmake 3.10.2, so upgrade it by
 
 ```
-sudo apt remove --purge --auto-remove cmake
+sudo dpkg --force-all -r cmake
 wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
 tar xvf cmake-3.19.4.tar.gz
 cd cmake-3.19.4/
@@ -33,7 +33,7 @@ sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 ### 2. Build TensorRT OSS Plugin
 
 ```
-git clone -b release/7.0 https://github.com/nvidia/TensorRT        // replease with release/7.1 for  TensorRT 7.1
+git clone -b release/7.0 https://github.com/nvidia/TensorRT        // replace with release/7.x for  TensorRT 7.x
 cd TensorRT/
 git submodule update --init --recursive
 export TRT_SOURCE=`pwd`

@@ -1,0 +1,182 @@
+################################################################################
+# The MIT License (MIT)
+#
+# Copyright (c) 2019-2021 NVIDIA CORPORATION
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+random_seed: 42
+yolov3_config {
+big_anchor_shape: "[(116,90), (156,198), (373,326)]"
+mid_anchor_shape: "[(30,61), (62,45), (59,119)]"
+small_anchor_shape: "[(10,13), (16,30), (33,23)]"
+matching_neutral_box_iou: 0.5
+arch: "darknet"
+nlayers: 53
+arch_conv_blocks: 2
+
+loss_loc_weight: 0.8
+loss_neg_obj_weights: 100.0
+loss_class_weights: 1.0
+
+freeze_bn: false
+#freeze_blocks: 0
+force_relu: false
+}
+
+training_config {
+  batch_size_per_gpu: 8
+  num_epochs: 180
+  enable_qat: false
+  checkpoint_interval: 10
+  learning_rate {
+  soft_start_annealing_schedule {
+    min_learning_rate: 1e-6
+    max_learning_rate: 1e-4
+    soft_start: 0.1
+    annealing: 0.5
+    }
+  }
+  regularizer {
+    type: L1
+    weight: 3e-8
+  }
+  optimizer {
+    adam {
+      epsilon: 1e-7
+      beta1: 0.9
+      beta2: 0.999
+      amsgrad: false
+    }
+  }
+  pretrain_model_path: "/raid/darknet_53.hdf5"
+}
+eval_config {
+  average_precision_mode: SAMPLE
+  batch_size: 8
+  matching_iou_threshold: 0.5
+}
+nms_config {
+  confidence_threshold: 0.001
+  clustering_iou_threshold: 0.5
+  top_k: 200
+}
+augmentation_config {
+  hue: 0.1
+  saturation: 1.5
+  exposure:1.5
+  vertical_flip:0
+  horizontal_flip: 0.5
+  jitter: 0.3
+  output_width: 416
+  output_height: 416
+  randomize_input_shape_period: 10
+}
+dataset_config {
+  data_sources: {
+    label_directory_path: "/raid/orig_shape_voc/train/label"
+    image_directory_path: "/raid/orig_shape_voc/train/image"
+  }
+  target_class_mapping {
+    key: "car"
+    value: "car"
+  }
+  target_class_mapping {
+    key: "person"
+    value: "person"
+  }
+  target_class_mapping {
+    key: "bicycle"
+    value: "bicycle"
+  }
+  target_class_mapping {
+    key: "dog"
+    value: "dog"
+  }
+  target_class_mapping {
+    key: "cat"
+    value: "cat"
+  }
+  target_class_mapping {
+    key: "aeroplane"
+    value: "aeroplane"
+  }
+  target_class_mapping {
+    key: "bird"
+    value: "bird"
+  }
+  target_class_mapping {
+    key: "boat"
+    value: "boat"
+  }
+  target_class_mapping {
+    key: "bottle"
+    value: "bottle"
+  }
+  target_class_mapping {
+    key: "bus"
+    value: "bus"
+  }
+  target_class_mapping {
+    key: "chair"
+    value: "chair"
+  }
+  target_class_mapping {
+    key: "cow"
+    value: "cow"
+  }
+  target_class_mapping {
+    key: "diningtable"
+    value: "diningtable"
+  }
+  target_class_mapping {
+    key: "horse"
+    value: "horse"
+  }
+  target_class_mapping {
+    key: "motorbike"
+    value: "motorbike"
+  }
+  target_class_mapping {
+    key: "pottedplant"
+    value: "pottedplant"
+  }
+  target_class_mapping {
+    key: "sheep"
+    value: "sheep"
+  }
+  target_class_mapping {
+    key: "sofa"
+    value: "sofa"
+  }
+  target_class_mapping {
+    key: "train"
+    value: "train"
+  }
+  target_class_mapping {
+    key: "tvmonitor"
+    value: "tvmonitor"
+  }
+
+  validation_data_sources: {
+    label_directory_path: "/raid/orig_shape_voc/val/label"
+    image_directory_path: "/raid/orig_shape_voc/val/image"
+  }
+}

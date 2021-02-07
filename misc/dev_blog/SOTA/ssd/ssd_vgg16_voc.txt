@@ -1,0 +1,161 @@
+################################################################################
+# The MIT License (MIT)
+#
+# Copyright (c) 2019-2021 NVIDIA CORPORATION
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+ssd_config {
+  aspect_ratios: "[[1.0, 2.0, 0.5],  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],  [1.0, 2.0, 0.5],  [1.0, 2.0, 0.5]]"
+  scales: "[0.1, 0.2, 0.37, 0.54, 0.71, 0.88, 1.05]"
+  two_boxes_for_ar1: true
+  clip_boxes: true
+  variances: "[0.1, 0.1, 0.2, 0.2]"
+  arch: "vgg"
+  nlayers: 16
+  freeze_bn: false
+  # uncomment in retrain
+  # freeze_bn: True
+  # freeze_blocks: 0
+  # freeze_blocks: 1
+}
+training_config {
+  batch_size_per_gpu: 32
+  num_epochs: 240
+  learning_rate {
+    soft_start_annealing_schedule {
+      min_learning_rate: 1e-5
+      max_learning_rate: 0.001
+      soft_start: 0.001
+      annealing: 0.65
+    }
+  }
+  regularizer {
+    type: L2
+    weight: 0.0005
+  }
+}
+eval_config {
+  validation_period_during_training: 5
+  average_precision_mode: SAMPLE
+  batch_size: 1
+  matching_iou_threshold: 0.5
+}
+nms_config {
+  confidence_threshold: 0.01
+  clustering_iou_threshold: 0.45
+  top_k: 200
+}
+augmentation_config {
+    output_width: 300
+    output_height: 300
+    output_channel: 3
+}
+dataset_config {
+  data_sources: {
+    label_directory_path: "/workspace/tlt-experiments/data/voc0712trainval/labels_kitti"
+    image_directory_path: "/workspace/tlt-experiments/data/voc0712trainval/images"
+  }
+  include_difficult_in_training: true
+  target_class_mapping {
+    key: "sheep"
+    value: "sheep"
+  }
+  target_class_mapping {
+    key: "bottle"
+    value: "bottle"
+  }
+  target_class_mapping {
+    key: "horse"
+    value: "horse"
+  }
+  target_class_mapping {
+    key: "bicycle"
+    value: "bicycle"
+  }
+  target_class_mapping {
+    key: "motorbike"
+    value: "motorbike"
+  }
+  target_class_mapping {
+    key: "cow"
+    value: "cow"
+  }
+  target_class_mapping {
+    key: "sofa"
+    value: "sofa"
+  }
+  target_class_mapping {
+    key: "dog"
+    value: "dog"
+  }
+  target_class_mapping {
+    key: "cat"
+    value: "cat"
+  }
+  target_class_mapping {
+    key: "person"
+    value: "person"
+  }
+  target_class_mapping {
+    key: "train"
+    value: "train"
+  }
+  target_class_mapping {
+    key: "diningtable"
+    value: "diningtable"
+  }
+  target_class_mapping {
+    key: "aeroplane"
+    value: "aeroplane"
+  }
+  target_class_mapping {
+    key: "bus"
+    value: "bus"
+  }
+  target_class_mapping {
+    key: "pottedplant"
+    value: "pottedplant"
+  }
+  target_class_mapping {
+    key: "tvmonitor"
+    value: "tvmonitor"
+  }
+  target_class_mapping {
+    key: "chair"
+    value: "chair"
+  }
+  target_class_mapping {
+    key: "bird"
+    value: "bird"
+  }
+  target_class_mapping {
+    key: "boat"
+    value: "boat"
+  }
+  target_class_mapping {
+    key: "car"
+    value: "car"
+  }
+  validation_data_sources: {
+    label_directory_path: "/workspace/tlt-experiments/data/voc07test/labels_kitti"
+    image_directory_path: "/workspace/tlt-experiments/data/voc07test/images"
+  }
+}

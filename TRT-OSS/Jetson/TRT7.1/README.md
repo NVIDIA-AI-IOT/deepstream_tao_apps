@@ -1,4 +1,3 @@
-[[_TOC_]]
 # Build Jetson TensorRT OSS Plugin
 
 Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT) on Jetson device for Jetson libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
@@ -21,10 +20,10 @@ You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/ez
 TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 18.04 is cmake 3.10.2, so upgrade it by
 
 ```
-sudo apt remove --purge --auto-remove cmake
-wget https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5.tar.gz
-tar xvf cmake-3.13.5.tar.gz
-cd cmake-3.13.5/
+sudo dpkg --force-all -r cmake
+wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
+tar xvf cmake-3.19.4.tar.gz
+cd cmake-3.19.4/
 ./configure
 make -j$(nproc)
 sudo make install

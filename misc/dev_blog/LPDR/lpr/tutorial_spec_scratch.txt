@@ -1,0 +1,69 @@
+################################################################################
+# The MIT License (MIT)
+#
+# Copyright (c) 2019-2021 NVIDIA CORPORATION
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+random_seed: 42
+lpr_config {
+  hidden_units: 512
+  max_label_length: 8
+  arch: "baseline"
+  nlayers: 18 #setting nlayers to be 10 to use baseline10 model
+}
+training_config {
+  batch_size_per_gpu: 32
+  num_epochs: 100
+  learning_rate {
+  soft_start_annealing_schedule {
+    min_learning_rate: 1e-6
+    max_learning_rate: 1e-4
+    soft_start: 0.001
+    annealing: 0.5
+  }
+  }
+  regularizer {
+    type: L2
+    weight: 5e-4
+  }
+}
+eval_config {
+  validation_period_during_training: 5
+  batch_size: 1
+}
+augmentation_config {
+    output_width: 96
+    output_height: 48
+    output_channel: 3
+    keep_original_prob: 0.3
+    transform_prob: 0.5
+    rotate_degree: 5
+}
+dataset_config {
+  data_sources: {
+    label_directory_path: "/workspace/tlt-experiments/data/openalpr/train/label"
+    image_directory_path: "/workspace/tlt-experiments/data/openalpr/train/image"
+  }
+  characters_list_file: "/workspace/examples/lprnet/specs/us_lp_characters.txt"
+  validation_data_sources: {
+    label_directory_path: "/workspace/tlt-experiments/data/openalpr/val/label"
+    image_directory_path: "/workspace/tlt-experiments/data/openalpr/val/image"
+  }
+}

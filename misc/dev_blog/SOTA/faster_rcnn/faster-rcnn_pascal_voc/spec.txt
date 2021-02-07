@@ -1,0 +1,279 @@
+################################################################################
+# The MIT License (MIT)
+#
+# Copyright (c) 2019-2021 NVIDIA CORPORATION
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+random_seed: 42
+enc_key: 'tlt'
+verbose: True
+model_config {
+input_image_config {
+image_type: RGB
+image_channel_order: 'bgr'
+size_min {
+min: 600
+}
+    image_channel_mean {
+        key: 'b'
+        value: 103.939
+}
+    image_channel_mean {
+        key: 'g'
+        value: 116.779
+}
+    image_channel_mean {
+        key: 'r'
+        value: 123.68
+}
+image_scaling_factor: 1.0
+max_objects_num_per_image: 100
+}
+arch: "vgg:16"
+anchor_box_config {
+scale: 32.0
+scale: 128.0
+scale: 256.0
+scale: 512.0
+ratio: 1.0
+ratio: 0.5
+ratio: 2.0
+}
+freeze_bn: True
+freeze_blocks: 1
+freeze_blocks: 2
+roi_mini_batch: 256
+rpn_stride: 16
+use_bias: False
+roi_pooling_config {
+pool_size: 7
+pool_size_2x: True
+}
+all_projections: False
+use_pooling:True
+}
+dataset_config {
+  data_sources: {
+    tfrecords_path: "/workspace/tlt-experiments/data/voc0712trainval/tfrecords/*"
+    image_directory_path: "/workspace/tlt-experiments/data/voc0712trainval"
+  }
+image_extension: 'jpg'
+target_class_mapping {
+key: "horse"
+value: "horse"
+}
+target_class_mapping {
+key: "pottedplant"
+value: "pottedplant"
+}
+target_class_mapping {
+key: "train"
+value: "train"
+}
+target_class_mapping {
+key: "person"
+value: "person"
+}
+target_class_mapping {
+key: "bird"
+value: "bird"
+}
+target_class_mapping {
+key: "car"
+value: "car"
+}
+target_class_mapping {
+key: "chair"
+value: "chair"
+}
+target_class_mapping {
+key: "tvmonitor"
+value: "tvmonitor"
+}
+target_class_mapping {
+key: "bus"
+value: "bus"
+}
+target_class_mapping {
+key: "sofa"
+value: "sofa"
+}
+target_class_mapping {
+key: "dog"
+value: "dog"
+}
+target_class_mapping {
+key: "motorbike"
+value: "motorbike"
+}
+target_class_mapping {
+key: "bicycle"
+value: "bicycle"
+}
+target_class_mapping {
+key: "sheep"
+value: "sheep"
+}
+target_class_mapping {
+key: "boat"
+value: "boat"
+}
+target_class_mapping {
+key: "cat"
+value: "cat"
+}
+target_class_mapping {
+key: "bottle"
+value: "bottle"
+}
+target_class_mapping {
+key: "diningtable"
+value: "diningtable"
+}
+target_class_mapping {
+key: "cow"
+value: "cow"
+}
+target_class_mapping {
+key: "aeroplane"
+value: "aeroplane"
+}
+validation_data_source: {
+    tfrecords_path: "/workspace/tlt-experiments/data/voc07test/tfrecords/*"
+    image_directory_path: "/workspace/tlt-experiments/data/voc07test"
+}
+}
+augmentation_config {
+preprocessing {
+output_image_channel: 3
+output_image_min: 600
+output_image_max: 1000
+min_bbox_width: 1.0
+min_bbox_height: 1.0
+}
+spatial_augmentation {
+hflip_probability: 0.5
+vflip_probability: 0.0
+zoom_min: 1.0
+zoom_max: 1.0
+translate_max_x: 0
+translate_max_y: 0
+}
+color_augmentation {
+hue_rotation_max: 0.0
+saturation_shift_max: 0.0
+contrast_scale_max: 0.0
+contrast_center: 0.5
+}
+}
+training_config {
+enable_augmentation: True
+enable_qat: False
+batch_size_per_gpu: 1
+num_epochs: 20
+pretrained_weights: "/workspace/tlt-experiments/classification/vgg16/vgg_080.tlt"
+output_model: "/workspace/tlt-experiments/faster_rcnn/pascal_voc/vgg16_frcnn.tlt"
+rpn_min_overlap: 0.3
+rpn_max_overlap: 0.7
+classifier_min_overlap: 0.0
+classifier_max_overlap: 0.5
+gt_as_roi: False
+std_scaling: 1.0
+classifier_regr_std {
+key: 'x'
+value: 10.0
+}
+classifier_regr_std {
+key: 'y'
+value: 10.0
+}
+classifier_regr_std {
+key: 'w'
+value: 5.0
+}
+classifier_regr_std {
+key: 'h'
+value: 5.0
+}
+
+rpn_mini_batch: 256
+rpn_pre_nms_top_N: 12000
+rpn_nms_max_boxes: 2000
+rpn_nms_overlap_threshold: 0.7
+
+regularizer {
+type: L2
+weight: 1e-4
+}
+
+optimizer {
+adam {
+lr: 0.00001
+beta_1: 0.9
+beta_2: 0.999
+decay: 0.0
+}
+}
+
+learning_rate {
+step {
+base_lr: 0.00001
+gamma: 0.1
+step_size: 70
+}
+}
+
+lambda_rpn_regr: 1.0
+lambda_rpn_class: 1.0
+lambda_cls_regr: 1.0
+lambda_cls_class: 1.0
+}
+inference_config {
+images_dir: '/workspace/tlt-experiments/data/voc07test/images'
+model: '/workspace/tlt-experiments/faster_rcnn/pascal_voc/vgg16_frcnn.epoch20.tlt'
+batch_size: 1
+detection_image_output_dir: '/workspace/tlt-experiments/faster_rcnn/pascal_voc/inference_results_imgs'
+labels_dump_dir: '/workspace/tlt-experiments/faster_rcnn/pascal_voc/inference_dump_labels'
+rpn_pre_nms_top_N: 6000
+rpn_nms_max_boxes: 300
+rpn_nms_overlap_threshold: 0.7
+object_confidence_thres: 0.0001
+bbox_visualize_threshold: 0.6
+classifier_nms_max_boxes: 100
+classifier_nms_overlap_threshold: 0.3
+bbox_caption_on: True
+}
+
+evaluation_config {
+model: '/workspace/tlt-experiments/faster_rcnn/pascal_voc/vgg16_frcnn.epoch20.tlt'
+batch_size: 1
+validation_period_during_training: 1
+labels_dump_dir: '/workspace/tlt-experiments/faster_rcnn/pascal_voc/test_dump_labels'
+rpn_pre_nms_top_N: 6000
+rpn_nms_max_boxes: 300
+rpn_nms_overlap_threshold: 0.7
+classifier_nms_max_boxes: 100
+classifier_nms_overlap_threshold: 0.5
+object_confidence_thres: 0.0001
+use_voc07_11point_metric: True
+gt_matching_iou_threshold: 0.5
+}
+
