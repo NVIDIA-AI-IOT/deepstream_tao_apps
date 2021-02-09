@@ -66,7 +66,7 @@ training_config {
       amsgrad: false
     }
   }
-  pretrain_model_path: "/raid/darknet_53.hdf5"
+  pretrain_model_path: "/workspace/tlt-experiments/classification/darknet53/weights/darknet_$EPOCH.tlt"
 }
 eval_config {
   average_precision_mode: SAMPLE
@@ -91,8 +91,8 @@ augmentation_config {
 }
 dataset_config {
   data_sources: {
-    label_directory_path: "/raid/orig_shape_voc/train/label"
-    image_directory_path: "/raid/orig_shape_voc/train/image"
+    label_directory_path: "/workspace/tlt-experiments/data/voc0712trainval/labels_kitti"
+    image_directory_path: "/workspace/tlt-experiments/data/voc0712trainval/images"
   }
   target_class_mapping {
     key: "car"
@@ -176,7 +176,7 @@ dataset_config {
   }
 
   validation_data_sources: {
-    label_directory_path: "/raid/orig_shape_voc/val/label"
-    image_directory_path: "/raid/orig_shape_voc/val/image"
+    label_directory_path: "/workspace/tlt-experiments/data/voc07test/labels_kitti"
+    image_directory_path: "/workspace/tlt-experiments/data/voc07test/images"
   }
 }

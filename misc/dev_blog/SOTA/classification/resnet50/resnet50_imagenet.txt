@@ -65,7 +65,7 @@ train_config {
 }
 eval_config {
   eval_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
-  model_path: "/workspace/tlt-experiments/classification/resnet50/weights/resnet50_120.tlt"
+  model_path: "/workspace/tlt-experiments/classification/resnet50/weights/resnet_120.tlt"
   top_k: 1
   batch_size: 64
   n_workers: 8

@@ -505,7 +505,6 @@ evaluation_config {
 model: '/workspace/tlt-experiments/coco2014/frcnn_resnet101.epoch20.tlt'
 batch_size: 1
 validation_period_during_training: 1
-labels_dump_dir: '/workspace/tlt-experiments/coco2014/test_dump_labels'
 rpn_pre_nms_top_N: 6000
 rpn_nms_max_boxes: 300
 rpn_nms_overlap_threshold: 0.7

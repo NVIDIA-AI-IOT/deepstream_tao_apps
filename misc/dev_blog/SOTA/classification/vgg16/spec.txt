@@ -67,7 +67,7 @@ train_config {
 }
 eval_config {
   eval_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
-  model_path: "/workspace/tlt-experiments/classification/vgg16/weights/vgg16_80.tlt"
+  model_path: "/workspace/tlt-experiments/classification/vgg16/weights/vgg_080.tlt"
   top_k: 1
   batch_size: 32
   n_workers: 8

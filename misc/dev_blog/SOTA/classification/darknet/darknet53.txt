@@ -23,27 +23,18 @@
 ################################################################################
 
 model_config {
-  # Model Architecture can be chosen from:
-  # ['resnet', 'vgg', 'googlenet', 'alexnet']
   arch: "darknet"
- 
-  # for resnet --> n_layers can be [10, 18, 50]
-  # for vgg --> n_layers can be [16, 19]
   n_layers: 53
   use_batch_norm: True
   use_bias: False
   use_imagenet_head: True
   all_projections: False
   use_pooling: True
-  # if you want to use the pretrained model,
-  # image size should be "3,224,224"
-  # otherwise, it can be "3, X, Y", where X,Y >= 16
   input_image_size: "3,224,224"
 }
 train_config {
-  train_dataset_path: "/raid/ImageNet2012/ImageNet2012/train"
-  val_dataset_path: "/raid/ImageNet2012/ImageNet2012/val"
-  # Only ['sgd', 'adam'] are supported for optimizer
+  train_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/train"
+  val_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
   optimizer {
     sgd {
         lr: 0.01
@@ -51,7 +42,7 @@ train_config {
         momentum: 0.9
         nesterov: False
     }
-  } 
+  }
   preprocess_mode: "torch"
   enable_random_crop: True
   enable_center_crop: True
@@ -59,22 +50,16 @@ train_config {
   batch_size_per_gpu: 64
   n_epochs: 200
   mixup_alpha: 0.2
- 
+
   # Number of CPU cores for loading data
   n_workers: 40
- 
-  # regularizer
+
   reg_config {
-    # regularizer type can be "L1", "L2" or "None".
     type: "L2"
-    # if the type is not "None",
-    # scope can be either "Conv2D" or "Dense" or both.
     scope: "Conv2D,Dense"
-    # 0 < weight decay < 1
     weight_decay: 0.00003
   }
- 
-  # learning_rate
+
   lr_config {
     cosine{
         learning_rate: 0.05
