@@ -29,14 +29,13 @@ Please refer to the Build Guidance under https://github.com/NVIDIA/TensorRT
 TensorRT OSS requires cmake >= v3.13, so install cmake 3.13 if your cmake version is lower than 3.13
 
 ```
-sudo apt remove --purge --auto-remove cmake
 wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
 tar xvf cmake-3.19.4.tar.gz
 cd cmake-3.19.4/
-./configure
+mkdir $HOME/install
+./configure --prefix=$HOME/install
 make -j$(nproc)
 sudo make install
-sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 ```
 
 ### 2. Build TensorRT OSS Plugin
@@ -50,7 +49,7 @@ cd $TRT_SOURCE
 mkdir -p build && cd build
 ## NOTE: as mentioned above, please make sure your GPU_ARCHS in TRT OSS CMakeLists.txt
 ## if GPU_ARCHS is not in TRT OSS CMakeLists.txt, add -DGPU_ARCHS=xy as below, for xy, refer to below "How to Get GPU_ARCHS" section
-/usr/local/bin/cmake .. -DGPU_ARCHS=xy  -DTRT_LIB_DIR=/usr/lib/x86_64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
+$HOME/install/bin/cmake .. -DGPU_ARCHS=xy  -DTRT_LIB_DIR=/usr/lib/x86_64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
 make nvinfer_plugin -j$(nproc)
 ```
 
