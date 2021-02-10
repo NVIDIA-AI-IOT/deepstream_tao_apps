@@ -138,13 +138,14 @@ bool NvDsInferParseCustomBatchedNMSTLT (
     for (int i = 0; i < p_keep_count[0] && objectList.size() <= keep_top_k; i++) {
 
         if ( p_scores[i] < threshold) continue;
-        assert((unsigned int) p_classes[i] < detectionParams.numClassesConfigured);
 
         if(log_enable != NULL && std::stoi(log_enable)) {
             std::cout << "label/conf/ x/y x/y -- "
                       << p_classes[i] << " " << p_scores[i] << " "
                       << p_bboxes[4*i] << " " << p_bboxes[4*i+1] << " " << p_bboxes[4*i+2] << " "<< p_bboxes[4*i+3] << " " << std::endl;
         }
+
+        if((unsigned int) p_classes[i] < detectionParams.numClassesConfigured) continue;
         if(p_bboxes[4*i+2] < p_bboxes[4*i] || p_bboxes[4*i+3] < p_bboxes[4*i+1]) continue;
 
         NvDsInferObjectDetectionInfo object;
