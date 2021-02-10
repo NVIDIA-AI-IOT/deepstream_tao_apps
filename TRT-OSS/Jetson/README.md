@@ -20,14 +20,13 @@ You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/ez
 TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 18.04 is cmake 3.10.2, so upgrade it by
 
 ```
-sudo dpkg --force-all -r cmake
 wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
 tar xvf cmake-3.19.4.tar.gz
 cd cmake-3.19.4/
-./configure
+mkdir $HOME/install
+./configure --prefix=$HOME/install
 make -j$(nproc)
 sudo make install
-sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 ```
 
 ### 2. Build TensorRT OSS Plugin
@@ -39,7 +38,7 @@ git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
 cd $TRT_SOURCE
 mkdir -p build && cd build
-/usr/local/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
+$HOME/install/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
 make nvinfer_plugin -j$(nproc)
 ```
 
