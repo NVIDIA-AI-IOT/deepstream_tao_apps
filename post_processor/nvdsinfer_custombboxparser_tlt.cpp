@@ -145,7 +145,7 @@ bool NvDsInferParseCustomBatchedNMSTLT (
                       << p_bboxes[4*i] << " " << p_bboxes[4*i+1] << " " << p_bboxes[4*i+2] << " "<< p_bboxes[4*i+3] << " " << std::endl;
         }
 
-        if((unsigned int) p_classes[i] < detectionParams.numClassesConfigured) continue;
+        if((unsigned int) p_classes[i] >= detectionParams.numClassesConfigured) continue;
         if(p_bboxes[4*i+2] < p_bboxes[4*i] || p_bboxes[4*i+3] < p_bboxes[4*i+1]) continue;
 
         NvDsInferObjectDetectionInfo object;
