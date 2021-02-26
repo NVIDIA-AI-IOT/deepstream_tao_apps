@@ -32,16 +32,9 @@ AT=@
 endif
 
 TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
+DS_VER = $(shell deepstream-app -v | awk '$$1~/DeepStreamSDK/ {print substr($$2,1,3)}' )
 
-NVDS_VERSION:=5.0
-
-LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
-APP_INSTALL_DIR?=/usr/bin/
-
-DS_SRC_PATH?=
-ifeq ($(DS_SRC_PATH),)
-  $(error "DS_SRC_PATH is not set")
-endif
+DS_SRC_PATH := /opt/nvidia/deepstream/deepstream-$(DS_VER)
 
 ifeq ($(TARGET_DEVICE),aarch64)
   CFLAGS:= -DPLATFORM_TEGRA
@@ -49,6 +42,7 @@ endif
 
 # Change to your deepstream SDK includes
 CFLAGS+= -I$(DS_SRC_PATH)/sources/includes
+LIB_INSTALL_DIR?=$(DS_SRC_PATH)/lib/
 
 SRCS:= $(wildcard *.c)
 SRCS+= $(wildcard ./tlt_detection/*.c)
@@ -79,5 +73,3 @@ $(APP): $(OBJS) Makefile
 clean:
 	rm -rf $(OBJS) $(APP)
 
-install: $(APP)
-	cp -rv $(APP) $(APP_INSTALL_DIR)

@@ -25,15 +25,10 @@ ifeq ($(CUDA_VER),)
   $(error "CUDA_VER is not set")
 endif
 
-DS_SRC_PATH?=
-ifeq ($(DS_SRC_PATH),)
-  $(error "DS_SRC_PATH is not set")
-endif
+DS_VER = $(shell deepstream-app -v | awk '$$1~/DeepStreamSDK/ {print substr($$2,1,3)}' )
 
+DS_SRC_PATH := /opt/nvidia/deepstream/deepstream-$(DS_VER)
 CC:= g++
-
-NVDS_VERSION:=5.0
-LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream-$(NVDS_VERSION)/lib/
 
 # Change to your deepstream SDK includes
 CFLAGS+= -I$(DS_SRC_PATH)/sources/includes \
@@ -55,7 +50,3 @@ $(TARGET_LIB) : $(SRCFILES)
 
 clean:
 	rm -rf $(TARGET_LIB)
-
-install: $(TARGET_LIB)
-	cp -rv $(TARGET_LIB) $(LIB_INSTALL_DIR)
-

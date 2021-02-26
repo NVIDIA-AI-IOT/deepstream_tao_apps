@@ -22,6 +22,7 @@
     - [TRT Plugins Requirements](#trt-plugins-requirements)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
+    - [About misc folder](#about-misc-folder)
   - [Known issues](#known-issues)
 
 ## Description
@@ -51,15 +52,11 @@ JPEG --> decoder --> streammux --> nvinfer(segmentation) --> nvsegvidsual --> ti
 
 ## Prerequisites
 
-* [Deepstream SDK 5.0](https://developer.nvidia.com/deepstream-sdk)   
+* [Deepstream SDK 5.x](https://developer.nvidia.com/deepstream-sdk)
 
    Make sure deepstream-test1 sample can run successful to verify your installation
 
-   Note
-
-   1. For DS5.1 release, you need to change  NVDS_VERSION:=5.1 in Makefile and change deepstream-5.0 to deepstream-5.1 in pgie_xxx_tlt_config.txt
-
-   2. For Unet model, you must use DS 5.1 or later release.
+   Note, For Unet model, you must use DS 5.1 or later release.
 
 * [TensorRT OSS (release/7.x branch)](https://github.com/NVIDIA/TensorRT/tree/release/7.0)
 
@@ -97,10 +94,8 @@ TRT-OSS/x86/README.md                 // for x86 platform
 ### 2. Build Sample Application
 
 ```
-export DS_SRC_PATH="Your deepstream sdk source path"      // e.g. /opt/nvidia/deepstream/deepstream-5.0
 export CUDA_VER=xy.z                                      // xy.z is CUDA version, e.g. 10.2
 make
-make install                                              // install app and postprocess parser lib
 ```
 ## Run
 
@@ -116,7 +111,7 @@ For segmentation model:
 Usage: ds-tlt  config_file <file1> [file2] ... [fileN]
  
  e.g.
- [SHOW_MASK=1] ds-tlt  -c configs/frcnn_tlt/pgie_frcnn_tlt_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
+ [SHOW_MASK=1] ./apps/ds-tlt  -c configs/frcnn_tlt/pgie_frcnn_tlt_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
 
  note:for PeopleSegNet, you need to set SHOW_MASK=1 if you need to display the instance mask
 ```
@@ -210,3 +205,7 @@ trtexec --batch=2 --useSpinWait --loadEngine=yolo_resnet18.etlt_b2_gpu0_fp16.eng
 
 
 ## Known issues
+
+```
+1. currently yolov3/yolov4 cannot work with TensorRT 7.2.2
+```

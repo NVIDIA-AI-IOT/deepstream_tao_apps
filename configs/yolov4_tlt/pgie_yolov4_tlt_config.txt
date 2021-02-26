@@ -45,7 +45,7 @@ is-classifier=0
 cluster-mode=3
 output-blob-names=BatchedNMS
 parse-bbox-func-name=NvDsInferParseCustomBatchedNMSTLT
-custom-lib-path=/opt/nvidia/deepstream/deepstream-5.0/lib/libnvds_infercustomparser_tlt.so
+custom-lib-path=../../post_processor/libnvds_infercustomparser_tlt.so
 
 [class-attrs-all]
 pre-cluster-threshold=0.3
