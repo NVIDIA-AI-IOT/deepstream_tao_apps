@@ -23,49 +23,11 @@
 ################################################################################
 
 random_seed: 42
-
 augmentation_config {
     output_width: 608
     output_height: 608
     output_channel: 3
 }
-
-training_config {
-
-  batch_size_per_gpu: 16
-  num_epochs: 150
-  pretrain_model_path: "/workspace/tlt-experiments/classification/resnet50/weights/resnet50_120.tlt"
-  checkpoint_interval: 1
-  learning_rate {
-    soft_start_annealing_schedule {
-      min_learning_rate: 5e-5
-      max_learning_rate: 1e-2
-      soft_start: 0.08
-      annealing: 0.32
-    }
-  }
-
-  regularizer {
-    type: L1
-    weight: 1e-6
-  }
-}
-
-eval_config {
-
-  batch_size: 16
-  validation_period_during_training: 120
-  matching_iou_threshold: 0.5
-
-}
-
-nms_config {
-  confidence_threshold: 0.01
-  clustering_iou_threshold: 0.5
-  top_k: 200
-
-}
-
 retinanet_config {
   aspect_ratios_global: "[1.0, 2.0, 0.5]"
   scales: "[0.05, 0.15, 0.3, 0.45, 0.6, 0.75]"
@@ -77,10 +39,43 @@ retinanet_config {
   freeze_blocks: 0
   nlayers: 50
   n_kernels: 2
+  n_anchor_levels: 1
   feature_size: 256
-
 }
-
+training_config {
+  batch_size_per_gpu: 16
+  num_epochs: 150
+  pretrain_model_path: "/workspace/tlt-experiments/classification/resnet50/weights/resnet50_120.tlt"
+  checkpoint_interval: 1
+  optimizer {
+    sgd {
+      momentum: 0.9
+      nesterov: True
+    }
+  }
+  learning_rate {
+    soft_start_annealing_schedule {
+      min_learning_rate: 5e-5
+      max_learning_rate: 1e-2
+      soft_start: 0.08
+      annealing: 0.32
+    }
+  }
+  regularizer {
+    type: L1
+    weight: 1e-6
+  }
+}
+eval_config {
+  batch_size: 16
+  validation_period_during_training: 50
+  matching_iou_threshold: 0.5
+}
+nms_config {
+  confidence_threshold: 0.01
+  clustering_iou_threshold: 0.5
+  top_k: 200
+}
 dataset_config {
   data_sources: {
     label_directory_path: "/workspace/tlt-experiments/data/coco2017/KITTI/train2017"
