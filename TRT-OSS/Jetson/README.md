@@ -48,7 +48,7 @@ After building ends successfully, libnvinfer_plugin.so* will be generated under 
 
 ```
 sudo mv /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y ${HOME}/libnvinfer_plugin.so.7.x.y.bak   // backup original libnvinfer_plugin.so.x.y
-sudo cp `pwd`/build/libnvinfer_plugin.so.7.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y
+sudo cp $TRT_SOURCE/build/libnvinfer_plugin.so.7.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y
 sudo ldconfig
 ```
 
