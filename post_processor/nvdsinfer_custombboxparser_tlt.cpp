@@ -30,7 +30,9 @@
 #define CLIP(a,min,max) (MAX(MIN(a, max), min))
 #define DIVIDE_AND_ROUND_UP(a, b) ((a + b - 1) / b)
 
-
+struct MrcnnRawDetection {
+    float y1, x1, y2, x2, class_id, score;
+};
 /* This is a sample bounding box parsing function for the sample FasterRCNN
  *
  * detector model provided with the SDK. */
@@ -158,12 +160,90 @@ bool NvDsInferParseCustomBatchedNMSTLT (
         object.width = CLIP(p_bboxes[4*i+2] * networkInfo.width, 0, networkInfo.width - 1) - object.left;
         object.height = CLIP(p_bboxes[4*i+3] * networkInfo.height, 0, networkInfo.height - 1) - object.top;
 
-		if(object.height < 0 || object.width < 0)
-			continue;
+        if(object.height < 0 || object.width < 0)
+            continue;
         objectList.push_back(object);
     }
     return true;
 }
+
+extern "C"
+bool NvDsInferParseCustomMrcnnTLTV2 (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+                                   NvDsInferNetworkInfo  const &networkInfo,
+                                   NvDsInferParseDetectionParams const &detectionParams,
+                                   std::vector<NvDsInferInstanceMaskInfo> &objectList) {
+    auto layerFinder = [&outputLayersInfo](const std::string &name)
+        -> const NvDsInferLayerInfo *{
+        for (auto &layer : outputLayersInfo) {
+            if (layer.dataType == FLOAT &&
+              (layer.layerName && name == layer.layerName)) {
+                return &layer;
+            }
+        }
+        return nullptr;
+    };
+
+    const NvDsInferLayerInfo *detectionLayer = layerFinder("generate_detections");
+    const NvDsInferLayerInfo *maskLayer = layerFinder("mask_fcn_logits/BiasAdd");
+
+    if (!detectionLayer || !maskLayer) {
+        std::cerr << "ERROR: some layers missing or unsupported data types "
+                  << "in output tensors" << std::endl;
+        return false;
+    }
+
+    if(maskLayer->inferDims.numDims != 4U) {
+        std::cerr << "Network output number of dims is : " <<
+            maskLayer->inferDims.numDims << " expect is 4"<< std::endl;
+        return false;
+    }
+
+    const unsigned int det_max_instances = maskLayer->inferDims.d[0];
+    const unsigned int num_classes = maskLayer->inferDims.d[1];
+    if(num_classes != detectionParams.numClassesConfigured) {
+        std::cerr << "WARNING: Num classes mismatch. Configured:" <<
+            detectionParams.numClassesConfigured << ", detected by network: " <<
+            num_classes << std::endl;
+    }
+    const unsigned int mask_instance_height= maskLayer->inferDims.d[2];
+    const unsigned int mask_instance_width = maskLayer->inferDims.d[3];
+
+    auto out_det = reinterpret_cast<MrcnnRawDetection*>( detectionLayer->buffer);
+    auto out_mask = reinterpret_cast<float(*)[mask_instance_width *
+        mask_instance_height]>(maskLayer->buffer);
+
+    for(auto i = 0U; i < det_max_instances; i++) {
+        MrcnnRawDetection &rawDec = out_det[i];
+
+        if(rawDec.score < detectionParams.perClassPreclusterThreshold[0])
+            continue;
+
+        NvDsInferInstanceMaskInfo obj;
+        obj.left = CLIP(rawDec.x1, 0, networkInfo.width - 1);
+        obj.top = CLIP(rawDec.y1, 0, networkInfo.height - 1);
+        obj.width = CLIP(rawDec.x2, 0, networkInfo.width - 1) - rawDec.x1;
+        obj.height = CLIP(rawDec.y2, 0, networkInfo.height - 1) - rawDec.y1;
+        if(obj.width <= 0 || obj.height <= 0)
+            continue;
+        obj.classId = static_cast<int>(rawDec.class_id);
+        obj.detectionConfidence = rawDec.score;
+
+        obj.mask_size = sizeof(float)*mask_instance_width*mask_instance_height;
+        obj.mask = new float[mask_instance_width*mask_instance_height];
+        obj.mask_width = mask_instance_width;
+        obj.mask_height = mask_instance_height;
+
+        float *rawMask = reinterpret_cast<float *>(out_mask + i
+                         * detectionParams.numClassesConfigured + obj.classId);
+        memcpy (obj.mask, rawMask, sizeof(float)*mask_instance_width*mask_instance_height);
+
+        objectList.push_back(obj);
+    }
+
+    return true;
+
+}
 /* Check that the custom function has been defined correctly */
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomNMSTLT);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomBatchedNMSTLT);
+CHECK_CUSTOM_INSTANCE_MASK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomMrcnnTLTV2);
