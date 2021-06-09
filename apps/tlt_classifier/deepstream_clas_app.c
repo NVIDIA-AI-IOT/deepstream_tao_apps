@@ -20,8 +20,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <string.h>
-#include <sys/time.h>
 #include <gst/gst.h>
 #include <glib.h>
 #include <stdio.h>
@@ -30,21 +28,18 @@
 #include <iostream>
 #include "gstnvdsmeta.h"
 
-
 /* The muxer output resolution must be set if the input streams will be of
  * different resolution. The muxer will scale all the input frames to this
  * resolution. */
-#define MUXER_OUTPUT_WIDTH 1280
-#define MUXER_OUTPUT_HEIGHT 720
+#define MUXER_OUTPUT_WIDTH 60
+#define MUXER_OUTPUT_HEIGHT 80
 
 /* Muxer batch formation timeout, for e.g. 40 millisec. Should ideally be set
  * based on the fastest source's framerate. */
-#define MUXER_BATCH_TIMEOUT_USEC 40000
+#define MUXER_BATCH_TIMEOUT_USEC 4000000
 
-#define TILED_OUTPUT_WIDTH 1280
-#define TILED_OUTPUT_HEIGHT 720
-#define MODEL_OUTPUT_WIDTH 960
-#define MODEL_OUTPUT_HEIGHT 608
+#define TILED_OUTPUT_WIDTH 60
+#define TILED_OUTPUT_HEIGHT 80
 
 static gboolean
 bus_call (GstBus * bus, GstMessage * msg, gpointer data) {
@@ -86,7 +81,7 @@ main (int argc, char *argv[]) {
     GMainLoop *loop = NULL;
     GstElement *pipeline = NULL, *source = NULL, *parser = NULL,
                *decoder = NULL, *streammux = NULL, *sink = NULL,
-               *pgie = NULL, *nvvidconv = NULL, *segvisual = NULL,
+               *pgie = NULL, *nvvidconv = NULL, *nvdsosd = NULL,
                *parser1 = NULL, *nvvidconv1 = NULL, *enc = NULL,
                *tiler = NULL, *tee = NULL;
 
@@ -196,11 +191,11 @@ main (int argc, char *argv[]) {
      * behaviour of inferencing is set through config file */
     pgie = gst_element_factory_make ("nvinfer", "primary-nvinference-engine");
 
-    /* Use convertor to convert from NV12 to RGBA as required by segvisual */
-    //nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvideo-converter");
+    /* Use convertor to convert from NV12 to RGBA as required by nvdsosd */
+    nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvideo-converter");
 
     /* Create OSD to draw on the converted RGBA buffer */
-    segvisual = gst_element_factory_make ("nvsegvisual", "nv-segvisual");
+    nvdsosd = gst_element_factory_make ("nvdsosd", "nv-onscreendisplay");
 
     tee = gst_element_factory_make("tee", "tee");
     tiler = gst_element_factory_make ("nvmultistreamtiler", "nvtiler");
@@ -220,14 +215,14 @@ main (int argc, char *argv[]) {
         nvvidconv1 = gst_element_factory_make ("nvvideoconvert", "nvvideo-converter1");
         sink = gst_element_factory_make ("filesink", "file-sink");
         if (!source || !parser || !parser1 || !decoder || !tee || !pgie
-                || !tiler || !nvvidconv1 || !segvisual || !enc || !sink) {
+                || !tiler || !nvvidconv || !nvvidconv1 || !nvdsosd || !enc || !sink) {
             g_printerr ("One element could not be created. Exiting.\n");
             return -1;
         }
     } else {
         sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
         if (!source || !parser || !decoder || !tee || !pgie
-                || !tiler || !segvisual || !sink) {
+                || !tiler || !nvvidconv || !nvdsosd || !sink) {
             g_printerr ("One element could not be created. Exiting.\n");
             return -1;
         }
@@ -273,7 +268,8 @@ main (int argc, char *argv[]) {
     /* we set the tiler properties here */
     g_object_set (G_OBJECT (tiler), "rows", tiler_rows, "columns", tiler_cols,
       "width", TILED_OUTPUT_WIDTH, "height", TILED_OUTPUT_HEIGHT, NULL);
-
+    if(showMask)
+        g_object_set (G_OBJECT (nvdsosd), "display-mask", 1, "display-bbox", 0, "display-text", 0, "process-mode", 0, NULL);
     /* we add a message handler */
     bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
     bus_watch_id = gst_bus_add_watch (bus, bus_call, loop);
@@ -284,16 +280,16 @@ main (int argc, char *argv[]) {
     if(useDisplay == FALSE) {
         gst_bin_add_many (GST_BIN (pipeline),
                           source, parser, decoder, tee, streammux, pgie, tiler,
-                           segvisual, nvvidconv1, enc, parser1, sink, NULL);
+                          nvvidconv, nvdsosd, nvvidconv1, enc, parser1, sink, NULL);
     } else {
 #ifdef PLATFORM_TEGRA
         gst_bin_add_many (GST_BIN (pipeline),
                           source, parser, decoder, tee, streammux, pgie,
-                          tiler, segvisual, transform, sink, NULL);
+                          tiler, nvvidconv, nvdsosd, transform, sink, NULL);
 #else
         gst_bin_add_many (GST_BIN (pipeline),
                           source, parser, decoder, tee, streammux, pgie,
-                          tiler, segvisual, sink, NULL);
+                          tiler, nvvidconv, nvdsosd, sink, NULL);
 #endif
     }
 
@@ -326,7 +322,7 @@ main (int argc, char *argv[]) {
     }
     /* We link the elements together */
     /* file-source -> h264-parser -> nvv4l2decoder ->
-     * nvinfer -> nvvideoconvert -> segvisual -> video-renderer */
+     * nvinfer -> nvvideoconvert -> nvdsosd -> video-renderer */
 
     if (!gst_element_link_many (source, parser, decoder, tee, NULL)) {
         g_printerr ("Elements could not be linked: 1. Exiting.\n");
@@ -334,20 +330,20 @@ main (int argc, char *argv[]) {
     }
     if (useDisplay == FALSE) {
         if (!gst_element_link_many (streammux, pgie, tiler,
-                                     segvisual, nvvidconv1, enc, parser1, sink, NULL)) {
+                                    nvvidconv, nvdsosd, nvvidconv1, enc, parser1, sink, NULL)) {
             g_printerr ("Elements could not be linked: 2. Exiting.\n");
             return -1;
         }
     } else {
 #ifdef PLATFORM_TEGRA
         if (!gst_element_link_many (streammux, pgie, tiler,
-                                     segvisual, transform, sink, NULL)) {
+                                    nvvidconv, nvdsosd, transform, sink, NULL)) {
             g_printerr ("Elements could not be linked: 2. Exiting.\n");
             return -1;
         }
 #else
         if (!gst_element_link_many (streammux, pgie, tiler,
-                                     segvisual, sink, NULL)) {
+                                    nvvidconv, nvdsosd, sink, NULL)) {
             g_printerr ("Elements could not be linked: 2. Exiting.\n");
             return -1;
         }

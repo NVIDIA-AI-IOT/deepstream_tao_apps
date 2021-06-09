@@ -77,7 +77,7 @@ static void printUsage(const char* cmd) {
     g_printerr ("-d: \n\tenable display, otherwise dump to output H264 or JPEG file  \n");
 }
 int
-det_main (int argc, char *argv[]) {
+main (int argc, char *argv[]) {
     GMainLoop *loop = NULL;
     GstElement *pipeline = NULL, *source = NULL, *parser = NULL,
                *decoder = NULL, *streammux = NULL, *sink = NULL,
