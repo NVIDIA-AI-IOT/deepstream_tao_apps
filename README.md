@@ -73,7 +73,7 @@ Run below script to download models except multi_task model.
 ```
 ./download_models.sh
 ```
-For multi_task, refer to https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/index.html to train it by yourself```
+For multi_task, refer to https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/index.html to train it by yourself
 
 
 ## Build
