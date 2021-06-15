@@ -54,7 +54,9 @@ H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detec
 
 * [TensorRT OSS (release/7.x branch)](https://github.com/NVIDIA/TensorRT/tree/release/7.0)
 
-  This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet*, *YOLOV3* , *YOLOV4*and *PeopleSegNet* models because some TRT plugins such as BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
+  This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet*, and *PeopleSegNet* models because some TRT plugins such as BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
+
+  Note:This is alos needed for *YOLOV3* , *YOLOV4* if you are using TRT7.2 backward version
 
 ## Download
 
@@ -68,23 +70,9 @@ git clone https://github.com/NVIDIA-AI-IOT/deepstream_tlt_apps.git
 ```
 ### 2. Download Models
 ```
-cd deepstream_tlt_apps/
-wget https://nvidia.box.com/shared/static/i1cer4s3ox4v8svbfkuj5js8yqm3yazo.zip -O models.zip
-unzip models.zip
-rm models.zip
-
-For peopleSemSegNet:
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tlt_peoplesemsegnet/versions/deployable_v1.0/zip -O tlt_peoplesemsegnet_deployable_v1.0.zip
-
-For peopleSegNet V2:
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tlt_peoplesegnet/versions/deployable_v2.0/zip \
--O tlt_peoplesegnet_deployable_v2.0.zip
-
-For old peopleSegNet:
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_peoplesegnet/versions/deployable_v1.0/files/peopleSegNet_resnet50.etlt
+run ./download_models.sh to get the models, refer download_models.sh for more details about the models
 
 For multi_task:
-multi_task is a standalone sample that run single stage multi-task network from TLT without detection.
 NVIDIA does not provide any pretrained TLT model for multi-task network. 
 To train a multi-task model please check https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/index.html.
 ```
@@ -94,6 +82,8 @@ To train a multi-task model please check https://docs.nvidia.com/metropolis/TLT/
 ### 1. Build TRT OSS Plugin
 
 Refer to below README to update libnvinfer_plugin.so* if want to run *SSD*, *DSSD*, *RetinaNet*, *PeopleSegNet*.
+
+Note: Need to update libnvinfer_plugin.so* for *YOLOV3*, *YOLOV4* if you are using TRT7.2 backward version
 
 ```
 TRT-OSS/Jetson/README.md              // for Jetson platform
