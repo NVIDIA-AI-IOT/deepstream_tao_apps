@@ -70,11 +70,11 @@ git clone https://github.com/NVIDIA-AI-IOT/deepstream_tlt_apps.git
 ```
 ### 2. Download Models
 Run below script to download models except multi_task model.  
-
-For multi_task, refer to https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/index.html to train it by yourself
 ```
 ./download_models.sh
 ```
+For multi_task, refer to https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/index.html to train it by yourself```
+
 
 ## Build
 
