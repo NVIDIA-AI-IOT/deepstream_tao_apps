@@ -56,7 +56,7 @@ H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detec
 
   This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet*, and *PeopleSegNet* models because some TRT plugins such as BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
 
-  Note:This is alos needed for *YOLOV3* , *YOLOV4* if you are using TRT7.2 backward version
+  Note:This is also needed for *YOLOV3* , *YOLOV4* if you are using TRT version(such as TRT7.1) before TRT7.2
 
 ## Download
 
@@ -81,7 +81,7 @@ For multi_task, refer to https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/i
 
 Refer to below README to update libnvinfer_plugin.so* if want to run *SSD*, *DSSD*, *RetinaNet*, *PeopleSegNet*.
 
-Note: Need to update libnvinfer_plugin.so* for *YOLOV3*, *YOLOV4* if you are using TRT7.2 backward version
+Note:This is also needed for *YOLOV3* , *YOLOV4* if you are using TRT version(such as TRT7.1) before TRT7.2
 
 ```
 TRT-OSS/Jetson/README.md              // for Jetson platform
@@ -176,7 +176,7 @@ The model has the following two outputs:
 
 >- **FasterRCNN**: cropAndResizePlugin,  proposalPlugin
 >- **SSD/DSSD/RetinaNet**:  batchTilePlugin, nmsPlugin
->- **YOLOV3**:  batchTilePlugin, resizeNearestPlugin, batchedNMSPlugin
+>- **YOLOV3/YOLOV4**:  batchTilePlugin, resizeNearestPlugin, batchedNMSPlugin
 >- **PeopleSegNet**:  generateDetectionPlugin, MultilevelCropAndResize, MultilevelProposeROI
 
 ## FAQ
