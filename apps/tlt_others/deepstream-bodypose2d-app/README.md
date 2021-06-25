@@ -62,7 +62,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cv
 ```
 
 ## Post_processing Parameters
-The bodypose2D sample application can config post-processing parameters with configuration file. There is a sample of the configuration file "sample_postprocessing_config.txt".
+The bodypose2D sample application can config post-processing parameters with configuration file. There is a sample of the configuration file "sample_bodypose2d_model_config.txt".
 The definition and explanation of the parameters are in following table:
 
 Post-process parameters

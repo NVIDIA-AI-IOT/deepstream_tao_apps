@@ -201,6 +201,9 @@ trtexec --batch=2 --useSpinWait --loadEngine=yolo_resnet18.etlt_b2_gpu0_fp16.eng
 ## 2.  Real time vehicle license plate detection and recognition using NVIDIA Transfer Learning Toolkit
 ```
 
+## Others Models
+
+There are some special models which are not exactly detector, classifier or segmetation. The sample application of these special models are put in apps/tlt_others. These samples should run on DeepStream 6.0 or above versions. Please refer to apps/tlt_others/README.md document for details.
 
 ## Known issues
 
