@@ -20,7 +20,7 @@ The application pipeline graph
 The application can be build and run seperately.
 
 ```
-cd apps/lt_others/deepstream-faciallandmark-app
+cd apps/tlt_others/deepstream-faciallandmark-app
 ```
 
 For Jetson platform

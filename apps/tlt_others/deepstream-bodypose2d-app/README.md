@@ -41,7 +41,7 @@ The application pipeline graph
 The application can be build and run seperately.
 
 ```
-cd apps/lt_others/deepstream-bodypose2d-app
+cd apps/tlt_others/deepstream-bodypose2d-app
 ```
 
 For Jetson platform
