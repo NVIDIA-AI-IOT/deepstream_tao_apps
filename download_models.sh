@@ -69,5 +69,15 @@ unzip tlt_peoplesemsegnet_deployable_v1.0.zip -d models/peopleSemSegNet/
 rm tlt_peoplesemsegnet_deployable_v1.0.zip
 
 echo "==================================================================="
+echo "begin downloading facial landmarks models "
+echo "==================================================================="
+mkdir -p ./models/faciallandmark
+cd ./models/faciallandmark
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_fpenet/versions/deployable_v1.0/files/model.etlt -O faciallandmarks.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_facedetectir/versions/pruned_v1.0/files/resnet18_facedetectir_pruned.etlt -O resnet18_facedetectir_pruned.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_facedetectir/versions/pruned_v1.0/files/facedetectir_int8.txt -O facedetectir_int8.txt
+cd -
+
+echo "==================================================================="
 echo "Download models successfully "
 echo "==================================================================="
