@@ -26,12 +26,6 @@ This sample is to show the following TLT3.0 models runing with DeepStream
   
   https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tlt-part-1/
 
-* CVCORE libraries
-
-  CVCORE libraries support the following platforms:
-  Ubuntu 18.04, CUDA 11.1.1, TensorRT 7.2.2.3
-  L4T JetPack 4.4 or above
-
 ## Download
 
 1. Download Project with HTTPS
