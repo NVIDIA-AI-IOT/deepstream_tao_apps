@@ -49,7 +49,7 @@ The trained bodypose2D model can be put in ./models/bodypose2d directory
 ## Build and Run
 Go into the application folder
 ```
-    cd apps/tlt-others
+    cd apps/tlt_others
 ```
 
 For dGPU
