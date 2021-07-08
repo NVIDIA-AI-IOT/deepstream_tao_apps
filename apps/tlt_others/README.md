@@ -48,6 +48,18 @@ Please run the following script to download pre-trained models:
 To run the bodypose2D sample application, the bodypose2D trainable model should be trained with TLT3.0 tool. 
 The trained bodypose2D model can be put in ./models/bodypose2d directory
 
+3. For Jetson platform, gst-nvvideotemplate is not supported by deepstream 6.0 EA package. The gst-nvvideotemplate source code can be available with the servers and workstations package. Please copy the source code to the coresponding folder on Jetson device.
+
+/opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate
+
+And then start to build the plugin on Jetson:
+```
+    cd /opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate
+    make
+    cp libnvdsgst_videotemplate.so /opt/nvidia/deepstream/deepstream/lib/gst-plugins/
+    rm -rf ~/.cache/gstreamer-1.0/
+```
+
 ## Build and Run
 Go into the application folder
 ```
