@@ -3,6 +3,7 @@ This sample is to show the following TLT3.0 models runing with DeepStream
 
 * 2D Bodypose
 * Facial Landmarks Estimation
+* EmotionNet
 
 ## Prerequisition
 
@@ -19,6 +20,7 @@ This sample is to show the following TLT3.0 models runing with DeepStream
 |------------|-----------|---------|
 | FaceDetect |[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_facenet)|deployable_v1.0|
 | Facial Landmarks Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_fpenet)|deployable_v1.0|
+| EmotionNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_emotionnet)|deployable_v1.0|
 
   The [Bodypose2D backbone](https://ngc.nvidia.com/catalog/models/nvidia:tlt_bodyposenet) can be trained and deployed with TLT3.0 tools.
   
@@ -79,6 +81,13 @@ Start to run the facial landmark application
         <input uri> ... <input uri> <out filename>
 ```
 
+Start to run the emotionNet application
+```
+    cd deepstream-emotion-app
+    ./deepstream-emotion-app [1:file sink|2:fakesink|3:display sink]  \
+     <input uri> ... <input uri> <out filename>
+```
+
 A sample of 2D bodypose:
 
 `./deepstream-bodypose2d-app 1 ../../../configs/bodypose2d_tlt/sample_bodypose2d_model_config.txt file:///usr/data/bodypose2d_test.png ./body2dout`
@@ -86,3 +95,7 @@ A sample of 2D bodypose:
 A sample of facial landmark:
 
 `./deepstream-faciallandmark-app 1 file:///usr/data/faciallandmarks_test.jpg ./landmarkout`
+
+A sample of emotions:
+
+`./deepstream-emotion-app 1 file:///usr/data/faciallandmarks_test.jpg ./emotion`
