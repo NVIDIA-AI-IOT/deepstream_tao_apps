@@ -9,9 +9,11 @@ The TLT 3.0 pretrained models used in this sample application:
 ## Prerequisition
 
 * DeepStream SDK 6.0 and above
+
   Current DeepStream 6.0 EA version is available in https://developer.nvidia.com/deepstream-sdk-6.0-members-page for specific users.
 
 ## Application Pipeline
+
 The application pipeline graph
 
 ![faciallandmarks application pipeline](faciallandmarks_pipeline.png)

@@ -53,6 +53,6 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cv
 ```
 
 ## Known Issue
-The GazeNet is a multiple input layers model. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the GazeNet and GestureNet sample applications without engine, they will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, they will work.
+The GazeNet is a multiple input layers model. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the GazeNet sample application without engine, they will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, they will work.
 
-Another workaround is to generate the engines outside the applications. The 'download_models.sh' script will download GazeNet and GestureNet models and generate the engines with tlt-converter tool.
+Another workaround is to generate the engines outside the applications. Please refer to the TLT tlt-converter tool document: https://docs.nvidia.com/tlt/tlt-user-guide/text/tensorrt.html
