@@ -1,0 +1,10 @@
+enginePath=../../../../models/heartrate/heartrate.etlt_b16_gpu0_fp16.engine
+etltPath=../../../../models/heartrate/heartrate.etlt
+batchSize=
+inputWidth=
+inputHeight=
+inputType=
+etltKey=nvidia_tlt
+## networkMode can be int8, fp16 or fp32
+networkMode=fp16
+batchSize=16

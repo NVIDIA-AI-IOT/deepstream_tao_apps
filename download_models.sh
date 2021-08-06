@@ -74,8 +74,8 @@ echo "==================================================================="
 mkdir -p ./models/faciallandmark
 cd ./models/faciallandmark
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_fpenet/versions/deployable_v1.0/files/model.etlt -O faciallandmarks.etlt
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_facedetectir/versions/pruned_v1.0/files/resnet18_facedetectir_pruned.etlt -O resnet18_facedetectir_pruned.etlt
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_facedetectir/versions/pruned_v1.0/files/facedetectir_int8.txt -O facedetectir_int8.txt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tlt_facenet/versions/pruned_quantized_v2.0/files/model.etlt -O facenet.etlt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tlt_facenet/versions/pruned_quantized_v2.0/files/int8_calibration.txt -O int8_calibration.txt
 
 echo "==================================================================="
 echo "begin downloading emotionNet model "
@@ -84,6 +84,22 @@ cd -
 mkdir -p ./models/emotion
 cd ./models/emotion
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_emotionnet/versions/deployable_v1.0/files/model.etlt -O emotion.etlt
+
+echo "==================================================================="
+echo "begin downloading GazeNet model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/gazenet
+cd ./models/gazenet
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tlt_gazenet/versions/deployable_v1.0/files/model.etlt -O gazenet_facegrid.etlt
+
+echo "==================================================================="
+echo "begin downloading HeartRateNet model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/heartrate
+cd ./models/heartrate
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_heartratenet/versions/deployable_v1.0/files/model.etlt -O heartrate.etlt
 
 echo "==================================================================="
 echo "Download models successfully "

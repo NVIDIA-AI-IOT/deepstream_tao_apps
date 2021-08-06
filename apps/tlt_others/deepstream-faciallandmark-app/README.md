@@ -4,7 +4,7 @@ With the TLT 3.0 pretrained facial landmarks estimation model, the application c
 
 The TLT 3.0 pretrained models used in this sample application:
 * [Facial Landmark Estimation](https://ngc.nvidia.com/catalog/models/nvidia:tlt_fpenet).
-* [FaceDetectIR](https://ngc.nvidia.com/catalog/models/nvidia:tlt_facedetectir)
+* [FaceNet](https://ngc.nvidia.com/catalog/models/nvidia:tlt_facenet)
 
 ## Prerequisition
 

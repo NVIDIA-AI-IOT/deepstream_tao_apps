@@ -4,6 +4,8 @@ This sample is to show the following TLT3.0 models runing with DeepStream
 * 2D Bodypose
 * Facial Landmarks Estimation
 * EmotionNet
+* GazeNet
+* HeartRateNet
 
 ## Prerequisition
 
@@ -21,6 +23,8 @@ This sample is to show the following TLT3.0 models runing with DeepStream
 | FaceDetect |[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_facenet)|deployable_v1.0|
 | Facial Landmarks Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_fpenet)|deployable_v1.0|
 | EmotionNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_emotionnet)|deployable_v1.0|
+| Gaze Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_gazenet)|deployable_v1.0|
+| HeartRateNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tlt_heartratenet)|deployable_v1.0|
 
   The [Bodypose2D backbone](https://ngc.nvidia.com/catalog/models/nvidia:tlt_bodyposenet) can be trained and deployed with TLT3.0 tools.
   
@@ -100,6 +104,20 @@ Start to run the emotionNet application
      <input uri> ... <input uri> <out filename>
 ```
 
+Start to run the gazenet application
+```
+    cd deepstream-gaze-app
+    ./deepstream-gaze-app [1:file sink|2:fakesink|3:display sink]  \
+     <input uri> ... <input uri> <out filename>
+```
+
+Start to run the HeartRateNet application
+```
+    cd deepstream-heartrate-app
+    ./deepstream-heartrate-app [1:file sink|2:fakesink|3:display sink]  \
+     <input uri> ... <input uri> <out filename>
+```
+
 A sample of 2D bodypose:
 
 `./deepstream-bodypose2d-app 1 ../../../configs/bodypose2d_tlt/sample_bodypose2d_model_config.txt file:///usr/data/bodypose2d_test.png ./body2dout`
@@ -111,3 +129,17 @@ A sample of facial landmark:
 A sample of emotions:
 
 `./deepstream-emotion-app 1 file:///usr/data/faciallandmarks_test.jpg ./emotion`
+
+A sample of gazenet:
+
+`./deepstream-gaze-app 1 file:///usr/data/faciallandmarks_test.jpg ./gaze`
+
+A sample of heartratenet:
+
+`./deepstream-heartrate-app 1 file:///usr/data/test_video.mp4 ./heartrate`
+
+## Known Issue
+
+The GazeNet and GestureNet models are all multiple input layers models. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the GazeNet and GestureNet sample applications without engine, they will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, they will work.
+
+Another workaround is to generate the engines outside the applications. The 'download_models.sh' script will download GazeNet and GestureNet models and generate the engines with tlt-converter tool.

@@ -37,8 +37,13 @@
 #include "gstnvdsinfer.h"
 #include "cuda_runtime_api.h"
 #include "ds_facialmark_meta.h"
+#include "ds_gaze_meta.h"
 #include "cv/core/Tensor.h"
 #include "nvbufsurface.h"
+#include <map>
+
+using namespace std;
+using std::string;
 
 #define MAX_DISPLAY_LEN 64
 
@@ -204,40 +209,48 @@ tile_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
               }
             }
             if(!facebboxdraw) {
-                disp_meta->rect_params[disp_meta->num_rects].left =
-                    facepoints_meta->right_eye_rect.left +
-                    obj_meta->rect_params.left;
-                disp_meta->rect_params[disp_meta->num_rects].top =
-                    facepoints_meta->right_eye_rect.top +
-                    obj_meta->rect_params.top;
-                disp_meta->rect_params[disp_meta->num_rects].width =
-                    facepoints_meta->right_eye_rect.right -
-                    facepoints_meta->right_eye_rect.left;
-                disp_meta->rect_params[disp_meta->num_rects].height =
-                    facepoints_meta->right_eye_rect.bottom -
-                    facepoints_meta->right_eye_rect.top;
-                disp_meta->rect_params[disp_meta->num_rects].border_width = 2;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.red = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.green = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.blue = 0.0;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.alpha = 0.5;
-                disp_meta->rect_params[disp_meta->num_rects+1].left =
-                    facepoints_meta->left_eye_rect.left + obj_meta->rect_params.left;
-                disp_meta->rect_params[disp_meta->num_rects+1].top =
-                    facepoints_meta->left_eye_rect.top + obj_meta->rect_params.top;
-                disp_meta->rect_params[disp_meta->num_rects+1].width =
-                    facepoints_meta->left_eye_rect.right -
-                    facepoints_meta->left_eye_rect.left;
-                disp_meta->rect_params[disp_meta->num_rects+1].height =
-                    facepoints_meta->left_eye_rect.bottom -
-                    facepoints_meta->left_eye_rect.top;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_width = 2;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.red = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.green = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.blue = 0.0;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.alpha = 0.5;
-                disp_meta->num_rects+=2;
-                facebboxdraw = true;
+              disp_meta->rect_params[disp_meta->num_rects].left =
+                facepoints_meta->right_eye_rect.left +
+                obj_meta->rect_params.left;
+              disp_meta->rect_params[disp_meta->num_rects].top =
+                facepoints_meta->right_eye_rect.top +
+                obj_meta->rect_params.top;
+              disp_meta->rect_params[disp_meta->num_rects].width =
+                facepoints_meta->right_eye_rect.right -
+                facepoints_meta->right_eye_rect.left;
+              disp_meta->rect_params[disp_meta->num_rects].height =
+                facepoints_meta->right_eye_rect.bottom -
+                facepoints_meta->right_eye_rect.top;
+              disp_meta->rect_params[disp_meta->num_rects].border_width = 2;
+              disp_meta->rect_params[disp_meta->num_rects].border_color.red
+                = 1.0;
+              disp_meta->rect_params[disp_meta->num_rects].border_color.green
+                = 1.0;
+              disp_meta->rect_params[disp_meta->num_rects].border_color.blue
+                = 0.0;
+              disp_meta->rect_params[disp_meta->num_rects].border_color.alpha
+                = 0.5;
+              disp_meta->rect_params[disp_meta->num_rects+1].left =
+                facepoints_meta->left_eye_rect.left + obj_meta->rect_params.left;
+              disp_meta->rect_params[disp_meta->num_rects+1].top =
+                facepoints_meta->left_eye_rect.top + obj_meta->rect_params.top;
+              disp_meta->rect_params[disp_meta->num_rects+1].width =
+                facepoints_meta->left_eye_rect.right -
+                facepoints_meta->left_eye_rect.left;
+              disp_meta->rect_params[disp_meta->num_rects+1].height =
+                facepoints_meta->left_eye_rect.bottom -
+                facepoints_meta->left_eye_rect.top;
+              disp_meta->rect_params[disp_meta->num_rects+1].border_width = 2;
+              disp_meta->rect_params[disp_meta->num_rects+1].border_color.red
+                = 1.0;
+              disp_meta->rect_params[disp_meta->num_rects+1].border_color
+               .green = 1.0;
+              disp_meta->rect_params[disp_meta->num_rects+1].border_color
+               .blue = 0.0;
+              disp_meta->rect_params[disp_meta->num_rects+1].border_color
+               .alpha = 0.5;
+              disp_meta->num_rects+=2;
+              facebboxdraw = true;
             }
 
             disp_meta->circle_params[disp_meta->num_circles].xc =
@@ -251,6 +264,15 @@ tile_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
             disp_meta->circle_params[disp_meta->num_circles].circle_color.alpha = 0.5;
             disp_meta->num_circles++;
           }
+        } else if(user_meta->base_meta.meta_type ==
+            (NvDsMetaType)NVDS_USER_JARVIS_META_GAZE) {
+            NvDsGazeMetaData * gazemeta =
+                (NvDsGazeMetaData *)user_meta->user_meta_data;
+            g_print("Gaze:");
+            for (int i=0; i<cvcore::gazenet::GazeNet::OUTPUT_SIZE; i++){
+                g_print(" %f", gazemeta->gaze_params[i]);
+            }
+            g_print("\n");
         }
       }
     }
@@ -312,7 +334,7 @@ pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
           obj_meta->rect_params.top;
 
       /*Check the border*/
-      if(center_x < (square_size/2.0) || center_y < square_size/2.0 || 
+      if(center_x < (square_size/2.0) || center_y < square_size/2.0 ||
           center_x + square_size/2.0 > frame_width ||
           center_y - square_size/2.0 > frame_height) {
               g_print("Keep the original bbox\n");
@@ -345,7 +367,6 @@ sgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
   for (NvDsMetaList * l_frame = batch_meta->frame_meta_list; l_frame != NULL;
       l_frame = l_frame->next) {
     NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
-    //NvDsDisplayMeta *disp_meta = NULL;
     /* Iterate object metadata in frame */
     for (NvDsMetaList * l_obj = frame_meta->obj_meta_list; l_obj != NULL;
         l_obj = l_obj->next) {
@@ -466,8 +487,8 @@ cb_newpad (GstElement * decodebin, GstPad * decoder_src_pad, gpointer data)
          g_printerr ("Failed to link videoconvert to nvvideoconvert\n");
       }
     } else {
-      GstPad *conv_sink_pad = gst_element_get_static_pad (bin_struct->nvvidconv,
-          "sink");
+      GstPad *conv_sink_pad = gst_element_get_static_pad (
+          bin_struct->nvvidconv, "sink");
       if (gst_pad_link (decoder_src_pad, conv_sink_pad)) {
         g_printerr ("Failed to link decoderbin src pad to "
             "converter sink pad\n");
@@ -596,9 +617,10 @@ main (int argc, char *argv[])
   GstElement *pipeline = NULL,*streammux = NULL, *sink = NULL, 
              *primary_detector = NULL, *second_detector = NULL,
              *nvvidconv = NULL, *nvosd = NULL, *nvvidconv1 = NULL,
-             *outenc = NULL, *capfilt = NULL, *nvtile=NULL;
+             *outenc = NULL, *capfilt = NULL, *nvtile = NULL,
+             *gaze_identifier = NULL;
   GstElement *queue1 = NULL, *queue2 = NULL, *queue3 = NULL, *queue4 = NULL,
-             *queue5 = NULL, *queue6 = NULL, *queue7 = NULL;
+             *queue5 = NULL, *queue6 = NULL, *queue7 = NULL, *queue8 = NULL;
   DsSourceBinStruct source_struct[128];
 #ifdef PLATFORM_TEGRA
   GstElement *transform = NULL;
@@ -685,7 +707,7 @@ main (int argc, char *argv[])
 
   }
 
-  /* Create three nvinfer instances for two detectors. */
+  /* Create three nvinfer instances for two detectors and one classifier*/
   primary_detector = gst_element_factory_make ("nvinfer",
                        "primary-infer-engine1");
 
@@ -704,6 +726,8 @@ main (int argc, char *argv[])
 
   nvtile = gst_element_factory_make ("nvmultistreamtiler", "nvtiler");
 
+  gaze_identifier = gst_element_factory_make ("nvdsvideotemplate",
+      "gaze_infer");
  
   queue1 = gst_element_factory_make ("queue", "queue1");
   queue2 = gst_element_factory_make ("queue", "queue2");
@@ -712,6 +736,7 @@ main (int argc, char *argv[])
   queue5 = gst_element_factory_make ("queue", "queue5");
   queue6 = gst_element_factory_make ("queue", "queue6");
   queue7 = gst_element_factory_make ("queue", "queue7");
+  queue8 = gst_element_factory_make ("queue", "queue8");
 
   if (atoi(argv[1]) == 1) {
     if (g_strrstr (argv[2], ".jpg") || g_strrstr (argv[2], ".png")
@@ -750,7 +775,7 @@ main (int argc, char *argv[])
   }
 
   if (!primary_detector || !second_detector || !nvvidconv
-      || !nvosd || !sink  || !capfilt) {
+      || !nvosd || !sink  || !capfilt || !gaze_identifier) {
     g_printerr ("One element could not be created. Exiting.\n");
     return -1;
   }
@@ -764,9 +789,9 @@ main (int argc, char *argv[])
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
       tiler_columns, "width", 1280, "height", 720, NULL);
 
-  /* Set the config files for the two detectors. The first detector is PGIE which
-   * detects the faces. The second detector is SGIE which generates faciallandmarks
-   * for every face. */
+  /* Set the config files for the facedetect and faciallandmark 
+   * inference modules. Gaze inference is based on faciallandmark 
+   * result and face bbox. */
   g_object_set (G_OBJECT (primary_detector), "config-file-path",
       "../../../configs/facial_tlt/config_infer_primary_facenet.txt",
       "unique-id", PRIMARY_DETECTOR_UID, NULL);
@@ -774,6 +799,10 @@ main (int argc, char *argv[])
   g_object_set (G_OBJECT (second_detector), "config-file-path",
       "../../../configs/facial_tlt/faciallandmark_sgie_config.txt",
       "unique-id", SECOND_DETECTOR_UID, NULL);
+
+  g_object_set (G_OBJECT (gaze_identifier), "customlib-name",
+      "./gazeinfer_impl/libnvds_gazeinfer.so", "customlib-props",
+      "config-file:../../../configs/gaze_tlt/sample_gazenet_model_config.txt", NULL);
 
   /* we add a bus message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
@@ -784,11 +813,11 @@ main (int argc, char *argv[])
   /* we add all elements into the pipeline */
   gst_bin_add_many (GST_BIN (pipeline), primary_detector, second_detector,
       queue1, queue2, queue3, queue4, queue5, nvvidconv, nvosd, nvtile, sink,
-      NULL);
+      gaze_identifier, queue6, NULL);
 
   if (!gst_element_link_many (streammux, queue1, primary_detector, queue2, 
-        second_detector, queue3, nvtile, queue4, nvvidconv, queue5,
-        nvosd, NULL)) {
+        second_detector, queue3, gaze_identifier, queue4, nvtile, queue5,
+        nvvidconv, queue6, nvosd, NULL)) {
     g_printerr ("Inferring and tracking elements link failure.\n");
     return -1;
   }
@@ -799,9 +828,9 @@ main (int argc, char *argv[])
     g_object_set (G_OBJECT (sink), "location", filename,NULL);
     g_object_set (G_OBJECT (sink), "enable-last-sample", false,NULL);
     gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt, 
-        queue6, queue7, NULL);
+        queue7, queue8, NULL);
 
-    if (!gst_element_link_many (nvosd, queue6, nvvidconv1, capfilt, queue7,
+    if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
            outenc, sink, NULL)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
@@ -815,14 +844,14 @@ main (int argc, char *argv[])
     }
   } else if (atoi(argv[1]) == 3) {
 #ifdef PLATFORM_TEGRA
-    gst_bin_add_many (GST_BIN (pipeline), transform, queue6, NULL);
-    if (!gst_element_link_many (nvosd, queue6, transform, sink, NULL)) {
+    gst_bin_add_many (GST_BIN (pipeline), transform, queue7, NULL);
+    if (!gst_element_link_many (nvosd, queue7, transform, sink, NULL)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
     }
 #else
-    gst_bin_add (GST_BIN (pipeline), queue6);
-    if (!gst_element_link_many (nvosd, queue6, sink, NULL)) {
+    gst_bin_add (GST_BIN (pipeline), queue7);
+    if (!gst_element_link_many (nvosd, queue7, sink, NULL)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
     }

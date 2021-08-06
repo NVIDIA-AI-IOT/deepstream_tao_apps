@@ -175,6 +175,8 @@ tile_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
 
       if (!obj_meta)
         continue;
+
+      bool facebboxdraw = false;
         
       for (NvDsMetaList * l_user = obj_meta->obj_user_meta_list;
           l_user != NULL; l_user = l_user->next) {
@@ -201,39 +203,42 @@ tile_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
                 disp_meta->num_circles = 0;
               }
             }
-            disp_meta->rect_params[disp_meta->num_rects].left =
-                facepoints_meta->right_eye_rect.left +
-                obj_meta->rect_params.left;
-            disp_meta->rect_params[disp_meta->num_rects].top =
-                facepoints_meta->right_eye_rect.top +
-                obj_meta->rect_params.top;
-            disp_meta->rect_params[disp_meta->num_rects].width =
-                facepoints_meta->right_eye_rect.right -
-                facepoints_meta->right_eye_rect.left;
-            disp_meta->rect_params[disp_meta->num_rects].height =
-                facepoints_meta->right_eye_rect.bottom -
-                facepoints_meta->right_eye_rect.top;
-            disp_meta->rect_params[disp_meta->num_rects].border_width = 2;
-            disp_meta->rect_params[disp_meta->num_rects].border_color.red = 1.0;
-            disp_meta->rect_params[disp_meta->num_rects].border_color.green = 1.0;
-            disp_meta->rect_params[disp_meta->num_rects].border_color.blue = 0.0;
-            disp_meta->rect_params[disp_meta->num_rects].border_color.alpha = 0.5;
-            disp_meta->rect_params[disp_meta->num_rects+1].left =
-                facepoints_meta->left_eye_rect.left + obj_meta->rect_params.left;
-            disp_meta->rect_params[disp_meta->num_rects+1].top =
-                facepoints_meta->left_eye_rect.top + obj_meta->rect_params.top;
-            disp_meta->rect_params[disp_meta->num_rects+1].width =
-                facepoints_meta->left_eye_rect.right -
-                facepoints_meta->left_eye_rect.left;
-            disp_meta->rect_params[disp_meta->num_rects+1].height =
-                facepoints_meta->left_eye_rect.bottom -
-                facepoints_meta->left_eye_rect.top;
-            disp_meta->rect_params[disp_meta->num_rects+1].border_width = 2;
-            disp_meta->rect_params[disp_meta->num_rects+1].border_color.red = 1.0;
-            disp_meta->rect_params[disp_meta->num_rects+1].border_color.green = 1.0;
-            disp_meta->rect_params[disp_meta->num_rects+1].border_color.blue = 0.0;
-            disp_meta->rect_params[disp_meta->num_rects+1].border_color.alpha = 0.5;
-            disp_meta->num_rects+=2;
+            if(!facebboxdraw) {
+                disp_meta->rect_params[disp_meta->num_rects].left =
+                    facepoints_meta->right_eye_rect.left +
+                    obj_meta->rect_params.left;
+                disp_meta->rect_params[disp_meta->num_rects].top =
+                    facepoints_meta->right_eye_rect.top +
+                    obj_meta->rect_params.top;
+                disp_meta->rect_params[disp_meta->num_rects].width =
+                    facepoints_meta->right_eye_rect.right -
+                    facepoints_meta->right_eye_rect.left;
+                disp_meta->rect_params[disp_meta->num_rects].height =
+                    facepoints_meta->right_eye_rect.bottom -
+                    facepoints_meta->right_eye_rect.top;
+                disp_meta->rect_params[disp_meta->num_rects].border_width = 2;
+                disp_meta->rect_params[disp_meta->num_rects].border_color.red = 1.0;
+                disp_meta->rect_params[disp_meta->num_rects].border_color.green = 1.0;
+                disp_meta->rect_params[disp_meta->num_rects].border_color.blue = 0.0;
+                disp_meta->rect_params[disp_meta->num_rects].border_color.alpha = 0.5;
+                disp_meta->rect_params[disp_meta->num_rects+1].left =
+                    facepoints_meta->left_eye_rect.left + obj_meta->rect_params.left;
+                disp_meta->rect_params[disp_meta->num_rects+1].top =
+                    facepoints_meta->left_eye_rect.top + obj_meta->rect_params.top;
+                disp_meta->rect_params[disp_meta->num_rects+1].width =
+                    facepoints_meta->left_eye_rect.right -
+                    facepoints_meta->left_eye_rect.left;
+                disp_meta->rect_params[disp_meta->num_rects+1].height =
+                    facepoints_meta->left_eye_rect.bottom -
+                    facepoints_meta->left_eye_rect.top;
+                disp_meta->rect_params[disp_meta->num_rects+1].border_width = 2;
+                disp_meta->rect_params[disp_meta->num_rects+1].border_color.red = 1.0;
+                disp_meta->rect_params[disp_meta->num_rects+1].border_color.green = 1.0;
+                disp_meta->rect_params[disp_meta->num_rects+1].border_color.blue = 0.0;
+                disp_meta->rect_params[disp_meta->num_rects+1].border_color.alpha = 0.5;
+                disp_meta->num_rects+=2;
+                facebboxdraw = true;
+            }
 
             disp_meta->circle_params[disp_meta->num_circles].xc =
                 facepoints_meta->mark[part_index].x + obj_meta->rect_params.left;
@@ -340,6 +345,7 @@ sgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
   for (NvDsMetaList * l_frame = batch_meta->frame_meta_list; l_frame != NULL;
       l_frame = l_frame->next) {
     NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
+
     /* Iterate object metadata in frame */
     for (NvDsMetaList * l_obj = frame_meta->obj_meta_list; l_obj != NULL;
         l_obj = l_obj->next) {
@@ -680,7 +686,7 @@ main (int argc, char *argv[])
 
   }
 
-  /* Create three nvinfer instances for two detectors and one classifier*/
+  /* Create three nvinfer instances for two detectors. */
   primary_detector = gst_element_factory_make ("nvinfer",
                        "primary-infer-engine1");
 
@@ -748,7 +754,7 @@ main (int argc, char *argv[])
     sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
   }
 
-  if (!primary_detector || !second_detector || !emotioninfer || !nvvidconv
+  if (!primary_detector || !second_detector || !nvvidconv || !emotioninfer
       || !nvosd || !sink  || !capfilt) {
     g_printerr ("One element could not be created. Exiting.\n");
     return -1;
@@ -770,7 +776,7 @@ main (int argc, char *argv[])
    * customized.
    */
   g_object_set (G_OBJECT (primary_detector), "config-file-path",
-      "../../../configs/facial_tlt/config_infer_primary_facedetectir.txt",
+      "../../../configs/facial_tlt/config_infer_primary_facenet.txt",
       "unique-id", PRIMARY_DETECTOR_UID, NULL);
 
   g_object_set (G_OBJECT (second_detector), "config-file-path",
@@ -788,13 +794,13 @@ main (int argc, char *argv[])
 
   /* Set up the pipeline */
   /* we add all elements into the pipeline */
-  gst_bin_add_many (GST_BIN (pipeline), primary_detector, second_detector, 
-      emotioninfer, queue1, queue2, queue3, queue4, queue5, queue6, nvvidconv,
-      nvosd, nvtile, sink, NULL);
+  gst_bin_add_many (GST_BIN (pipeline), primary_detector, second_detector,
+    emotioninfer, queue1, queue2, queue3, queue4, queue5, queue6, nvvidconv,
+    nvosd, nvtile, sink, NULL);
 
-  if (!gst_element_link_many (streammux, queue1, primary_detector, queue2, 
-        second_detector, queue3, emotioninfer, queue4, nvtile, queue5,
-        nvvidconv, queue6, nvosd, NULL)) {
+  if (!gst_element_link_many (streammux, queue1, primary_detector, queue2,
+    second_detector, queue3, emotioninfer, queue4, nvtile, queue5,
+    nvvidconv, queue6, nvosd, NULL)) {
     g_printerr ("Inferring and tracking elements link failure.\n");
     return -1;
   }

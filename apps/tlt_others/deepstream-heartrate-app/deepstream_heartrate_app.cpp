@@ -36,9 +36,12 @@
 #include "nvdsinfer_custom_impl.h"
 #include "gstnvdsinfer.h"
 #include "cuda_runtime_api.h"
-#include "ds_facialmark_meta.h"
 #include "cv/core/Tensor.h"
 #include "nvbufsurface.h"
+#include <map>
+
+using namespace std;
+using std::string;
 
 #define MAX_DISPLAY_LEN 64
 
@@ -51,8 +54,8 @@
 /* The muxer output resolution must be set if the input streams will be of
  * different resolution. The muxer will scale all the input frames to this
  * resolution. */
-#define MUXER_OUTPUT_WIDTH 1280
-#define MUXER_OUTPUT_HEIGHT 720
+#define MUXER_OUTPUT_WIDTH 1920
+#define MUXER_OUTPUT_HEIGHT 1280
 
 /* Muxer batch formation timeout, for e.g. 40 millisec. Should ideally be set
  * based on the fastest source's framerate. */
@@ -63,14 +66,11 @@
 #define GST_CAPS_FEATURES_NVMM "memory:NVMM"
 #define CONFIG_GPU_ID "gpu-id"
 
-#define SGIE_NET_WIDTH 80
-#define SGIE_NET_HEIGHT 80
 
 gint frame_number = 0;
 gint total_face_num = 0;
 
 #define PRIMARY_DETECTOR_UID 1
-#define SECOND_DETECTOR_UID 2
 
 typedef struct _perf_measure{
   GstClockTime pre_time;
@@ -141,274 +141,10 @@ osd_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
     }
   }
 
-  g_print ("Frame Number = %d Face Count = %d\n",
-           frame_number, face_count);
+  // g_print ("Frame Number = %d Face Count = %d\n",
+  //          frame_number, face_count);
   frame_number++;
   total_face_num += face_count;
-  return GST_PAD_PROBE_OK;
-}
-
-/*Generate bodypose2d display meta right after inference */
-static GstPadProbeReturn
-tile_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
-    gpointer u_data)
-{
-  GstBuffer *buf = (GstBuffer *) info->data;
-  NvDsObjectMeta *obj_meta = NULL;
-  NvDsMetaList * l_frame = NULL;
-  NvDsMetaList * l_obj = NULL;
-  int part_index = 0;
-
-  NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta (buf);
-
-  for (l_frame = batch_meta->frame_meta_list; l_frame != NULL;
-       l_frame = l_frame->next) {
-    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) (l_frame->data);    
-    NvDsDisplayMeta *disp_meta = NULL;
- 
-    if (!frame_meta)
-      continue;
-
-    for (l_obj = frame_meta->obj_meta_list; l_obj != NULL;
-         l_obj = l_obj->next) {
-      obj_meta = (NvDsObjectMeta *) (l_obj->data);
-
-      if (!obj_meta)
-        continue;
-
-      bool facebboxdraw = false;
-        
-      for (NvDsMetaList * l_user = obj_meta->obj_user_meta_list;
-          l_user != NULL; l_user = l_user->next) {
-        NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
-        if(user_meta->base_meta.meta_type ==
-            (NvDsMetaType)NVDS_USER_JARVIS_META_FACEMARK) {
-          NvDsFacePointsMetaData *facepoints_meta =
-              (NvDsFacePointsMetaData *)user_meta->user_meta_data;
-          /*Get the face marks and mark with dots*/
-          if (!facepoints_meta)
-            continue;
-          for (part_index = 0;part_index < facepoints_meta->facemark_num;
-              part_index++) {
-            if (!disp_meta) {
-              disp_meta = nvds_acquire_display_meta_from_pool(batch_meta);
-              disp_meta->num_circles = 0;
-              disp_meta->num_rects = 0;
-              
-            } else {
-              if (disp_meta->num_circles==MAX_ELEMENTS_IN_DISPLAY_META) {
-                
-                nvds_add_display_meta_to_frame (frame_meta, disp_meta);
-                disp_meta = nvds_acquire_display_meta_from_pool(batch_meta);
-                disp_meta->num_circles = 0;
-              }
-            }
-            if(!facebboxdraw) {
-                disp_meta->rect_params[disp_meta->num_rects].left =
-                    facepoints_meta->right_eye_rect.left +
-                    obj_meta->rect_params.left;
-                disp_meta->rect_params[disp_meta->num_rects].top =
-                    facepoints_meta->right_eye_rect.top +
-                    obj_meta->rect_params.top;
-                disp_meta->rect_params[disp_meta->num_rects].width =
-                    facepoints_meta->right_eye_rect.right -
-                    facepoints_meta->right_eye_rect.left;
-                disp_meta->rect_params[disp_meta->num_rects].height =
-                    facepoints_meta->right_eye_rect.bottom -
-                    facepoints_meta->right_eye_rect.top;
-                disp_meta->rect_params[disp_meta->num_rects].border_width = 2;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.red = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.green = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.blue = 0.0;
-                disp_meta->rect_params[disp_meta->num_rects].border_color.alpha = 0.5;
-                disp_meta->rect_params[disp_meta->num_rects+1].left =
-                    facepoints_meta->left_eye_rect.left + obj_meta->rect_params.left;
-                disp_meta->rect_params[disp_meta->num_rects+1].top =
-                    facepoints_meta->left_eye_rect.top + obj_meta->rect_params.top;
-                disp_meta->rect_params[disp_meta->num_rects+1].width =
-                    facepoints_meta->left_eye_rect.right -
-                    facepoints_meta->left_eye_rect.left;
-                disp_meta->rect_params[disp_meta->num_rects+1].height =
-                    facepoints_meta->left_eye_rect.bottom -
-                    facepoints_meta->left_eye_rect.top;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_width = 2;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.red = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.green = 1.0;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.blue = 0.0;
-                disp_meta->rect_params[disp_meta->num_rects+1].border_color.alpha = 0.5;
-                disp_meta->num_rects+=2;
-                facebboxdraw = true;
-            }
-
-            disp_meta->circle_params[disp_meta->num_circles].xc =
-                facepoints_meta->mark[part_index].x + obj_meta->rect_params.left;
-            disp_meta->circle_params[disp_meta->num_circles].yc =
-                facepoints_meta->mark[part_index].y + obj_meta->rect_params.top;
-            disp_meta->circle_params[disp_meta->num_circles].radius = 1;
-            disp_meta->circle_params[disp_meta->num_circles].circle_color.red = 0.0;
-            disp_meta->circle_params[disp_meta->num_circles].circle_color.green = 1.0;
-            disp_meta->circle_params[disp_meta->num_circles].circle_color.blue = 0.0;
-            disp_meta->circle_params[disp_meta->num_circles].circle_color.alpha = 0.5;
-            disp_meta->num_circles++;
-          }
-        }
-      }
-    }
-    if (disp_meta && disp_meta->num_circles)
-       nvds_add_display_meta_to_frame (frame_meta, disp_meta);
-  }
-  return GST_PAD_PROBE_OK;
-}
-
-/* This is the buffer probe function that we have registered on the src pad
- * of the PGIE's next queue element. The face bbox will be scale to square for
- * facial marks.
- */
-static GstPadProbeReturn
-pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
-{
-  NvDsBatchMeta *batch_meta =
-      gst_buffer_get_nvds_batch_meta (GST_BUFFER (info->data));
-  NvBufSurface *in_surf;
-  GstMapInfo in_map_info;
-  int frame_width, frame_height;
-
-  memset (&in_map_info, 0, sizeof (in_map_info));
-
-  /* Map the buffer contents and get the pointer to NvBufSurface. */
-  if (!gst_buffer_map (GST_BUFFER (info->data), &in_map_info, GST_MAP_READ)) {
-    g_printerr ("Failed to map GstBuffer\n");
-    return GST_PAD_PROBE_PASS;
-  }
-  in_surf = (NvBufSurface *) in_map_info.data;
-  gst_buffer_unmap(GST_BUFFER (info->data), &in_map_info);
-
-  /* Iterate each frame metadata in batch */
-  for (NvDsMetaList * l_frame = batch_meta->frame_meta_list; l_frame != NULL;
-      l_frame = l_frame->next) {
-    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
-    frame_width = in_surf->surfaceList[frame_meta->batch_id].width;
-    frame_height = in_surf->surfaceList[frame_meta->batch_id].height;
-    /* Iterate object metadata in frame */
-    for (NvDsMetaList * l_obj = frame_meta->obj_meta_list; l_obj != NULL;
-        l_obj = l_obj->next) {
-
-      NvDsObjectMeta *obj_meta = (NvDsObjectMeta *) l_obj->data;
-      
-      if (!obj_meta) {
-        g_print("No obj meta\n");
-        break;
-      }
-      if(obj_meta->rect_params.left<0)
-          obj_meta->rect_params.left=0;
-      if(obj_meta->rect_params.top<0)
-          obj_meta->rect_params.top=0;
-          
-      float square_size = MAX(obj_meta->rect_params.width,
-          obj_meta->rect_params.height);
-      float center_x = obj_meta->rect_params.width/2.0 +
-          obj_meta->rect_params.left;
-      float center_y = obj_meta->rect_params.height/2.0 +
-          obj_meta->rect_params.top;
-
-      /*Check the border*/
-      if(center_x < (square_size/2.0) || center_y < square_size/2.0 || 
-          center_x + square_size/2.0 > frame_width ||
-          center_y - square_size/2.0 > frame_height) {
-              g_print("Keep the original bbox\n");
-      } else {
-          obj_meta->rect_params.left = center_x - square_size/2.0;
-          obj_meta->rect_params.top = center_y - square_size/2.0;
-          obj_meta->rect_params.width = square_size;
-          obj_meta->rect_params.height = square_size;
-      }
-    }
-  }
-  return GST_PAD_PROBE_OK;
-}
-
-/* This is the buffer probe function that we have registered on the src pad
- * of the SGIE's next queue element. The facial marks output will be processed
- * and the facial marks metadata will be generated.
- */
-static GstPadProbeReturn
-sgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
-{
-  std::unique_ptr<cvcore::faciallandmarks::FacialLandmarksPostProcessor>
-      facemarkpost(new cvcore::faciallandmarks::FacialLandmarksPostProcessor(
-        cvcore::faciallandmarks::defaultModelInputParams));
-
-  NvDsBatchMeta *batch_meta =
-      gst_buffer_get_nvds_batch_meta (GST_BUFFER (info->data));
-
-  /* Iterate each frame metadata in batch */
-  for (NvDsMetaList * l_frame = batch_meta->frame_meta_list; l_frame != NULL;
-      l_frame = l_frame->next) {
-    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
-    //NvDsDisplayMeta *disp_meta = NULL;
-    /* Iterate object metadata in frame */
-    for (NvDsMetaList * l_obj = frame_meta->obj_meta_list; l_obj != NULL;
-        l_obj = l_obj->next) {
-
-      NvDsObjectMeta *obj_meta = (NvDsObjectMeta *) l_obj->data;
-      
-      if (!obj_meta)
-        continue;
-
-      /* Iterate user metadata in object to search SGIE's tensor data */
-      for (NvDsMetaList * l_user = obj_meta->obj_user_meta_list; l_user != NULL;
-          l_user = l_user->next) {
-        NvDsUserMeta *user_meta = (NvDsUserMeta *) l_user->data;
-        if (user_meta->base_meta.meta_type != NVDSINFER_TENSOR_OUTPUT_META)
-          continue;
-
-        NvDsInferTensorMeta *meta =
-            (NvDsInferTensorMeta *) user_meta->user_meta_data;
-        float * heatmap_data = NULL;
-        float * confidence = NULL;
-        //int heatmap_c = 0;
-
-        for (unsigned int i = 0; i < meta->num_output_layers; i++) {
-          NvDsInferLayerInfo *info = &meta->output_layers_info[i];
-          info->buffer = meta->out_buf_ptrs_host[i];
-
-          std::vector < NvDsInferLayerInfo >
-            outputLayersInfo (meta->output_layers_info,
-            meta->output_layers_info + meta->num_output_layers);
-          //Prepare CVCORE input layers
-          if (strcmp(outputLayersInfo[i].layerName,
-              "softargmax/strided_slice:0") == 0) {
-            //This layer output landmarks coordinates
-            heatmap_data = (float *)meta->out_buf_ptrs_host[i];
-          } else if (strcmp(outputLayersInfo[i].layerName,
-              "softargmax/strided_slice_1:0") == 0) {
-            confidence = (float *)meta->out_buf_ptrs_host[i];
-          }
-        }
-
-        cvcore::Tensor<cvcore::CL, cvcore::CX, cvcore::F32> tempheatmap(
-            cvcore::faciallandmarks::FacialLandmarks::NUM_FACIAL_LANDMARKS, 1,
-            (float *)heatmap_data, true);
-        cvcore::Array<cvcore::BBox> faceBBox(1);
-        faceBBox.setSize(1);
-        faceBBox[0] = {0, 0, (int)obj_meta->rect_params.width,
-            (int)obj_meta->rect_params.height};
-        //Prepare output array
-        cvcore::Array<cvcore::ArrayN<cvcore::Vector2f,
-            cvcore::faciallandmarks::FacialLandmarks::NUM_FACIAL_LANDMARKS>>
-            output(1, true);
-        output.setSize(1);
-      
-        facemarkpost->execute(output, tempheatmap, faceBBox, NULL);
-      
-        /*add user meta for facemark*/
-        if (!nvds_add_facemark_meta (batch_meta, obj_meta, output[0],
-            confidence)) {
-          g_printerr ("Failed to get bbox from model output\n");
-        }
-      }
-    }
-  }
   return GST_PAD_PROBE_OK;
 }
 
@@ -466,8 +202,8 @@ cb_newpad (GstElement * decodebin, GstPad * decoder_src_pad, gpointer data)
          g_printerr ("Failed to link videoconvert to nvvideoconvert\n");
       }
     } else {
-      GstPad *conv_sink_pad = gst_element_get_static_pad (bin_struct->nvvidconv,
-          "sink");
+      GstPad *conv_sink_pad = gst_element_get_static_pad (
+          bin_struct->nvvidconv, "sink");
       if (gst_pad_link (decoder_src_pad, conv_sink_pad)) {
         g_printerr ("Failed to link decoderbin src pad to "
             "converter sink pad\n");
@@ -594,11 +330,12 @@ main (int argc, char *argv[])
 {
   GMainLoop *loop = NULL;
   GstElement *pipeline = NULL,*streammux = NULL, *sink = NULL, 
-             *primary_detector = NULL, *second_detector = NULL,
+             *primary_detector = NULL,
              *nvvidconv = NULL, *nvosd = NULL, *nvvidconv1 = NULL,
-             *outenc = NULL, *capfilt = NULL, *nvtile=NULL;
-  GstElement *queue1 = NULL, *queue2 = NULL, *queue3 = NULL, *queue4 = NULL,
-             *queue5 = NULL, *queue6 = NULL, *queue7 = NULL;
+             *outenc = NULL, *capfilt = NULL, *nvtile = NULL,
+             *hrinfer = NULL;
+  GstElement *queue1 = NULL, *queue2 = NULL, *queue4 = NULL,
+             *queue5 = NULL, *queue6 = NULL, *queue7 = NULL, *queue8 = NULL;
   DsSourceBinStruct source_struct[128];
 #ifdef PLATFORM_TEGRA
   GstElement *transform = NULL;
@@ -685,12 +422,9 @@ main (int argc, char *argv[])
 
   }
 
-  /* Create three nvinfer instances for two detectors. */
+  /* Create three nvinfer instances for two detectors and one classifier*/
   primary_detector = gst_element_factory_make ("nvinfer",
                        "primary-infer-engine1");
-
-  second_detector = gst_element_factory_make ("nvinfer",
-                       "second-infer-engine1");
 
   /* Use convertor to convert from NV12 to RGBA as required by nvosd */
   nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvid-converter");
@@ -704,14 +438,16 @@ main (int argc, char *argv[])
 
   nvtile = gst_element_factory_make ("nvmultistreamtiler", "nvtiler");
 
+  hrinfer = gst_element_factory_make ("nvdsvideotemplate",
+      "heartrate_infer");
  
   queue1 = gst_element_factory_make ("queue", "queue1");
   queue2 = gst_element_factory_make ("queue", "queue2");
-  queue3 = gst_element_factory_make ("queue", "queue3");
   queue4 = gst_element_factory_make ("queue", "queue4");
   queue5 = gst_element_factory_make ("queue", "queue5");
   queue6 = gst_element_factory_make ("queue", "queue6");
   queue7 = gst_element_factory_make ("queue", "queue7");
+  queue8 = gst_element_factory_make ("queue", "queue8");
 
   if (atoi(argv[1]) == 1) {
     if (g_strrstr (argv[2], ".jpg") || g_strrstr (argv[2], ".png")
@@ -749,8 +485,8 @@ main (int argc, char *argv[])
     sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
   }
 
-  if (!primary_detector || !second_detector || !nvvidconv
-      || !nvosd || !sink  || !capfilt) {
+  if (!primary_detector || !nvvidconv
+      || !nvosd || !sink  || !capfilt || !hrinfer) {
     g_printerr ("One element could not be created. Exiting.\n");
     return -1;
   }
@@ -764,16 +500,16 @@ main (int argc, char *argv[])
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
       tiler_columns, "width", 1280, "height", 720, NULL);
 
-  /* Set the config files for the two detectors. The first detector is PGIE which
-   * detects the faces. The second detector is SGIE which generates faciallandmarks
-   * for every face. */
+  /* Set the config files for the facedetect and faciallandmark 
+   * inference modules. Gaze inference is based on faciallandmark 
+   * result and face bbox. */
   g_object_set (G_OBJECT (primary_detector), "config-file-path",
       "../../../configs/facial_tlt/config_infer_primary_facenet.txt",
       "unique-id", PRIMARY_DETECTOR_UID, NULL);
 
-  g_object_set (G_OBJECT (second_detector), "config-file-path",
-      "../../../configs/facial_tlt/faciallandmark_sgie_config.txt",
-      "unique-id", SECOND_DETECTOR_UID, NULL);
+  g_object_set (G_OBJECT (hrinfer), "customlib-name",
+      "./heartrateinfer_impl/libnvds_heartrateinfer.so", "customlib-props",
+      "config-file:../../../../configs/heartrate_tlt/sample_heartrate_model_config.txt", NULL);
 
   /* we add a bus message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
@@ -782,13 +518,13 @@ main (int argc, char *argv[])
 
   /* Set up the pipeline */
   /* we add all elements into the pipeline */
-  gst_bin_add_many (GST_BIN (pipeline), primary_detector, second_detector,
-      queue1, queue2, queue3, queue4, queue5, nvvidconv, nvosd, nvtile, sink,
-      NULL);
+  gst_bin_add_many (GST_BIN (pipeline), primary_detector,
+      queue1, queue2, queue4, queue5, nvvidconv, nvosd, nvtile, sink,
+      hrinfer, queue6, NULL);
 
   if (!gst_element_link_many (streammux, queue1, primary_detector, queue2, 
-        second_detector, queue3, nvtile, queue4, nvvidconv, queue5,
-        nvosd, NULL)) {
+        hrinfer, queue4, nvtile, queue5,
+        nvvidconv, queue6, nvosd, NULL)) {
     g_printerr ("Inferring and tracking elements link failure.\n");
     return -1;
   }
@@ -799,9 +535,9 @@ main (int argc, char *argv[])
     g_object_set (G_OBJECT (sink), "location", filename,NULL);
     g_object_set (G_OBJECT (sink), "enable-last-sample", false,NULL);
     gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt, 
-        queue6, queue7, NULL);
+        queue7, queue8, NULL);
 
-    if (!gst_element_link_many (nvosd, queue6, nvvidconv1, capfilt, queue7,
+    if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
            outenc, sink, NULL)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
@@ -815,29 +551,18 @@ main (int argc, char *argv[])
     }
   } else if (atoi(argv[1]) == 3) {
 #ifdef PLATFORM_TEGRA
-    gst_bin_add_many (GST_BIN (pipeline), transform, queue6, NULL);
-    if (!gst_element_link_many (nvosd, queue6, transform, sink, NULL)) {
+    gst_bin_add_many (GST_BIN (pipeline), transform, queue7, NULL);
+    if (!gst_element_link_many (nvosd, queue7, transform, sink, NULL)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
     }
 #else
-    gst_bin_add (GST_BIN (pipeline), queue6);
-    if (!gst_element_link_many (nvosd, queue6, sink, NULL)) {
+    gst_bin_add (GST_BIN (pipeline), queue7);
+    if (!gst_element_link_many (nvosd, queue7, sink, NULL)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
     }
 #endif
-  }
-
-  /* Display the facemarks output on video. Fakesink do not need to display. */
-  if(atoi(argv[1]) != 2) {    
-    osd_sink_pad = gst_element_get_static_pad (nvtile, "sink");
-    if (!osd_sink_pad)
-      g_print ("Unable to get sink pad\n");
-    else
-      gst_pad_add_probe (osd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-          tile_sink_pad_buffer_probe, NULL, NULL);
-    gst_object_unref (osd_sink_pad);
   }
 
   /*Performance measurement*/
@@ -849,22 +574,6 @@ main (int argc, char *argv[])
         osd_sink_pad_buffer_probe, &perf_measure, NULL);
   gst_object_unref (osd_sink_pad);
 
-  /* Add probe to get square bbox from face detector. */
-  osd_sink_pad = gst_element_get_static_pad (queue2, "src");
-  if (!osd_sink_pad)
-    g_print ("Unable to get nvinfer src pad\n");
-  gst_pad_add_probe (osd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-      pgie_pad_buffer_probe, NULL, NULL);
-  gst_object_unref (osd_sink_pad);
-
-  /* Add probe to handle facial marks output and generate facial */
-  /* marks metadata.                                             */
-  osd_sink_pad = gst_element_get_static_pad (queue3, "src");
-  if (!osd_sink_pad)
-    g_print ("Unable to get nvinfer src pad\n");
-  gst_pad_add_probe (osd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-      sgie_pad_buffer_probe, NULL, NULL);
-  gst_object_unref (osd_sink_pad);  
 
   /* Set the pipeline to "playing" state */
   g_print ("Now playing: %s\n", argv[2]);

@@ -1,9 +1,9 @@
 ## Description
-The emotion deepstream sample application identify human emotion based on the facial landmarks.
+The emotion deepstream sample application identify human emotion based on the facial landmarks. Current sample application can identify five emotions as neutral, happy, surprise, squint, disgust and scream.
 
 The TLT3.0 pretrained models used in the sample application are:
-* [FaceDetectIR](https://ngc.nvidia.com/catalog/models/nvidia:tlt_facedetectir)
 * [Facial Landmarks Estimation](https://ngc.nvidia.com/catalog/models/nvidia:tlt_fpenet)
+* [FaceNet](https://ngc.nvidia.com/catalog/models/nvidia:tlt_facenet)
 * [EmotionNet](https://ngc.nvidia.com/catalog/models/nvidia:tlt_emotionnet)
 
 ## Prerequisition
@@ -13,6 +13,7 @@ The TLT3.0 pretrained models used in the sample application are:
 
 ## Application Pipeline
 The application pipeline graph
+
 ![emotion application pipeline](emotion_pipeline.png)
 
 ## Build And Run
@@ -41,7 +42,7 @@ export CUDA_VER=11.1
 ```
 Build the nvvideotemplate library and the application and run to inference one picture.
 ```
-cd apps/lt_others/deepstream-emotion-app/emotion_impl
+cd apps/tlt_others/deepstream-emotion-app/emotion_impl
 make
 cd ../
 make
