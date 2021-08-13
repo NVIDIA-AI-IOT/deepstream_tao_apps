@@ -30,7 +30,7 @@ dependencies:
   version: 0.0.1
 - extension: NvDsMuxDemuxExt
   uuid: 89b8398c-5820-4051-835c-a91f2d49766b
-  version: 0.0.2
+  version: 0.0.1
 - extension: NvDsInferenceExt
   uuid: 0b02963e-c24e-4c13-ace0-c4cdf36c7c71
   version: 0.0.1
