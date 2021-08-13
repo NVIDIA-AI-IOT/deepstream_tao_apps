@@ -32,6 +32,7 @@ This repository provides a DeepStream sample application based on [NVIDIA DeepSt
 
 - **apps**: sample application for detection models and segmentation models
 - **configs**: DeepStream nvinfer configure file and label files
+- **graphs**: DeepStream sample graphs based on the Graph Composer tools.
 - **post_processor**: include inference postprocessor for the models
 - **models**:  To download sample models that are trained by  trained by [NVIDIA Transfer Learning Toolkit(TLT) SDK](https://developer.nvidia.com/transfer-learning-toolkit) run  `wget https://nvidia.box.com/shared/static/i1cer4s3ox4v8svbfkuj5js8yqm3yazo.zip -O models.zip`
 - **TRT-OSS**: TRT(TensorRT) OSS libs for some platforms/systems (refer to the README to build lib for other platforms/systems)
@@ -204,6 +205,10 @@ trtexec --batch=2 --useSpinWait --loadEngine=yolo_resnet18.etlt_b2_gpu0_fp16.eng
 ## Others Models
 
 There are some special models which are not exactly detector, classifier or segmetation. The sample application of these special models are put in apps/tlt_others. These samples should run on DeepStream 6.0 or above versions. Please refer to apps/tlt_others/README.md document for details.
+
+## Graph Composer Samples
+
+Some special models needs special deepstream pipeline for running. The deepstream sample graphs for them are put in graphs/tlt_others. Please refer to graphs/README.md file for more details.
 
 ## Known issues
 
