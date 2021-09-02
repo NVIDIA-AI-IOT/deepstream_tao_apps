@@ -20,6 +20,7 @@ You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/ez
 TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 18.04 is cmake 3.10.2, so upgrade it by
 
 ```
+sudo apt-get install libssl-dev
 wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
 tar xvf cmake-3.19.4.tar.gz
 cd cmake-3.19.4/
