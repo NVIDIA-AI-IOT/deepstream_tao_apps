@@ -70,8 +70,8 @@ augmentation_config {
 }
 dataset_config {
   data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/voc0712trainval/labels_kitti"
-    image_directory_path: "/workspace/tlt-experiments/data/voc0712trainval/images"
+    label_directory_path: "/workspace/tao-experiments/data/voc0712trainval/labels_kitti"
+    image_directory_path: "/workspace/tao-experiments/data/voc0712trainval/images"
   }
   include_difficult_in_training: true
   target_class_mapping {
@@ -155,7 +155,7 @@ dataset_config {
     value: "car"
   }
   validation_data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/voc07test/labels_kitti"
-    image_directory_path: "/workspace/tlt-experiments/data/voc07test/images"
+    label_directory_path: "/workspace/tao-experiments/data/voc07test/labels_kitti"
+    image_directory_path: "/workspace/tao-experiments/data/voc07test/images"
   }
 }

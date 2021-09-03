@@ -66,7 +66,7 @@ training_config {
       amsgrad: false
     }
   }
-  pretrain_model_path: "/workspace/tlt-experiments/classification/darknet53/weights/darknet_$EPOCH.tlt"
+  pretrain_model_path: "/workspace/tao-experiments/classification/darknet53/weights/darknet_$EPOCH.tlt"
 }
 eval_config {
   average_precision_mode: SAMPLE
@@ -91,8 +91,8 @@ augmentation_config {
 }
 dataset_config {
   data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/coco2014/KITTI/train2014"
-    image_directory_path: "/workspace/tlt-experiments/data/coco2014/images/train2014"
+    label_directory_path: "/workspace/tao-experiments/data/coco2014/KITTI/train2014"
+    image_directory_path: "/workspace/tao-experiments/data/coco2014/images/train2014"
   }
   target_class_mapping {
   key: "apple"
@@ -415,7 +415,7 @@ dataset_config {
   value: "kite"
   }
   validation_data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/coco2014/KITTI/val2014"
-    image_directory_path: "/workspace/tlt-experiments/data/coco2014/images/val2014"
+    label_directory_path: "/workspace/tao-experiments/data/coco2014/KITTI/val2014"
+    image_directory_path: "/workspace/tao-experiments/data/coco2014/images/val2014"
   }
 }

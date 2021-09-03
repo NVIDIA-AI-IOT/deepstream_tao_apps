@@ -34,8 +34,8 @@ model_config {
   input_image_size: "3,224,224"
 }
 train_config {
-  train_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/train"
-  val_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
+  train_dataset_path: "/workspace/tao-experiments/data/imagenet2012/train"
+  val_dataset_path: "/workspace/tao-experiments/data/imagenet2012/val"
   optimizer {
     sgd {
     lr: 0.05
@@ -58,14 +58,14 @@ train_config {
       soft_start: 0.0
     }
   }
-  preprocess_mode: torch
+  preprocess_mode: "torch"
   enable_random_crop: True
   enable_center_crop: True
   label_smoothing: 0.0
 }
 eval_config {
-  eval_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
-  model_path: "/workspace/tlt-experiments/classification/resnet50/weights/resnet_120.tlt"
+  eval_dataset_path: "/workspace/tao-experiments/data/imagenet2012/val"
+  model_path: "/workspace/tao-experiments/classification/resnet50/weights/resnet_120.tlt"
   top_k: 1
   batch_size: 64
   n_workers: 8

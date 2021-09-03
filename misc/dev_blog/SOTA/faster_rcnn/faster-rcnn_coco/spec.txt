@@ -23,7 +23,7 @@
 ################################################################################
 
 random_seed: 42
-enc_key: 'tlt'
+enc_key: 'tao'
 verbose: True
 model_config {
 input_image_config {
@@ -72,8 +72,8 @@ use_pooling:True
 }
 dataset_config {
   data_sources: {
-    tfrecords_path: "/workspace/tlt-experiments/data/coco2014/tfrecords/train2014/*"
-    image_directory_path: "/workspace/tlt-experiments/data/coco2014"
+    tfrecords_path: "/workspace/tao-experiments/data/coco2014/tfrecords/train2014/*"
+    image_directory_path: "/workspace/tao-experiments/data/coco2014"
   }
 image_extension: 'jpg'
  target_class_mapping {
@@ -397,8 +397,8 @@ image_extension: 'jpg'
     value: "hairdrier"
   }
 validation_data_source: {
-    tfrecords_path: "/workspace/tlt-experiments/data/coco2014/tfrecords/val2014/*"
-    image_directory_path: "/workspace/tlt-experiments/data/coco2014"
+    tfrecords_path: "/workspace/tao-experiments/data/coco2014/tfrecords/val2014/*"
+    image_directory_path: "/workspace/tao-experiments/data/coco2014"
 }
 }
 augmentation_config {
@@ -429,8 +429,8 @@ enable_augmentation: True
 enable_qat: False
 batch_size_per_gpu: 1
 num_epochs: 20
-pretrained_weights: "/workspace/tlt-experiments/classification/resnet101/weights/resnet_150.tlt"
-output_model: "/workspace/tlt-experiments/coco2014/frcnn_resnet101.tlt"
+pretrained_weights: "/workspace/tao-experiments/classification/resnet101/weights/resnet_150.tlt"
+output_model: "/workspace/tao-experiments/coco2014/frcnn_resnet101.tlt"
 rpn_min_overlap: 0.3
 rpn_max_overlap: 0.7
 classifier_min_overlap: 0.0
@@ -487,11 +487,11 @@ lambda_cls_regr: 1.0
 lambda_cls_class: 1.0
 }
 inference_config {
-images_dir: '/workspace/tlt-experiments/data/coco2014/images/val2014'
-model: '/workspace/tlt-experiments/coco2014/frcnn_resnet101.epoch20.tlt'
+images_dir: '/workspace/tao-experiments/data/coco2014/images/val2014'
+model: '/workspace/tao-experiments/coco2014/frcnn_resnet101.epoch20.tlt'
 batch_size: 1
-detection_image_output_dir: '/workspace/tlt-experiments/coco2014/inference_results_imgs'
-labels_dump_dir: '/workspace/tlt-experiments/coco2014/inference_dump_labels'
+detection_image_output_dir: '/workspace/tao-experiments/coco2014/inference_results_imgs'
+labels_dump_dir: '/workspace/tao-experiments/coco2014/inference_dump_labels'
 rpn_pre_nms_top_N: 6000
 rpn_nms_max_boxes: 300
 rpn_nms_overlap_threshold: 0.7
@@ -502,7 +502,7 @@ classifier_nms_overlap_threshold: 0.3
 }
 
 evaluation_config {
-model: '/workspace/tlt-experiments/coco2014/frcnn_resnet101.epoch20.tlt'
+model: '/workspace/tao-experiments/coco2014/frcnn_resnet101.epoch20.tlt'
 batch_size: 1
 validation_period_during_training: 1
 rpn_pre_nms_top_N: 6000

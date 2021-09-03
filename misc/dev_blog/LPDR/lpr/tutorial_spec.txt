@@ -59,12 +59,12 @@ augmentation_config {
 }
 dataset_config {
   data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/openalpr/train/label"
-    image_directory_path: "/workspace/tlt-experiments/data/openalpr/train/image"
+    label_directory_path: "/workspace/tao-experiments/data/openalpr/train/label"
+    image_directory_path: "/workspace/tao-experiments/data/openalpr/train/image"
   }
-  characters_list_file: "/workspace/tlt-experiments/lprnet/specs/us_lp_characters.txt"
+  characters_list_file: "/workspace/tao-experiments/lprnet/specs/us_lp_characters.txt"
   validation_data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/openalpr/val/label"
-    image_directory_path: "/workspace/tlt-experiments/data/openalpr/val/image"
+    label_directory_path: "/workspace/tao-experiments/data/openalpr/val/label"
+    image_directory_path: "/workspace/tao-experiments/data/openalpr/val/image"
   }
 }

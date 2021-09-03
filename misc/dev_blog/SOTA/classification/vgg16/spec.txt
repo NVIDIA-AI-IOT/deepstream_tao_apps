@@ -34,8 +34,9 @@ model_config {
   input_image_size: "3,224,224"
 }
 train_config {
-  train_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/train"
-  val_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
+  preprocess_mode: "caffe"
+  train_dataset_path: "/workspace/tao-experiments/data/imagenet2012/train"
+  val_dataset_path: "/workspace/tao-experiments/data/imagenet2012/val"
   optimizer {
     sgd {
     lr: 0.01
@@ -66,8 +67,8 @@ train_config {
   enable_center_crop: True
 }
 eval_config {
-  eval_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
-  model_path: "/workspace/tlt-experiments/classification/vgg16/weights/vgg_080.tlt"
+  eval_dataset_path: "/workspace/tao-experiments/data/imagenet2012/val"
+  model_path: "/workspace/tao-experiments/classification/vgg16/weights/vgg_080.tlt"
   top_k: 1
   batch_size: 32
   n_workers: 8

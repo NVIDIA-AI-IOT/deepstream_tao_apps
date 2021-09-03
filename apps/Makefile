@@ -21,10 +21,10 @@
 ################################################################################
 
 all:
-	make -C tlt_detection
-	make -C tlt_segmentation
-	make -C tlt_classifier
+	make -C tao_detection
+	make -C tao_segmentation
+	make -C tao_classifier
 %:
-	make -C tlt_detection $@
-	make -C tlt_segmentation $@
-	make -C tlt_classifier $@
+	make -C tao_detection $@
+	make -C tao_segmentation $@
+	make -C tao_classifier $@

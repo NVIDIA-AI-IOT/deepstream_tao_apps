@@ -48,7 +48,7 @@ def parse_args(args=None):
         "--output_dir",
         type=str,
         required=True,
-        help="Ouput directory to TLT train/eval dataset."
+        help="Ouput directory to TAO train/eval dataset."
     )
 
     return parser.parse_args(args)

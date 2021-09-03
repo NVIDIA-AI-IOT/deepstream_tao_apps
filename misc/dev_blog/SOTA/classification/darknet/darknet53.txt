@@ -33,8 +33,8 @@ model_config {
   input_image_size: "3,224,224"
 }
 train_config {
-  train_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/train"
-  val_dataset_path: "/workspace/tlt-experiments/data/imagenet2012/val"
+  train_dataset_path: "/workspace/tao-experiments/data/imagenet2012/train"
+  val_dataset_path: "/workspace/tao-experiments/data/imagenet2012/val"
   optimizer {
     sgd {
         lr: 0.01
