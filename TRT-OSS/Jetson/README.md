@@ -33,7 +33,7 @@ sudo make install
 ### 2. Build TensorRT OSS Plugin
 
 ```
-git clone -b release/7.0 https://github.com/nvidia/TensorRT        // replace with release/7.x for  TensorRT 7.x
+git clone -b release/7.0 https://github.com/nvidia/TensorRT        # replace with release/7.x for  TensorRT 7.x
 cd TensorRT/
 git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
@@ -48,7 +48,7 @@ After building ends successfully, libnvinfer_plugin.so* will be generated under 
 ### 3. Replace "libnvinfer_plugin.so*"
 
 ```
-sudo mv /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y ${HOME}/libnvinfer_plugin.so.7.x.y.bak   // backup original libnvinfer_plugin.so.x.y
+sudo mv /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y ${HOME}/libnvinfer_plugin.so.7.x.y.bak   # backup original libnvinfer_plugin.so.x.y
 sudo cp `pwd`/out/libnvinfer_plugin.so.7.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y
 sudo ldconfig
 ```
