@@ -5,7 +5,6 @@ all:
 	@make -C deepstream-emotion-app/emotion_impl
 	@make -C deepstream-gaze-app
 	@make -C deepstream-gaze-app/gazeinfer_impl
-	@make -C deepstream-gesture-app
 	@make -C deepstream-heartrate-app/heartrateinfer_impl
 	@make -C deepstream-heartrate-app
 clean:
@@ -15,6 +14,5 @@ clean:
 	@make clean -C deepstream-emotion-app/emotion_impl
 	@make clean -C deepstream-gaze-app
 	@make clean -C deepstream-gaze-app/gazeinfer_impl
-	@make clean -C deepstream-gesture-app
 	@make clean -C deepstream-heartrate-app/heartrateinfer_impl
 	@make clean -C deepstream-heartrate-app
