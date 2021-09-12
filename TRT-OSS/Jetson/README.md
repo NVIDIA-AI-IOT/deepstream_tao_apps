@@ -37,9 +37,9 @@ sudo make install
 | 5.0.1               | 4.4 GA - 4.5     | TRT 7.1.3       | release/7.1           |
 | 5.1                 | 4.5              | TRT 7.1.3       | release/7.1           |
 | 6.0 EA              | 4.5.1            | TRT 7.1.3       | release/7.1           |
-| /                   | 4.6              | TRT 8.0         | release/8.0           |
+| /                   | 4.6              | TRT 8.0.1       | release/8.0           |
 ```
-git clone -b   $TRT_OSS_CHECKOUT_TAG  https://github.com/nvidia/TensorRT        // replace with release/7.x for  TensorRT 7.x
+git clone -b   $TRT_OSS_CHECKOUT_TAG  https://github.com/nvidia/TensorRT        # replace with release/7.x for  TensorRT 7.x
 cd TensorRT/
 git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
