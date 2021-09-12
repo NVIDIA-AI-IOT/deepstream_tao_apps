@@ -39,9 +39,16 @@ sudo make install
 ```
 
 ### 2. Build TensorRT OSS Plugin
+| DeepStream Release  | TRT Version     | TRT_OSS_CHECKOUT_TAG  |
+| ------------------- | --------------- | --------------------- |
+| 5.0                 | TRT 7.0.0       | release/7.0           |
+| 5.0.1               | TRT 7.0.0       | release/7.0           |
+| 5.1                 | TRT 7.2.X       |                       |
+| 6.0 EA              | TRT 7.2.2       | 20.12                 |
+
 
 ```
-git clone -b release/7.0 https://github.com/nvidia/TensorRT
+git clone -b $TRT_OSS_CHECKOUT_TAG  https://github.com/nvidia/TensorRT   # find TRT_OSS_CHECKOUT_TAG in above table
 cd TensorRT/
 git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
