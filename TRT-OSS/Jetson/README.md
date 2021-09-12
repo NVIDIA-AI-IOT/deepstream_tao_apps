@@ -71,9 +71,9 @@ sudo make
 
 2. Can also find GPU_ARCHs from below table
 
-| Jetson Platform | GPU_ARCHS |
-| --------------- | --------- |
-| TX1 / NANO      | 53        |
-| TX2             | 62        |
-| Xavier / NX     | 72        |
+| Jetson Platform  | GPU_ARCHS |
+| ---------------- | --------- |
+| TX1 / NANO       | 53        |
+| TX2              | 62        |
+| (i)Xavier / NX   | 72        |
 
