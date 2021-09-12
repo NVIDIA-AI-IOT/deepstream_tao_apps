@@ -44,7 +44,7 @@ sudo make install
 | 5.0                 | TRT 7.0.0       | release/7.0           |
 | 5.0.1               | TRT 7.0.0       | release/7.0           |
 | 5.1                 | TRT 7.2.X       |                       |
-| 6.0 EA              | TRT 7.2.2       | 20.12                 |
+| 6.0 EA              | TRT 7.2.2       | 21.03                 |
 
 
 ```
