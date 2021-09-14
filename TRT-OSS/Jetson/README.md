@@ -20,7 +20,6 @@ You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/ez
 TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 18.04 is cmake 3.10.2, so upgrade it by
 
 ```
-sudo apt-get install libssl-dev
 wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
 tar xvf cmake-3.19.4.tar.gz
 cd cmake-3.19.4/
@@ -32,8 +31,15 @@ sudo make install
 
 ### 2. Build TensorRT OSS Plugin
 
+| DeepStream Release  | Jetpack Version  | TRT Version     | TRT_OSS_CHECKOUT_TAG  |
+| ------------------- | ---------------  | --------------- | --------------------- |
+| 5.0                 | 4.4 GA  - 4.5    | TRT 7.1.3       | release/7.1           |
+| 5.0.1               | 4.4 GA - 4.5     | TRT 7.1.3       | release/7.1           |
+| 5.1                 | 4.5              | TRT 7.1.3       | release/7.1           |
+| 6.0 EA              | 4.5.1            | TRT 7.1.3       | release/7.1           |
+| /                   | 4.6              | TRT 8.0.1       | release/8.0           |
 ```
-git clone -b release/7.0 https://github.com/nvidia/TensorRT        # replace with release/7.x for  TensorRT 7.x
+git clone -b   $TRT_OSS_CHECKOUT_TAG  https://github.com/nvidia/TensorRT        # replace with release/7.x for  TensorRT 7.x
 cd TensorRT/
 git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
@@ -48,8 +54,8 @@ After building ends successfully, libnvinfer_plugin.so* will be generated under 
 ### 3. Replace "libnvinfer_plugin.so*"
 
 ```
-sudo mv /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y ${HOME}/libnvinfer_plugin.so.7.x.y.bak   # backup original libnvinfer_plugin.so.x.y
-sudo cp `pwd`/out/libnvinfer_plugin.so.7.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y
+sudo mv /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y ${HOME}/libnvinfer_plugin.so.7.x.y.bak   // backup original libnvinfer_plugin.so.x.y
+sudo cp $TRT_SOURCE/build/libnvinfer_plugin.so.7.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.7.x.y
 sudo ldconfig
 ```
 
@@ -65,9 +71,8 @@ sudo make
 
 2. Can also find GPU_ARCHs from below table
 
-| Jetson Platform | GPU_ARCHS |
-| --------------- | --------- |
-| TX1 / NANO      | 53        |
-| TX2             | 62        |
-| Xavier / NX     | 72        |
-
+| Jetson Platform  | GPU_ARCHS |
+| ---------------- | --------- |
+| TX1 / NANO       | 53        |
+| TX2              | 62        |
+| (i)Xavier / NX   | 72        |
