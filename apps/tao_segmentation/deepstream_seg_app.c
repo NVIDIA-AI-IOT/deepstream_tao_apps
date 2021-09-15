@@ -78,7 +78,7 @@ static void printUsage(const char* cmd) {
     g_printerr ("-h: \n\tprint help info \n");
     g_printerr ("-c: \n\tpgie config file, e.g. pgie_frcnn_tao_config.txt  \n");
     g_printerr ("-i: \n\tH264 or JPEG input file  \n");
-    g_printerr ("-b: \n\tbatch size, this will override the value of \"baitch-size\" in pgie config file  \n");
+    g_printerr ("-b: \n\tbatch size, this will override the value of \"batch-size\" in pgie config file  \n");
     g_printerr ("-d: \n\tenable display, otherwise dump to output H264 or JPEG file  \n");
 }
 int

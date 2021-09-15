@@ -104,7 +104,7 @@ Usage: ds-tao-detection -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH
     -h: print help info
     -c: pgie config file, e.g. pgie_frcnn_tao_config.txt
     -i: H264 or JPEG input file
-    -b: batch size, this will override the value of "baitch-size" in pgie config file
+    -b: batch size, this will override the value of "batch-size" in pgie config file
     -d: enable display, otherwise dump to output H264 or JPEG file
  
  e.g.
