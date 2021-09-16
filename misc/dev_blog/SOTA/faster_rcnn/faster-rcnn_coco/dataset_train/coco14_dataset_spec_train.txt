@@ -23,7 +23,7 @@
 ################################################################################
 
 kitti_config {
-  root_directory_path: "/workspace/tlt-experiments/data/coco2014"
+  root_directory_path: "/workspace/tao-experiments/data/coco2014"
   image_dir_name: "images/train2014"
   label_dir_name: "KITTI/train2014"
   image_extension: ".jpg"
@@ -32,5 +32,5 @@ kitti_config {
   val_split: 10
   num_shards: 10
 }
-image_directory_path: "/workspace/tlt-experiments/data/coco2014"
+image_directory_path: "/workspace/tao-experiments/data/coco2014"
 

@@ -23,20 +23,22 @@
 ################################################################################
 
 # download
-cd ~/tlt-experiments/data
+cd ~/tao-experiments/data
 wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar
 wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar
 tar xvf VOCtrainval_06-Nov-2007.tar
 tar xvf VOCtrainval_11-May-2012.tar
+tar xvf VOCtest_06-Nov-2007.tar
 # Splitting datasets
-mkdir -p ~/tlt-experiments/data/voc0712trainval/images
-mkdir -p ~/tlt-experiments/data/voc0712trainval/labels
-mkdir -p ~/tlt-experiments/data/voc07test/images
-mkdir -p ~/tlt-experiments/data/voc07test/labels
-cat ~/tlt-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/test.txt | xargs -I'{}' mv -t ~/tlt-experiments/data/voc07test/images ~/tlt-experiments/data/VOCdevkit/VOC2007/JPEGImages/'{}'.jpg
-cat ~/tlt-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tlt-experiments/data/voc0712trainval/images ~/tlt-experiments/data/VOCdevkit/VOC2007/JPEGImages/'{}'.jpg
-cat ~/tlt-experiments/data/VOCdevkit/VOC2012/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tlt-experiments/data/voc0712trainval/images ~/tlt-experiments/data/VOCdevkit/VOC2012/JPEGImages/'{}'.jpg
-cat ~/tlt-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/test.txt | xargs -I'{}' mv -t ~/tlt-experiments/data/voc07test/labels ~/tlt-experiments/data/VOCdevkit/VOC2007/Annotations/'{}'.xml
-cat ~/tlt-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tlt-experiments/data/voc0712trainval/labels ~/tlt-experiments/data/VOCdevkit/VOC2007/Annotations/'{}'.xml
-cat ~/tlt-experiments/data/VOCdevkit/VOC2012/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tlt-experiments/data/voc0712trainval/labels ~/tlt-experiments/data/VOCdevkit/VOC2012/Annotations/'{}'.xml
+mkdir -p ~/tao-experiments/data/voc0712trainval/images
+mkdir -p ~/tao-experiments/data/voc0712trainval/labels
+mkdir -p ~/tao-experiments/data/voc07test/images
+mkdir -p ~/tao-experiments/data/voc07test/labels
+cat ~/tao-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/test.txt | xargs -I'{}' mv -t ~/tao-experiments/data/voc07test/images ~/tao-experiments/data/VOCdevkit/VOC2007/JPEGImages/'{}'.jpg
+cat ~/tao-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tao-experiments/data/voc0712trainval/images ~/tao-experiments/data/VOCdevkit/VOC2007/JPEGImages/'{}'.jpg
+cat ~/tao-experiments/data/VOCdevkit/VOC2012/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tao-experiments/data/voc0712trainval/images ~/tao-experiments/data/VOCdevkit/VOC2012/JPEGImages/'{}'.jpg
+cat ~/tao-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/test.txt | xargs -I'{}' mv -t ~/tao-experiments/data/voc07test/labels ~/tao-experiments/data/VOCdevkit/VOC2007/Annotations/'{}'.xml
+cat ~/tao-experiments/data/VOCdevkit/VOC2007/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tao-experiments/data/voc0712trainval/labels ~/tao-experiments/data/VOCdevkit/VOC2007/Annotations/'{}'.xml
+cat ~/tao-experiments/data/VOCdevkit/VOC2012/ImageSets/Main/trainval.txt | xargs -I'{}' mv -t ~/tao-experiments/data/voc0712trainval/labels ~/tao-experiments/data/VOCdevkit/VOC2012/Annotations/'{}'.xml
 

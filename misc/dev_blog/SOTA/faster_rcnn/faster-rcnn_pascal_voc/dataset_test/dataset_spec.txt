@@ -23,7 +23,7 @@
 ################################################################################
 
 kitti_config {
-  root_directory_path: "/workspace/tlt-experiments/data/voc07test"
+  root_directory_path: "/workspace/tao-experiments/data/voc07test"
   image_dir_name: "images"
   label_dir_name: "labels_kitti"
   image_extension: ".jpg"
@@ -32,5 +32,5 @@ kitti_config {
   val_split: 10
   num_shards: 10
 }
-image_directory_path: "/workspace/tlt-experiments/data/voc07test"
+image_directory_path: "/workspace/tao-experiments/data/voc07test"
 

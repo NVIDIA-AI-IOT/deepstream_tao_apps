@@ -1,6 +1,6 @@
-# Integrate TLT model with DeepStream SDK
+# Integrate TAO model with DeepStream SDK
 
-- [Integrate TLT model with DeepStream SDK](#integrate-tlt-model-with-deepstream-sdk)
+- [Integrate TAO model with DeepStream SDK](#integrate-tao-model-with-deepstream-sdk)
   - [Description](#description)
   - [Prerequisites](#prerequisites)
   - [Download](#download)
@@ -11,7 +11,7 @@
     - [2. Build Sample Application](#2-build-sample-application)
   - [Run](#run)
   - [Information for Customization](#information-for-customization)
-    - [TLT Models](#tlt-models)
+    - [TAO Models](#tao-models)
     - [Label Files](#label-files)
     - [DeepStream configuration file](#deepstream-configuration-file)
     - [Model Outputs](#model-outputs)
@@ -28,12 +28,13 @@
 
 ## Description
 
-This repository provides a DeepStream sample application based on [NVIDIA DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) to run eight TLT models (**Faster-RCNN** / **YoloV3** / **YoloV4** /**SSD** / **DSSD** / **RetinaNet**/ **PeopleSegNet**/ **UNET**/ **multi_task**/ **peopleSemSegNet**) with below files:
+This repository provides a DeepStream sample application based on [NVIDIA DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) to run eight TAO models (**Faster-RCNN** / **YoloV3** / **YoloV4** /**SSD** / **DSSD** / **RetinaNet**/ **PeopleSegNet**/ **UNET**/ **multi_task**/ **peopleSemSegNet**) with below files:
 
 - **apps**: sample application for detection models and segmentation models
 - **configs**: DeepStream nvinfer configure file and label files
 - **post_processor**: include inference postprocessor for the models
-- **models**:  To download sample models that are trained by  trained by [NVIDIA Transfer Learning Toolkit(TLT) SDK](https://developer.nvidia.com/transfer-learning-toolkit) run  `wget https://nvidia.box.com/shared/static/i1cer4s3ox4v8svbfkuj5js8yqm3yazo.zip -O models.zip`
+- **graphs**: DeepStream sample graphs based on the Graph Composer tools.
+- **models**:  To download sample models that are trained by  trained by [NVIDIA Train, Adapt, and Optimize(TAO) Toolkit SDK](https://developer.nvidia.com/tao-toolkit) run  `wget https://nvidia.box.com/shared/static/i1cer4s3ox4v8svbfkuj5js8yqm3yazo.zip -O models.zip`
 - **TRT-OSS**: TRT(TensorRT) OSS libs for some platforms/systems (refer to the README to build lib for other platforms/systems)
 
 The pipeline of the sample:
@@ -54,9 +55,7 @@ H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detec
 
 * [TensorRT OSS (release/7.x branch)](https://github.com/NVIDIA/TensorRT/tree/release/7.0)
 
-  This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet*, and *PeopleSegNet* models because some TRT plugins such as BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
-
-  Note:This is also needed for *YOLOV3* , *YOLOV4* if you are using TRT version(such as TRT7.1) before TRT7.2
+  This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet*, *YOLOV3* , *YOLOV4* and *PeopleSegNet* models because some TRT plugins such as BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
 
 ## Download
 
@@ -64,17 +63,18 @@ H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detec
 
 ```
 // SSH
-git clone git@github.com:NVIDIA-AI-IOT/deepstream_tlt_apps.git
+git clone -b release/tao3.0 git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone https://github.com/NVIDIA-AI-IOT/deepstream_tlt_apps.git
+git clone -b release/tao3.0 https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 ### 2. Download Models
-Run below script to download models except multi_task model.  
+Run below script to download models except multi_task model.
+
 ```
 ./download_models.sh
 ```
-For multi_task, refer to https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/index.html to train it by yourself
 
+For multi_task, refer to https://docs.nvidia.com/tao/tao-toolkit/text/multitask_image_classification.html to train it by yourself
 
 ## Build
 
@@ -98,48 +98,48 @@ make
 ## Run
 
 ```
-Usage: ds-tlt-detection -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH] [-d]
+Usage: ds-tao-detection -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH] [-d]
     -h: print help info
-    -c: pgie config file, e.g. pgie_frcnn_tlt_config.txt
+    -c: pgie config file, e.g. pgie_frcnn_tao_config.txt
     -i: H264 or JPEG input file
-    -b: batch size, this will override the value of "baitch-size" in pgie config file
+    -b: batch size, this will override the value of "batch-size" in pgie config file
     -d: enable display, otherwise dump to output H264 or JPEG file
  
  e.g.
- ./apps/tlt_segmentation/ds-tlt-segmentation -c configs/unet_tlt/pgie_unet_tlt_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
- ./apps/tlt_classifier/ds-tlt-classifier -c configs/multi_task_tlt/pgie_multi_task_tlt_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
- [SHOW_MASK=1] ./apps/tlt_detection/ds-tlt-detection  -c configs/frcnn_tlt/pgie_frcnn_tlt_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
+ ./apps/tao_segmentation/ds-tao-segmentation -c configs/unet_tao/pgie_unet_tao_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
+ ./apps/tao_classifier/ds-tao-classifier -c configs/multi_task_tao/pgie_multi_task_tao_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
+ [SHOW_MASK=1] ./apps/tao_detection/ds-tao-detection  -c configs/frcnn_tao/pgie_frcnn_tao_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
 
  note:for PeopleSegNet, you need to set SHOW_MASK=1 if you need to display the instance mask
 ```
 
 ## Information for Customization
 
-If you want to do some customization, such as training your own TLT model, running the model in other DeepStream pipeline, you should read below sections.  
-### TLT Models
+If you want to do some customization, such as training your own TAO model, running the model in other DeepStream pipeline, you should read below sections.
+### TAO Models
 
-To download the sample models that we have trained with [NVIDIA Transfer Learning Toolkit(TLT) SDK](https://developer.nvidia.com/transfer-learning-toolkit) , run `wget https://nvidia.box.com/shared/static/i1cer4s3ox4v8svbfkuj5js8yqm3yazo.zip -O models.zip`
+To download the sample models that we have trained with [NVIDIA TAO Toolkit SDK](https://developer.nvidia.com/tao-toolkit) , run `wget https://nvidia.box.com/shared/static/i1cer4s3ox4v8svbfkuj5js8yqm3yazo.zip -O models.zip`
 
-Refer [TLT Doc](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/index.html) for how to train the models, after training finishes, run `tlt-export` to generate an `.etlt` model. This .etlt model can be deployed into DeepStream for fast inference as this sample shows. 
-This DeepStream sample app also supports the TensorRT engine(plan) file generated by running the `tlt-converter` tool on the `.etlt` model.  
+Refer [TAO Doc](https://docs.nvidia.com/tao/tao-toolkit/text/overview.html) for how to train the models, after training finishes, run `tao-export` to generate an `.etlt` model. This .etlt model can be deployed into DeepStream for fast inference as this sample shows.
+This DeepStream sample app also supports the TensorRT engine(plan) file generated by running the `tao-converter` tool on the `.etlt` model.
 The TensorRT engine file is hardware dependent, while the `.etlt` model is not. You may specify either a TensorRT engine file or a `.etlt` model in the DeepStream configuration file.
 
-Note, for Unet/peopleSemSegNet/yolov3/yolov4 model, you must convert the etlt model to TensorRT engine file using `tlt-convert` like following if you are using DS5.x:
+Note, for Unet/peopleSemSegNet/yolov3/yolov4 model, you must convert the etlt model to TensorRT engine file using `tao-convert` like following if you are using DS5.x:
 
 ```
-tlt-converter -e models/unet/unet_resnet18.etlt_b1_gpu0_fp16.engine -p input_1,1x3x608x960,1x3x608x960,1x3x608x960 -t fp16 -k tlt_encode -m 1 tlt_encode models/unet/unet_resnet18.etlt
+tao-converter -e models/unet/unet_resnet18.etlt_b1_gpu0_fp16.engine -p input_1,1x3x608x960,1x3x608x960,1x3x608x960 -t fp16 -k tlt_encode -m 1 tlt_encode models/unet/unet_resnet18.etlt
 ```
 ### Label Files
 
 The label file includes the list of class names for a model, which content varies for different models.  
-User can find the detailed label information for the MODEL in the README.md and the label file under *configs/$(MODEL)_tlt/*, e.g. ssd label informantion under *configs/ssd_tlt/*  
+User can find the detailed label information for the MODEL in the README.md and the label file under *configs/$(MODEL)_tao/*, e.g. ssd label informantion under *configs/ssd_tao/*
   
 Note, for some models like FasterRCNN, DON'T forget to include "background" lable and change num-detected-classes in pgie configure file accordingly 
 
 ### DeepStream configuration file
 
 The DeepStream configuration file includes some runtime parameters for DeepStream **nvinfer** plugin, such as model path, label file path, TensorRT inference precision, input and output node names, input dimensions and so on.  
-In this sample, each model has its own DeepStream configuration file, e.g. pgie_dssd_tlt_config.txt for DSSD model.
+In this sample, each model has its own DeepStream configuration file, e.g. pgie_dssd_tao_config.txt for DSSD model.
 Please refer to [DeepStream Development Guide](https://docs.nvidia.com/metropolis/deepstream/dev-guide/index.html#page/DeepStream_Development_Guide%2Fdeepstream_app_config.3.2.html) for detailed explanations of those parameters.
 
 ### Model Outputs
@@ -172,7 +172,7 @@ The model has the following two outputs:
 - **softmax_1**: A [batchSize, H, W, C] tensor containing the scores for each class
 
 #### 10. multi_task
-- refer detailed [README](./configs/multi_task_tlt/README.md) for how to configure and run the model
+- refer detailed [README](./configs/multi_task_tao/README.md) for how to configure and run the model
 ### TRT Plugins Requirements
 
 >- **FasterRCNN**: cropAndResizePlugin,  proposalPlugin
@@ -186,7 +186,7 @@ The model has the following two outputs:
 
 ```CQL
 # 1.  Build TensorRT Engine through this smample, for example, build YoloV3 with batch_size=2
-./ds-tlt -c pgie_yolov3_tlt_config.txt -i /opt/nvidia/deepstream/deepstream/samples/streams/sample_720p.h264 -b 2
+./ds-tao -c pgie_yolov3_tao_config.txt -i /opt/nvidia/deepstream/deepstream/samples/streams/sample_720p.h264 -b 2
 ## after this is done, it will generate the TRT engine file under models/$(MODEL), e.g. models/yolov3/ for above command.
 # 2. Measure the Inference Perf with trtexec, following above example
 cd models/yolov3/
@@ -197,11 +197,17 @@ trtexec --batch=2 --useSpinWait --loadEngine=yolo_resnet18.etlt_b2_gpu0_fp16.eng
 ### About misc folder
 
 ```CQL
-# The files in the folder are used by TLT 3.0 dev blogs:
-## 1.  Training State-Of-The-Art Models for Classification and Object Detection with NVIDIA Transfer Learning Toolkit
-## 2.  Real time vehicle license plate detection and recognition using NVIDIA Transfer Learning Toolkit
+# The files in the folder are used by TAO 3.0 dev blogs:
+## 1.  Training State-Of-The-Art Models for Classification and Object Detection with NVIDIA TAO Toolkit
+## 2.  Real time vehicle license plate detection and recognition using NVIDIA TAO Toolkit
 ```
+## Others Models
 
+There are some special models which are not exactly detector, classifier or segmetation. The sample application of these special models are put in apps/tao_others. These samples should run on DeepStream 6.0 or above versions. Please refer to apps/tao_others/README.md document for details.
+
+## Graph Composer Samples
+
+Some special models needs special deepstream pipeline for running. The deepstream sample graphs for them are put in graphs/tao_others. Please refer to graphs/README.md file for more details.
 
 ## Known issues
 

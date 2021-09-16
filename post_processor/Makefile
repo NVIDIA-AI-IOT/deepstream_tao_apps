@@ -40,8 +40,8 @@ LIBS+= -lnvinfer -lnvparsers -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcubl
 
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
-SRCFILES:= nvdsinfer_custombboxparser_tlt.cpp
-TARGET_LIB:= libnvds_infercustomparser_tlt.so
+SRCFILES:= nvdsinfer_custombboxparser_tao.cpp
+TARGET_LIB:= libnvds_infercustomparser_tao.so
 
 all: $(TARGET_LIB)
 

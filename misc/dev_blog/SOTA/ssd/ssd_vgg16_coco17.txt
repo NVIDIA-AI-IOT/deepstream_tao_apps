@@ -66,8 +66,8 @@ augmentation_config {
 }
 dataset_config {
   data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/coco2017/KITTI/train2017"
-    image_directory_path: "/workspace/tlt-experiments/data/coco2017/images/train2017"
+    label_directory_path: "/workspace/tao-experiments/data/coco2017/KITTI/train2017"
+    image_directory_path: "/workspace/tao-experiments/data/coco2017/images/train2017"
   }
   include_difficult_in_training: true 
   target_class_mapping {
@@ -391,7 +391,7 @@ dataset_config {
     value: "hairdrier"
   }
   validation_data_sources: {
-    label_directory_path: "/workspace/tlt-experiments/data/coco2017/KITTI/val2017"
-    image_directory_path: "/workspace/tlt-experiments/data/coco2017/images/val2017"
+    label_directory_path: "/workspace/tao-experiments/data/coco2017/KITTI/val2017"
+    image_directory_path: "/workspace/tao-experiments/data/coco2017/images/val2017"
   }
 }

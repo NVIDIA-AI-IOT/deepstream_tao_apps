@@ -1,0 +1,16 @@
+pafMapWidth=38
+pafMapHeight = 192
+pafMapChannels = 144
+heatMapWidth=19
+heatMapHeight=48
+heatMapChannels=36
+nmsWindowSize=7
+featUpsamplingFactor=4
+threshHeat=0.05
+threshVectorScore=0.05
+threshVectorCnt1=8
+threshPartCnt=4
+threshHumanScore=0.4
+batchSize=32
+##refer to enum ImageType in cv/core/Image.h
+imageType=8
