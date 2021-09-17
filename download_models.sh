@@ -28,15 +28,15 @@
 
 # For peopleSemSegNet:
 # wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_v1.0/zip \
-# -O tlt_peoplesemsegnet_deployable_v1.0.zip
+# -O peoplesemsegnet_deployable_v1.0.zip
 
 # For peopleSegNet V2:
 # wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v2.0/zip \
-# -O tlt_peoplesegnet_deployable_v2.0.zip
+# -O peoplesegnet_deployable_v2.0.zip
 
 # For old peopleSegNet:
 # wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v1.0/zip \
-# -O tlt_peoplesegnet_deployable_v1.0.zip
+# -O peoplesegnet_deployable_v1.0.zip
 
 echo "==================================================================="
 echo "begin download models for Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/"
@@ -83,7 +83,7 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/emotion
 cd ./models/emotion
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/emotionnet/versions/deployable_v1.0/files/model.etlt -O emotion.etlt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/emotionnet/versions/deployable_v1.0/files/model.etlt -O emotion.etlt
 
 echo "==================================================================="
 echo "begin downloading GazeNet model "
@@ -99,7 +99,7 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/heartrate
 cd ./models/heartrate
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/heartratenet/versions/deployable_v1.0/files/model.etlt -O heartrate.etlt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/heartratenet/versions/deployable_v1.0/files/model.etlt -O heartrate.etlt
 
 echo "==================================================================="
 echo "Download models successfully "

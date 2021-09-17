@@ -57,8 +57,6 @@ H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detec
 
   This is **ONLY** needed when running *SSD*, *DSSD*, *RetinaNet*, *YOLOV3* , *YOLOV4* and *PeopleSegNet* models because some TRT plugins such as BatchTilePlugin required by these models is not supported by TensorRT7.x native package.
 
-  Note:This is also needed for *YOLOV3* , *YOLOV4* if you are using TRT version(such as TRT7.1) before TRT7.2
-
 ## Download
 
 ### 1. Download Source Code with SSH or HTTPS

@@ -101,4 +101,3 @@ Device 0: "Tesla T4"
   CUDA Driver Version / Runtime Version          10.2 / 10.2
   CUDA Capability Major/Minor version number:    7.5
 ```
-

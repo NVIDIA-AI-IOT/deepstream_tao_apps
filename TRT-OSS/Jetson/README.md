@@ -76,4 +76,3 @@ sudo make
 | TX1 / NANO       | 53        |
 | TX2              | 62        |
 | (i)Xavier / NX   | 72        |
-
