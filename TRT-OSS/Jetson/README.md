@@ -26,7 +26,7 @@ cd cmake-3.19.4/
 mkdir $HOME/install
 ./configure --prefix=$HOME/install
 make -j$(nproc)
-sudo make install
+make install
 ```
 
 ### 2. Build TensorRT OSS Plugin
