@@ -7,7 +7,7 @@ Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT) 
  **libnvinfer_plugin.so.8.0.** provided in this folder was built with:
 
 > Ubuntu 18.04.3 LTS  
-> cuda-11.4  
+> cuda-11.4
 > cuDNN 8.2.1
 > TensorRT 8.0.1
 

@@ -10,49 +10,65 @@ This sample is to show the following TAO3.0 models runing with DeepStream
 
 ## Prerequisition
 
-* [DeepStream SDK 6.0 and above](https://developer.nvidia.com/deepstream-sdk-6.0-members-page)
+* [DeepStream SDK 6.0 GA and above](https://developer.nvidia.com/deepstream-sdk-6.0-members-page)
 
   Make sure deepstream-test1 sample can run successful to verify your DeepStream installation
 
-* [TAO3.0 models](https://docs.nvidia.com/metropolis/TAO/tao-user-guide/text/overview.html)
+* [TAO3.0 models](https://docs.nvidia.com/tao/tao-toolkit/text/overview.html)
 
   Nvidia has provides all the trainable models in NGC.
   The models used in the sample application are pre-trained models provided by TAO3.0:
 
 | Model name | NGC link  | Version |
 |------------|-----------|---------|
-| FaceDetect |[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:facenet)|deployable_v1.0|
-| Facial Landmarks Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:fpenet)|deployable_v1.0|
+| FaceDetect |[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:facenet)|pruned_quantized_v2.0.1|
+| Facial Landmarks Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:fpenet)|deployable_v2.0|
 | EmotionNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:emotionnet)|deployable_v1.0|
 | Gaze Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:gazenet)|deployable_v1.0|
-| GestureNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:gesturenet)|deployable_v1.0|
+| GestureNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:gesturenet)|deployable_v2.0.1|
 | HeartRateNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:heartratenet)|deployable_v1.0|
+| BodyPoseNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet)|deployable_v1.0.1|
 
   The [Bodypose2D backbone](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet) can be trained and deployed with TAO3.0 tools.
   
   There is blog for introducing training and optimization for bodypose 2D estimation model:
   
- https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tao-toolkit-part-1 
+  https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tlt-part-1/
+
+* Download x86 or Jetson tao-converter which is compatible to your platform from the following links.
+
+| Platform   |  Compute                       |        Link                                              |
+|------------|--------------------------------|----------------------------------------------------------|
+|x86 + GPU   |CUDA 10.2/cuDNN 8.0/TensorRT 7.1|[link](https://developer.nvidia.com/cuda102-trt71)|
+|x86 + GPU   |CUDA 10.2/cuDNN 8.0/TensorRT 7.2|[link](https://developer.nvidia.com/cuda102-cudnn80-trt72-0)|
+|x86 + GPU   |CUDA 11.0/cuDNN 8.0/TensorRT 7.1|[link](https://developer.nvidia.com/cuda110-cudnn80-trt71-0)|
+|x86 + GPU   |CUDA 11.0/cuDNN 8.0/TensorRT 7.2|[link](https://developer.nvidia.com/cuda110-rt72)|
+|x86 + GPU   |CUDA 11.1/cuDNN 8.0/TensorRT 7.2.2|[link](https://developer.nvidia.com/cuda111-cudnn80-trt72-0)|
+|x86 + GPU   |CUDA 11.3/cuDNN 8.1/TensorRT 8.0|[link](https://developer.nvidia.com/tao-converter-80)|
+|Jetson      |JetPack 4.4                     |[link](https://developer.nvidia.com/cuda102-trt71-jp44-0)   |
+|Jetson      |JetPack 4.5                     |[link](https://developer.nvidia.com/cuda110-cudnn80-trt72-0)   |
+|Jetson      |JetPack 4.6                     |[link](https://developer.nvidia.com/jp46-20210820t231431z-001zip)   |
+|Clara AGX   |CUDA 11.1/CuDNN8.0.5/TensorRT7.2.2|[link](https://developer.nvidia.com/tao-converter)   |
 
 ## Download
 
 1. Download Project with HTTPS
 ```
-    git clone -b release/tao3.0 https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+    git clone -b release/tao3.0_ds6.0ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 2. Prepare Models and TensorRT engine
 
 There are pre-trained TAO models available in [NGC](https://ngc.nvidia.com/catalog/models) for faciallandmarks, emotion, gesture, gaze and heart rate.
 
-Please run the following script to download pre-trained models: 
+Please run the following script to download pre-trained models and generate GazeNet and Gesture engines with tao-converter tool: 
 
 ```
     cd deepstream_tao_apps
     chmod 755 download_models.sh
+    export TAO_CONVERTER=the file path of tao-converter
+    export MODEL_PRECISION=fp16
     ./download_models.sh
 ```
-To run the bodypose2D sample application, the bodypose2D trainable model should be trained with TAO3.0 tool. 
-The trained bodypose2D model can be put in ./models/bodypose2d directory
 
 ## Build and Run
 Go into the application folder
@@ -62,7 +78,7 @@ Go into the application folder
 
 For dGPU
 ```
-    export CUDA_VER=11.1
+    export CUDA_VER=11.4
     make
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cvcore_libs
 ```
@@ -91,33 +107,34 @@ Start to run the 2D bodypose application
 ```
     cd deepstream-bodypose2d-app
     ./deepstream-bodypose2d-app [1:file sink|2:fakesink|3:display sink]  \
-     <bydypose2d model config file> <input uri> ... <input uri> <out filename>
+     <bodypose2d model config file> <input uri> ... <input uri> <out filename>
 ```
 Start to run the facial landmark application
 ```
     cd deepstream-faciallandmark-app
     ./deepstream-faciallandmark-app [1:file sink|2:fakesink|3:display sink]  \
-        <input uri> ... <input uri> <out filename>
+    <faciallandmark model config file> <input uri> ... <input uri> <out filename>
 ```
 Start to run the emotions application
 ```
     cd deepstream-emotion-app
     ./deepstream-emotion-app [1:file sink|2:fakesink|3:display sink]  \
-     <input uri> ... <input uri> <out filename>
+     <faciallandmark model config> <input uri> ... <input uri> <out filename>
 ```
 
 Start to run the gazenet application
 ```
     cd deepstream-gaze-app
     ./deepstream-gaze-app [1:file sink|2:fakesink|3:display sink]  \
-     <input uri> ... <input uri> <out filename>
+    <faciallandmark model config> <input uri> ... <input uri> <out filename>
 ```
 
 Start to run the gesture application
 ```
     cd deepstream-gesture-app
     ./deepstream-gesture-app [1:file sink|2:fakesink|3:display sink]  \
-     <bydypose2d model config file> <input uri> ... <input uri> <out filename>
+     [1:right hand|2:left hand|3:both hands] <bodypose2d model config file> \
+     <input uri> ... <input uri> <out filename>
 ```
 
 Start to run the heartrate application
@@ -133,15 +150,15 @@ A sample of 2D bodypose:
 
 A sample of facial landmark:
 
-`./deepstream-faciallandmark-app 1 file:///usr/data/faciallandmarks_test.jpg ./landmarkout`
+`./deepstream-faciallandmark-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./landmarkout`
 
 A sample of emotions:
 
-`./deepstream-emotion-app 1 file:///usr/data/faciallandmarks_test.jpg ./emotion`
+`./deepstream-emotion-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./emotion`
 
 A sample of gazenet:
 
-`./deepstream-gaze-app 1 file:///usr/data/faciallandmarks_test.jpg ./gazenet`
+`./deepstream-gaze-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./gazenet`
 
 A sample of gesture:
 
@@ -157,3 +174,4 @@ The GazeNet and HeartRateNet models are all multiple input layers models. DeepSt
 
 Another workaround is to generate the engines outside the applications. The 'download_models.sh' script will download the GazeNet and HeartRateNet models. Please refer to the TAO tao-converter tool document: https://docs.nvidia.com/tao/tao-user-guide/text/tensorrt.html
 
+Current bodypose2d model does not support INT8 with TensorRT 8.x, only FP16 and FP32 works.

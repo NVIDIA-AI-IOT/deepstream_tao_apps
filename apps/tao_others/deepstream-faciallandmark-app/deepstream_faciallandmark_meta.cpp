@@ -61,12 +61,12 @@ void nvds_release_facemark_meta (gpointer data,  gpointer user_data)
 extern "C"
 gboolean nvds_add_facemark_meta (NvDsBatchMeta *batch_meta, NvDsObjectMeta
         *obj_meta, cvcore::ArrayN<cvcore::Vector2f, 
-        cvcore::faciallandmarks::FacialLandmarks::NUM_FACIAL_LANDMARKS>
+        cvcore::faciallandmarks::FacialLandmarks::MAX_NUM_FACIAL_LANDMARKS>
         &marks, float *confidence)
 {
     NvDsUserMeta *user_meta = NULL;
     user_meta = nvds_acquire_user_meta_from_pool (batch_meta);
-    NvDsMetaType user_meta_type = (NvDsMetaType) NVDS_USER_JARVIS_META_FACEMARK;
+    NvDsMetaType user_meta_type = (NvDsMetaType) NVDS_USER_RIVA_META_FACEMARK;
     NvDsFacePointsMetaData *p_facemark_meta_data = new NvDsFacePointsMetaData;
     
     int marks_num = marks.getSize();

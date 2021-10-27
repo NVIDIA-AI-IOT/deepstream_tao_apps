@@ -524,6 +524,31 @@ bool HeartRateAlgorithm::SetInitParams(DSCustom_CreateParams *params)
               GST_ERROR("build engine failed \n");
               return false;
           }
+	  if (access( engine_path.c_str(), F_OK ) == -1) {
+              // Still no named engine found, check the degradingn engines
+              if (EngineGenParam.networkMode == NvDsInferNetworkMode_INT8) {
+                  engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
+                       devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP16) + ".engine";
+                  if (access( engine_path.c_str(), F_OK ) == -1) {
+                      //Degrade again
+                      engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
+                       devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+                      if (access( engine_path.c_str(), F_OK ) == -1) {
+                          //failed
+                          GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+                          return false;
+                      }
+                  }
+              } else if (EngineGenParam.networkMode == NvDsInferNetworkMode_FP16) {
+                  engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
+                       devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+                  if (access( engine_path.c_str(), F_OK ) == -1) {
+                      //failed
+                      GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+                      return false;
+                  }
+              }
+          }
       }
   }
 

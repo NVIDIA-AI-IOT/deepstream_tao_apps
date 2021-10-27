@@ -1,16 +1,15 @@
 ## Description
 The emotion deepstream sample application identify human emotion based on the facial landmarks. Current sample application can identify five emotions as neutral, happy, surprise, squint, disgust and scream.
 
-The TAO3.0 pretrained models used in the sample application are:
+The TAO 3.0 pretrained models used in the sample application are:
+
 * [Facial Landmarks Estimation](https://ngc.nvidia.com/catalog/models/nvidia:tao:fpenet)
 * [FaceNet](https://ngc.nvidia.com/catalog/models/nvidia:tao:facenet)
 * [EmotionNet](https://ngc.nvidia.com/catalog/models/nvidia:tao:emotionnet)
 
 ## Prerequisition
 
-* DeepStream SDK 6.0 and above
-
-  Current DeepStream 6.0 EA version is available in https://developer.nvidia.com/deepstream-sdk-6.0-members-page for specific users.
+* DeepStream SDK 6.0 GA and above
 
 ## Application Pipeline
 The application pipeline graph
@@ -39,7 +38,7 @@ export CUDA_VER=10.2
 
 For dGPU
 ```
-export CUDA_VER=11.1
+export CUDA_VER=11.4
 ```
 Build the nvvideotemplate library and the application and run to inference one picture.
 ```
@@ -48,5 +47,5 @@ make
 cd ../
 make
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cvcore_libs
-./deepstream-emotion-app 2 file:///usr/data/faciallandmarks_test.jpg ./landmarks
+./deepstream-emotion-app 2 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./landmarks
 ```

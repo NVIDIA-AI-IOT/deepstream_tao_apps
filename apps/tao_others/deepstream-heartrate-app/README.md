@@ -2,17 +2,18 @@
 The HeartRate deepstream sample application measures a person's heart rate with the face information. 
 
 The TAO 3.0 pretrained models used in this sample application:
+
 * [FaceNet](https://ngc.nvidia.com/catalog/models/nvidia:tao:facenet)
 * [HeartRateNet](https://ngc.nvidia.com/catalog/models/nvidia:tao:heartratenet)
 
 ## Prerequisition
 
-* DeepStream SDK 6.0 and above
+* DeepStream SDK 6.0 GA and above
 
-  Current DeepStream 6.0 EA version is available in https://developer.nvidia.com/deepstream-sdk-6.0-members-page for specific users.
 * gst-nvdsvideotemplate plugin
 
   Since the HeartRateNet is a multi-input network, the gst-nvinfer plugin can not support HeartRateNet inferencing.
+
   The gst-nvdsvideotemplate plugin is used in this sample to do the HeartRAteNet inference. The libnvds_heartrateinfer.so is the customized library for gst-nvdsvideotemplate to infer the batched iamges with the Nvidia proprietary inference library.
 
 ## Application Pipeline
@@ -38,7 +39,7 @@ rm -rf ~/.cache/gstreamer-1.0/
 
 For dGPU
 ```
-export CUDA_VER=11.1
+export CUDA_VER=11.4
 ```
 
 Build the applications and run to inference one video.
@@ -68,6 +69,6 @@ The pretrained model is trained with limited face images. There are some require
    Roll: -45 to 45 degrees
 
 ## Known Issue
-The HeartRateNet is a multiple input layers model. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the HeartRateNet sample application without engine, they will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, they will work.
+The HeartRateNet is a multiple input layers model. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the HeartRateNet sample application without engine, it will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, it will work.
 
-Another workaround is to generate the engines outside the applications. Please refer to the TAO tao-converter tool document: https://docs.nvidia.com/tao/tao-user-guide/text/tensorrt.html
+Another workaround is to generate the engines outside the applications. The 'download_models.sh' script will download the HeartRateNet model. Please refer to the TLT tao-converter tool document: https://developer.nvidia.com/tao-toolkit-get-started

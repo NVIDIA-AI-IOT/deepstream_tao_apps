@@ -517,12 +517,36 @@ bool GazeAlgorithm::SetInitParams(DSCustom_CreateParams *params)
                   GST_ERROR("build engine failed \n");
                   return false;
               }
+	      if (access( engine_path.c_str(), F_OK ) == -1) {
+                  // Still no named engine found, check the degradingn engines
+                  if(EngineGenParam.networkMode == NvDsInferNetworkMode_INT8) {
+                      engine_path = etlt_path +  "_b" + std::to_string(cvcore::gazenet::defaultModelInputParams.maxBatchSize) + "_" +
+                           devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP16) + ".engine";
+                      if (access( engine_path.c_str(), F_OK ) == -1) {
+                          //Degrade again
+                          engine_path = etlt_path +  "_b" + std::to_string(cvcore::gazenet::defaultModelInputParams.maxBatchSize) + "_" +
+                           devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+                          if (access( engine_path.c_str(), F_OK ) == -1) {
+                              //failed
+                              GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+                              return false;
+                          }
+                      }
+                  } else if (EngineGenParam.networkMode == NvDsInferNetworkMode_FP16) {
+                      engine_path = etlt_path +  "_b" + std::to_string(cvcore::gazenet::defaultModelInputParams.maxBatchSize) + "_" +
+                           devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+                      if (access( engine_path.c_str(), F_OK ) == -1) {
+                          //failed
+                          GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+                          return false;
+                      }
+                  }
+              }
           }
       }
 
       GazeInferenceParams.engineFilePath = engine_path;
     
-      g_print("Gaze model config file: %s\n",GazeInferenceParams.engineFilePath.c_str());
   }
 
   std::unique_ptr<cvcore::gazenet::GazeNet> objGaze(new 
@@ -808,7 +832,7 @@ void GazeAlgorithm::OutputThread(void)
               l_user != NULL; l_user = l_user->next) {
               NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
               if(user_meta->base_meta.meta_type ==
-                (NvDsMetaType)NVDS_USER_JARVIS_META_FACEMARK) {
+                (NvDsMetaType)NVDS_USER_RIVA_META_FACEMARK) {
                   NvDsFacePointsMetaData *facepoints_meta =
                     (NvDsFacePointsMetaData *)user_meta->user_meta_data;
                   if (!facepoints_meta)

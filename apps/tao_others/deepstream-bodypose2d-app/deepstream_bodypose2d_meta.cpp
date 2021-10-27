@@ -53,13 +53,13 @@ void nvds_release_2dpose_meta (gpointer data,  gpointer user_data)
 extern "C"
 gboolean nvds_add_2dpose_meta (NvDsBatchMeta *batch_meta,
     NvDsObjectMeta *obj_meta, cvcore::bodypose2d::Human human,
-    int frame_width, int frame_height)
+    int frame_width, int frame_height, float left_offset, float top_offset)
 {
     int parts_num = human.body_parts.size();
     
     NvDsUserMeta *user_meta = NULL;
     user_meta = nvds_acquire_user_meta_from_pool (batch_meta);
-    NvDsMetaType user_meta_type = (NvDsMetaType) NVDS_USER_JARVIS_META_2DPOSE;
+    NvDsMetaType user_meta_type = (NvDsMetaType) NVDS_USER_RIVA_META_2DPOSE;
     NvDs2DposeMetaData *p_2dpose_meta_data = new NvDs2DposeMetaData;
 
     for ( int n = 0; n < parts_num; n++ )
@@ -67,21 +67,20 @@ gboolean nvds_add_2dpose_meta (NvDsBatchMeta *batch_meta,
         if (n >= BODYPART_TOTAL_NUM)
           break;
         cvcore::bodypose2d::BodyPart body_part = human.body_parts[n];
- 
-        if (body_part.loc.x < 0) {
+        if (body_part.loc.x < left_offset) {
             p_2dpose_meta_data->bodypart_locs[n].x = 0;
-        } else if (body_part.loc.x > (frame_width-1)) {
+        } else if (body_part.loc.x > (frame_width-1+left_offset)) {
             p_2dpose_meta_data->bodypart_locs[n].x = frame_width-1;
         } else {
-            p_2dpose_meta_data->bodypart_locs[n].x = body_part.loc.x;
+            p_2dpose_meta_data->bodypart_locs[n].x = body_part.loc.x - left_offset;
         }
 
-        if (body_part.loc.y < 0) {
+        if (body_part.loc.y < top_offset) {
             p_2dpose_meta_data->bodypart_locs[n].y = 0;
-        } else if(body_part.loc.y > (frame_height-1)) {
+        } else if(body_part.loc.y > (frame_height-1+top_offset)) {
             p_2dpose_meta_data->bodypart_locs[n].y = frame_height-1;
         } else {
-            p_2dpose_meta_data->bodypart_locs[n].y = body_part.loc.y;
+            p_2dpose_meta_data->bodypart_locs[n].y = body_part.loc.y - top_offset;
         }
 
         p_2dpose_meta_data->bodypart_locs[n].part_idx =

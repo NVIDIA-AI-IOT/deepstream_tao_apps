@@ -32,7 +32,7 @@ extern "C"
 {
 #endif
 
-#define NVDS_USER_JARVIS_META_GAZE (nvds_get_user_meta_type((gchar*)"NVIDIA.JARVIS.USER_META_GAZE"))
+#define NVDS_USER_RIVA_META_GAZE (nvds_get_user_meta_type((gchar*)"NVIDIA.RIVA.USER_META_GAZE"))
 
 typedef struct
 {
