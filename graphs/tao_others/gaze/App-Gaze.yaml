@@ -1,4 +1,4 @@
-##############################################################################
+#############################################################################
 # The MIT License (MIT)
 #
 # Copyright (c) 2021 NVIDIA CORPORATION
@@ -24,34 +24,34 @@
 dependencies:
 - extension: NvDsSourceExt
   uuid: a632d022-3425-4848-9074-e6483ef74366
-  version: 0.0.4
+  version: 0.0.6
 - extension: NvDsBaseExt
   uuid: 56d7e3ec-62c6-4652-bcc8-4f1c3b00df03
-  version: 0.0.1
+  version: 0.0.4
 - extension: NvDsMuxDemuxExt
   uuid: 89b8398c-5820-4051-835c-a91f2d49766b
-  version: 0.0.1
+  version: 0.0.4
 - extension: NvDsInferenceExt
   uuid: 0b02963e-c24e-4c13-ace0-c4cdf36c7c71
-  version: 0.0.1
+  version: 0.0.4
 - extension: NvDsFacialLandmarks
   uuid: 78969c67-6287-44b0-83bf-afe920eb4874
-  version: 0.0.1
+  version: 0.0.4
 - extension: NvDsVisualizationExt
   uuid: 25903cd4-fc5c-4139-987b-47bb27e8b424
-  version: 0.0.1
+  version: 0.0.3
 - extension: NvDsInferenceUtilsExt
   uuid: 27856a43-5ad4-4d8e-be36-0ec2cf9bbb58
-  version: 0.0.2
+  version: 0.0.5
 - extension: NvDsOutputSinkExt
   uuid: 3fc9ad87-03e7-47a8-bbfc-8501c3f7ff2f
-  version: 0.0.1
+  version: 0.0.3
 - extension: NvDsTemplateExt
   uuid: 845a7fd3-51e8-4076-b3d9-e2974880925e
-  version: 0.0.1
-- extension: NvDsEmotionExt
-  uuid: 790289c2-915d-4cb4-b3dd-ae0c2052d5ac
-  version: 0.0.1
+  version: 0.0.3
+- extension: NvDsGazeExt
+  uuid: e7eaff36-de8b-329c-aad0-0952ddfc96b8
+  version: 0.0.4
 ---
 components:
 - name: nv_ds_multi_src_input15..a160
@@ -266,7 +266,7 @@ ui_property: {}
 components:
 - name: nv_ds_file_out6..6be0
   parameters:
-    output-file: emotion-out.mp4
+    output-file: gaze.mp4
     video-in: nv_ds_static_input7..37f0
   type: nvidia::deepstream::NvDsFileOut
 - name: nv_ds_static_input7..37f0
@@ -292,16 +292,14 @@ components:
   parameters:
     video-in: nv_ds_static_input1..4710
     video-out: nv_ds_static_output2..4b70
-    video-template-config: nv_ds_emotion_template_lib3..7b38
+    video-template-config: nv_ds_gaze_template_lib3..8ef0
   type: nvidia::deepstream::NvDsVideoTemplate
 - name: nv_ds_static_input1..4710
   type: nvidia::deepstream::NvDsStaticInput
 - name: nv_ds_static_output2..4b70
   type: nvidia::deepstream::NvDsStaticOutput
-- name: nv_ds_emotion_template_lib3..7b38
-  parameters:
-    config-file: sample_emotion_model_config.txt
-  type: nvidia::Emotion::NvDsEmotionTemplateLib
+- name: nv_ds_gaze_template_lib3..8ef0
+  type: nvidia::Gaze::NvDsGazeTemplateLib
 name: NvDsVideoTemplate..75f8
 ui_property:
   position:

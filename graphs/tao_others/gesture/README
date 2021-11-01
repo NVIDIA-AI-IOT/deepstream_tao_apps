@@ -21,37 +21,42 @@
 #CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 This sample builds on top of the "deepstream-test1" graph to demonstrate how to
-use NvDsVideoTemplate related extensions.
+use NvDsGesture related extensions.
 
-The graph contains additional "NvDsVideoTemplate" and "NvDsHeartRateTemplateLib"
-components required to estimate human heart rate.
+The graph contains additional "NvDsGesture" extension which include (PreProcess),
+it will reshape the bbox of the detected hand from NvDsBodyPose2D for the input of NvDsGesture inferencing.
 
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.0 (https://developer.nvidia.com/deepstream-sdk-6.0-early-access)
-- Graph-Composer 0.5.0 (https://developer.nvidia.com/deepstream-sdk-6.0-early-access)
+- DeepStreamSDK 6.0
+- Graph-Composer 1.0.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
 
 ================================================================================
-Download models for heartrate
+Download models for bodypose2d
 ================================================================================
-1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/heartrate
-2. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_heartratenet/versions/deployable_v1.0/files/model.etlt \
-    -O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/heartrate/heartrate.etlt
+1. Prepare bodypose2d model according to bodypose2d/README
+2. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/gesture/
+3. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/model.etlt \
+  -O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/gesture/gesture_v2.etlt
+4. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/int8_calibration.txt \
+  -O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/gesture/cal_v2.txt
 
-Refer https://github.com/NVIDIA-AI-IOT/deepstream_tlt_apps/tree/release/tlt3.0/apps/tlt_others#readme
-for more info.
+Refer https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao3.0/apps/tao_others#readme for more info
 
 ================================================================================
 Running the graph
 ================================================================================
 $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.0/lib/cvcore_libs/
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/facenet
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/heartrate
-$ /opt/nvidia/graph-composer/execute_graph.sh App-Heartrate.yaml App-Heartrate.parameters.yaml
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/bodypose2d
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/gesture
+For x86_64 platform
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Gesture.yaml App-Gesture.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_x86_64.yaml
+For jetson
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Gesture.yaml App-Gesture.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_aarch64.yaml
 
-NOTE: App-Heartrate.yaml is the main graph file describing the DeepStream
+NOTE: App-Gesture.yaml is the main graph file describing the DeepStream
 graph(pipeline) along with the configuration parameters for the components in the
-graph. App-Heartrate.parameters.yaml can be used to override these parameter values.
+graph. App-Gesture.parameters.yaml can be used to override these parameter values.

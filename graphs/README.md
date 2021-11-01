@@ -2,8 +2,8 @@
 These deepstream sample graphs are based on Graph Composer tools and the DeepStream set of extensions.
  
 ## Prerequisition
-* The DeepStream SDK 6.0 EA or above
-* Graph Composer 0.5 or above
+* The DeepStream SDK 6.0 or above
+* Graph Composer 1.0.0 or above
 
 Please refer to DeepStream SDK 6.0 document for details
 
@@ -16,3 +16,4 @@ The samples use the following TLT models:
 * Gaze Estimation
 * Emotion Classification
 * HeartRate Estimation
+* GestureNet

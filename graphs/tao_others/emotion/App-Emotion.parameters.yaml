@@ -1,4 +1,4 @@
-##############################################################################
+###############################################################################
 # The MIT License (MIT)
 #
 # Copyright (c) 2021 NVIDIA CORPORATION
@@ -20,7 +20,6 @@
 #IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
-
 components:
 - name: nv_ds_multi_src_input15..a160
   parameters:
