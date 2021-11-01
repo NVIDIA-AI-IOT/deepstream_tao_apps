@@ -32,7 +32,7 @@ extern "C"
 {
 #endif
 
-#define NVDS_USER_JARVIS_META_2DPOSE (nvds_get_user_meta_type((gchar*)"NVIDIA.JARVIS.USER_META_2DPOSE"))
+#define NVDS_USER_RIVA_META_2DPOSE (nvds_get_user_meta_type((gchar*)"NVIDIA.RIVA.USER_META_2DPOSE"))
 #define BODYPART_TOTAL_NUM 18
 
 typedef struct
@@ -51,7 +51,7 @@ typedef struct
 }NvDs2DposeMetaData;
 
 gboolean nvds_add_2dpose_meta (NvDsBatchMeta *batch_meta, NvDsObjectMeta *obj_meta, cvcore::bodypose2d::Human human,
-         int frame_width, int frame_height);
+         int frame_width, int frame_height, float left_offset, float top_offset);
 
 #ifdef __cplusplus
 }

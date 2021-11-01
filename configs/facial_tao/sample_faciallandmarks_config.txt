@@ -1,0 +1,4 @@
+numLandmarks=80
+maxBatchSize=32
+inputLayerWidth=80
+inputLayerHeight=80

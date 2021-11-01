@@ -42,9 +42,9 @@ endif
 INCS:= $(wildcard *.h)
 
 ifeq ($(TARGET_DEVICE),aarch64)
-	PKGS:= gstreamer-1.0 opencv4
+	PKGS:= gstreamer-1.0
 else
-	PKGS:= gstreamer-1.0 opencv
+	PKGS:= gstreamer-1.0
 endif
 
 OBJS:= deepstream_gaze_app.o deepstream_faciallandmark_meta.o

@@ -29,29 +29,32 @@ components required to identify human emotions.
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.0 (https://developer.nvidia.com/deepstream-sdk-6.0-early-access)
-- Graph-Composer 0.5.0 (https://developer.nvidia.com/deepstream-sdk-6.0-early-access)
+- DeepStreamSDK 6.0
+- Graph-Composer 1.0.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
 
 ================================================================================
 Download models for emotion
 ================================================================================
-1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/emotion/
-2. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tlt_emotionnet/versions/deployable_v1.0/files/model.etlt \
-    -O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/emotion/emotion.etlt
+1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/emotion/
+2. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/emotionnet/versions/deployable_v1.0/files/model.etlt \
+    -O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/emotion/emotion.etlt
 
-Refer https://github.com/NVIDIA-AI-IOT/deepstream_tlt_apps/tree/release/tlt3.0/apps/tlt_others#readme
+Refer https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao3.0/apps/tao_others#readme
 for more info
 
 ================================================================================
 Running the graph
 ================================================================================
 $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.0/lib/cvcore_libs/
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/faciallandmarks/
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/facenet
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/emotion
-$ /opt/nvidia/graph-composer/execute_graph.sh App-Emotion.yaml App-Emotion.parameters.yaml
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/faciallandmarks/
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/facenet
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/emotion
+For x86_64 platform
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Emotion.yaml App-Emotion.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/target_reference_graphs/common/target_x86_64.yaml
+For Jetson
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Emotion.yaml App-Emotion.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/target_reference_graphs/common/target_aarch64.yaml
 
 NOTE: App-Emotion.yaml is the main graph file describing the DeepStream
 graph(pipeline) along with the configuration parameters for the components in the

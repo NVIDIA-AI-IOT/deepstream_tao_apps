@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gmodule.h>
+#include <iostream>
 #include "gstnvdsmeta.h"
 #include "gst-nvmessage.h"
 #include "nvds_version.h"
@@ -38,27 +39,29 @@
 #include "cuda_runtime_api.h"
 #include "ds_bodypose2d_meta.h"
 #include "cv/core/Tensor.h"
+#include "cv/core/BBox.h"
 #include "nvbufsurface.h"
+#include "app_utils.h"
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 using namespace std;
 using std::string;
+
+namespace bp = cvcore::bodypose2d;
 
 #define MAX_DISPLAY_LEN 64
 
 #define MEASURE_ENABLE 1
 
 #define PGIE_CLASS_ID_PERSON 1
-
-#define PGIE_DETECTED_CLASS_NUM 4
+#define PGIE_CLASS_ID_HAND 2
 
 /* The muxer output resolution must be set if the input streams will be of
  * different resolution. The muxer will scale all the input frames to this
  * resolution. */
-#define MUXER_OUTPUT_WIDTH 640
-#define MUXER_OUTPUT_HEIGHT 480
+#define MUXER_OUTPUT_WIDTH 1280
+#define MUXER_OUTPUT_HEIGHT 720
 
 /* Muxer batch formation timeout, for e.g. 40 millisec. Should ideally be set
  * based on the fastest source's framerate. */
@@ -69,11 +72,17 @@ using std::string;
 #define GST_CAPS_FEATURES_NVMM "memory:NVMM"
 #define CONFIG_GPU_ID "gpu-id"
 
+#define NUM_COLORS 3
+const NvOSD_ColorParams color_params[NUM_COLORS] = {
+    {1, 0, 0, 1},
+    {1, 1, 0, 1},
+    {1, 0, 1, 1}
+};
+
 gint frame_number = 0;
 gint total_person_num = 0;
-/*
-  For the pre-trained default model
-   0 - nose
+
+/* 0 - nose
    1 - neck
    2 - right shoulder
    3 - right elbow
@@ -163,8 +172,29 @@ osd_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
         if (obj_meta->class_id == PGIE_CLASS_ID_PERSON)
           person_count++;
       }
-    }
+      for (NvDsMetaList *l_class = obj_meta->classifier_meta_list;
+        l_class != NULL; l_class = l_class->next) {
+        auto class_meta = (NvDsClassifierMeta *)(l_class->data);
+	    if (!class_meta)
+          continue;
+        gchar *temp = obj_meta->text_params.display_text;
+        if (class_meta->unique_component_id == 2) {
+          NvDsMetaList * l_label;
+          int label_i;
+          for ( label_i = 0, l_label = class_meta->label_info_list;
+            label_i < class_meta->num_labels && l_label; label_i++,
+            l_label = l_label->next) {
+	        auto label_info = (NvDsLabelInfo *)(l_label->data);
+	        if (label_info) {
+	          AppLogD ("gesture %s\n",label_info->result_label);
+	        }
+	      }
+        }
+      }
+	}
+
   }
+ 
 
   g_print ("Frame Number = %d Person Count = %d\n",
            frame_number, person_count);
@@ -261,6 +291,36 @@ tile_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
   return GST_PAD_PROBE_OK;
 }
 
+static inline bool
+ add_cvcoreBBox_to_ds_obj_meta(const cvcore::BBox &bbox, int class_id,
+     int component_id, NvDsObjectMeta *obj_meta, float left_offset, float top_offset) {
+  if(obj_meta == NULL) {
+    AppLogE("obj meta is null\n");
+    return false;
+  }
+
+  obj_meta->unique_component_id = component_id;
+  obj_meta->confidence = 1.0;
+  obj_meta->object_id = UNTRACKED_OBJECT_ID;
+  obj_meta->class_id = class_id;
+
+  NvOSD_RectParams & rect_params = obj_meta->rect_params;
+
+  /* Assign bounding box coordinates. */
+  rect_params.left = bbox.xmin - left_offset;
+  rect_params.top = bbox.ymin - top_offset;
+  rect_params.width = bbox.getWidth();
+  rect_params.height = bbox.getHeight();
+  /* Border of width 3. */
+  rect_params.border_width = 3;
+  rect_params.has_bg_color = 0;
+  rect_params.border_color = color_params[class_id % NUM_COLORS];
+  
+  AppLogD("x/y/w/h/class %f/%f/%f/%f/%d/\n", rect_params.left, rect_params.top,
+    rect_params.width, rect_params.height, class_id);
+  return true;
+}
+
 std::unique_ptr< cvcore::bodypose2d::BodyPose2DPostProcessor > body2Dposepost;
 
 /* This is the buffer probe function that we have registered on the src pad
@@ -276,6 +336,7 @@ pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
   GstMapInfo in_map_info;
   NvBufSurface *in_surf;
   int frame_width, frame_height;
+  int hand_index = *((int *)u_data);
 
   NvDsBatchMeta *batch_meta =
       gst_buffer_get_nvds_batch_meta (GST_BUFFER (info->data));
@@ -328,7 +389,7 @@ pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
         getDimsCHWFromDims(LayerDims, outputLayersInfo[i].inferDims);
         //Prepare CVCORE input layers
         if (strcmp(outputLayersInfo[i].layerName,
-            "conv2d_transpose_1/BiasAdd:0") == 0) {
+          "conv2d_transpose_1/BiasAdd:0") == 0) {
           //The layer of pafmap contains 112x160x38 float
           pafmap_data = (float *)meta->out_buf_ptrs_host[i];
           pafmap_w = LayerDims.w;
@@ -371,40 +432,148 @@ pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
 
       body2Dposepost->execute(output, tempPafmap, tempHeatmap,
           post_w, post_h);
-      
+
+      // hand boudning box parameters
+      cvcore::Array<cvcore::BBox> boundingBoxes(1, true);
+      boundingBoxes.setSize(1);
+
+      bp::HandBoundingBoxParams params = bp::defaultHandParams;
+      switch (hand_index){
+          case 1:
+          case 3:
+              params.handType = bp::HandType::RIGHT_HAND;
+	      params.wristIndex = 4;
+	      params.elbowIndex = 3;
+              break;
+          case 2:
+              params.handType = bp::HandType::LEFT_HAND;
+	      params.wristIndex = 7;
+	      params.elbowIndex = 6;
+              break;
+          default:
+              params.handType = bp::HandType::RIGHT_HAND;
+              break;
+      }
+
+      // Create hand bounding box object
+      std::unique_ptr<bp::HandBoundingBoxGenerator> handBoxPtr(
+          new bp::HandBoundingBoxGenerator(params));
+      std::unique_ptr<bp::HandBoundingBoxGenerator> handBoxPtr2;
+
+      /*When both hands are required, need another hand bbox generator*/
+      if (hand_index == 3) {
+          params.handType = bp::HandType::LEFT_HAND;
+	  params.wristIndex = 7;
+	  params.elbowIndex = 6;
+          std::unique_ptr<bp::HandBoundingBoxGenerator> lefthandBoxPtr(
+          new bp::HandBoundingBoxGenerator(params));
+          handBoxPtr2 = std::move(lefthandBoxPtr);
+      }
+
       int human_num = output[0].getSize();
 
       for (int i = 0; i < human_num; i++)
       {
-        NvDsObjectMeta *obj_meta = nvds_acquire_obj_meta_from_pool (batch_meta);
-        cvcore::bodypose2d::Human human;
-
-        human =  output[0][i];
-
-        obj_meta->unique_component_id = meta->unique_id;
-        obj_meta->confidence = 1.0;
-        obj_meta->object_id = UNTRACKED_OBJECT_ID;
-        obj_meta->class_id = PGIE_CLASS_ID_PERSON;
-
-        NvOSD_RectParams & rect_params = obj_meta->rect_params;
-
-        /* Assign bounding box coordinates. */
-        rect_params.left = human.boundingBox.xmin - left_offset;
-        rect_params.top = human.boundingBox.ymin - top_offset;
-        rect_params.width = human.boundingBox.xmax - human.boundingBox.xmin;
-        rect_params.height = human.boundingBox.ymax - human.boundingBox.ymin;
-        /* Border of width 3. */
-        rect_params.border_width = 3;
-        rect_params.has_bg_color = 0;
-        rect_params.border_color = (NvOSD_ColorParams) {1, 0, 0, 1};
-
+        NvDsObjectMeta *obj_meta_person = nvds_acquire_obj_meta_from_pool
+          (batch_meta);
+        if(!add_cvcoreBBox_to_ds_obj_meta(output[0][i].boundingBox,
+          PGIE_CLASS_ID_PERSON, meta->unique_id, obj_meta_person, left_offset, top_offset))
+          continue;
+        
         /*add user meta for 2dpose*/
-        if (!nvds_add_2dpose_meta (batch_meta, obj_meta, human, frame_width,
-          frame_height, left_offset, top_offset)) {
+        if (!nvds_add_2dpose_meta (batch_meta, obj_meta_person, output[0][i],
+          frame_width, frame_height, left_offset, top_offset)) {
           g_printerr ("Failed to get bbox from model output\n");
         }
 
-        nvds_add_obj_meta_to_frame (frame_meta, obj_meta, NULL);
+        nvds_add_obj_meta_to_frame (frame_meta, obj_meta_person, NULL);
+        // Returns i box is valid, user could discard the bbox if invalid
+        bool isValidBBox =
+            handBoxPtr->execute(boundingBoxes[0], output[0][i], frame_width,
+            frame_height);
+        
+        NvDsObjectMeta *obj_meta_hand = nvds_acquire_obj_meta_from_pool
+          (batch_meta);
+        if(!add_cvcoreBBox_to_ds_obj_meta(boundingBoxes[0],
+          PGIE_CLASS_ID_HAND, meta->unique_id, obj_meta_hand, left_offset, top_offset))
+          continue;
+        //store the person object so we know whose hand it is
+        *(reinterpret_cast<NvDsObjectMeta **>
+          (&obj_meta_hand->misc_obj_info[0])) = obj_meta_person;
+        nvds_add_obj_meta_to_frame (frame_meta, obj_meta_hand, NULL);
+
+        if (handBoxPtr2) {
+            isValidBBox =
+            handBoxPtr2->execute(boundingBoxes[0], output[0][i], frame_width,
+            frame_height);
+
+            obj_meta_hand = nvds_acquire_obj_meta_from_pool(batch_meta);
+            if(!add_cvcoreBBox_to_ds_obj_meta(boundingBoxes[0],
+                PGIE_CLASS_ID_HAND, meta->unique_id, obj_meta_hand, left_offset, top_offset))
+                continue;
+            //store the person object so we know whose hand it is
+            *(reinterpret_cast<NvDsObjectMeta **>
+               (&obj_meta_hand->misc_obj_info[0])) = obj_meta_person;
+            nvds_add_obj_meta_to_frame (frame_meta, obj_meta_hand, NULL);
+        }
+      }
+    }
+  }
+  return GST_PAD_PROBE_OK;
+}
+
+/* probe call back for preprocess for gestrure model
+ */
+
+static GstPadProbeReturn
+sgie_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
+{
+  GstMapInfo in_map_info;
+  NvBufSurface *in_surf;
+  int frame_width, frame_height;
+
+  NvDsBatchMeta *batch_meta =
+      gst_buffer_get_nvds_batch_meta (GST_BUFFER (info->data));
+
+  memset (&in_map_info, 0, sizeof (in_map_info));
+
+  /* Map the buffer contents and get the pointer to NvBufSurface. */
+  if (!gst_buffer_map (GST_BUFFER (info->data), &in_map_info, GST_MAP_READ)) {
+    g_printerr ("Failed to map GstBuffer\n");
+    return GST_PAD_PROBE_PASS;
+  }
+  in_surf = (NvBufSurface *) in_map_info.data;
+  gst_buffer_unmap(GST_BUFFER (info->data), &in_map_info);
+
+  /* Iterate each frame metadata in batch */
+  for (NvDsMetaList * l_frame = batch_meta->frame_meta_list; l_frame != NULL;
+      l_frame = l_frame->next) {
+    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
+    frame_width = in_surf->surfaceList[frame_meta->batch_id].width;
+    frame_height = in_surf->surfaceList[frame_meta->batch_id].height;
+
+    for (NvDsMetaList *l_obj = frame_meta->obj_meta_list; l_obj != NULL;
+          l_obj = l_obj->next) {
+      auto obj_meta = (NvDsObjectMeta *) (l_obj->data);
+      if (obj_meta->class_id == PGIE_CLASS_ID_HAND) {
+        NvOSD_RectParams & rect_params = obj_meta->rect_params;
+        cvcore::BBox bbox{rect_params.left, rect_params.top,
+          rect_params.left + rect_params.width, rect_params.top +
+            rect_params.height};
+        AppLogD("x1/y1/x2/y2 %d/%d/%d/%d/\n", bbox.xmin, bbox.ymin,
+            bbox.xmax, bbox.ymax);
+        if(bbox.isValid() && bbox.xmin <= frame_width && bbox.ymin <= frame_height) {
+          cvcore::BBox new_bbox = std::move(bbox.squarify({0, 0, frame_width,
+            frame_height}));
+          rect_params.left = new_bbox.xmin;
+          rect_params.top = new_bbox.ymin;
+          rect_params.width = new_bbox.getWidth();
+          rect_params.height = new_bbox.getHeight();
+          AppLogD("x/y/w/h/ %f/%f/%f/%f/\n", rect_params.left, rect_params.top,
+            rect_params.width, rect_params.height);
+        } else {
+          nvds_remove_obj_meta_from_frame(frame_meta, obj_meta);
+        }
       }
     }
   }
@@ -614,11 +783,11 @@ main (int argc, char *argv[])
 {
   GMainLoop *loop = NULL;
   GstElement *pipeline = NULL,*streammux = NULL, *sink = NULL, 
-             *primary_detector = NULL, *nvtile = NULL,
+             *primary_detector = NULL, *gesture = NULL, *nvtile = NULL,
              *nvvidconv = NULL, *nvosd = NULL, *nvvidconv1 = NULL,
              *outenc = NULL, *capfilt = NULL;
   GstElement *queue1 = NULL, *queue2 = NULL, *queue3 = NULL, *queue4 = NULL,
-             *queue5 = NULL, *queue6 = NULL;
+             *queue5 = NULL, *queue6 = NULL, *gesture_queue;
   DsSourceBinStruct source_struct[128];
 #ifdef PLATFORM_TEGRA
   GstElement *transform = NULL;
@@ -639,15 +808,18 @@ main (int argc, char *argv[])
   gchar *filename;
   ifstream fconfig;
   std::map<string, float> postprocess_params_list;
+  int hand_index = 0;
     
   /* Check input arguments */
-  if (argc < 5 || argc > 132 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
-      atoi(argv[1]) != 3)) {
+  if (argc < 6 || argc > 133 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
+      atoi(argv[1]) != 3) || (atoi(argv[2]) != 1 && atoi(argv[2]) != 2 &&
+      atoi(argv[2]) != 3)) {
     g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink] "
-      "<model configure file> "
+      "[1:right hand|2:left hand|3:both hands] <model configure file> "
       "<input file> ... <inputfile> <out H264 filename>\n", argv[0]);
     return -1;
   }
+  hand_index = atoi(argv[2]);
 
   /* Standard GStreamer initialization */
   gst_init (&argc, &argv);
@@ -673,10 +845,10 @@ main (int argc, char *argv[])
 
  
   /* Multiple source files */
-  for (src_cnt=0; src_cnt<(guint)argc-4; src_cnt++) {
+  for (src_cnt=0; src_cnt<(guint)argc-5; src_cnt++) {
     /* Source element for reading from the file */
     source_struct[src_cnt].index = src_cnt;
-    if (!create_source_bin (&(source_struct[src_cnt]), argv[src_cnt + 3]))
+    if (!create_source_bin (&(source_struct[src_cnt]), argv[src_cnt + 4]))
     {
       g_printerr ("Source bin could not be created. Exiting.\n");
       return -1;
@@ -711,6 +883,8 @@ main (int argc, char *argv[])
   /* Create three nvinfer instances for bodypose2d*/
   primary_detector = gst_element_factory_make ("nvinfer",
                        "primary-infer-engine1");
+  gesture = gst_element_factory_make ("nvinfer",
+                       "second-infer-engine");
 
   /* Use convertor to convert from NV12 to RGBA as required by nvosd */
   nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvid-converter");
@@ -731,10 +905,11 @@ main (int argc, char *argv[])
   queue4 = gst_element_factory_make ("queue", "queue4");
   queue5 = gst_element_factory_make ("queue", "queue5");
   queue6 = gst_element_factory_make ("queue", "queue6");
+  gesture_queue = gst_element_factory_make ("queue", "gesture_queue");
 
   if (atoi(argv[1]) == 1) {
-    if (g_strrstr (argv[3], ".jpg") || g_strrstr (argv[3], ".png")
-       || g_strrstr (argv[3], ".jpeg")) {
+    if (g_strrstr (argv[4], ".jpg") || g_strrstr (argv[4], ".png")
+       || g_strrstr (argv[4], ".jpeg")) {
         outenc = gst_element_factory_make ("jpegenc", "jpegenc");
         caps =
             gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
@@ -768,7 +943,7 @@ main (int argc, char *argv[])
     sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
   }
 
-  if (!primary_detector || !nvvidconv
+  if (!primary_detector || !gesture || !nvvidconv
       || !nvosd || !sink  || !capfilt ) {
     g_printerr ("One element could not be created. Exiting.\n");
     return -1;
@@ -787,6 +962,9 @@ main (int argc, char *argv[])
       "../../../configs/bodypose2d_tao/bodypose2d_pgie_config.txt",
       "unique-id", PRIMARY_DETECTOR_UID, NULL);
 
+  g_object_set (G_OBJECT (gesture), "config-file-path",
+      "../../../configs/gesture_tao/gesture_sgie_config.txt", NULL);
+  
   /* we add a bus message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
   bus_watch_id = gst_bus_add_watch (bus, bus_call, loop);
@@ -794,13 +972,11 @@ main (int argc, char *argv[])
 
   /* Set up the pipeline */
   /* we add all elements into the pipeline */
-  gst_bin_add_many (GST_BIN (pipeline), primary_detector, queue1, queue2, 
-      queue3, queue4, nvvidconv, nvosd, nvtile, sink,
-      NULL);
+  gst_bin_add_many (GST_BIN (pipeline), primary_detector, gesture, queue1,
+	  gesture_queue, queue2,queue3, queue4, nvvidconv, nvosd, nvtile, sink, NULL);
 
-  if (!gst_element_link_many (streammux, queue1, primary_detector, queue2,
-      nvtile, queue3, nvvidconv, queue4,
-        nvosd, NULL)) {
+  if (!gst_element_link_many (streammux, queue1, primary_detector, queue2, 
+    gesture, gesture_queue, nvtile, queue3, nvvidconv, queue4,nvosd, NULL)) {
     g_printerr ("Inferring and tracking elements link failure.\n");
     return -1;
   }
@@ -841,7 +1017,7 @@ main (int argc, char *argv[])
   }
 
   /* Read cvcore parameters from config file.*/
-  fconfig.open(argv[2]);
+  fconfig.open(argv[3]);
   if (!fconfig.is_open()) {
       g_print("The model config file open is failed!\n");
       return -1;
@@ -916,16 +1092,20 @@ main (int argc, char *argv[])
       postProcessParams.numJoints = (size_t)postprocess_params_list["numJoints"];
 
   for (int cnt=0; cnt < connect_table.size(); cnt++) {
-      if (connect_table[cnt].first <= postProcessParams.numJoints && connect_table[cnt].first >= 0
-           && connect_table[cnt].second <= postProcessParams.numJoints && connect_table[cnt].second >= 0) {
+      if (connect_table[cnt].first <= postProcessParams.numJoints &&
+          connect_table[cnt].first >= 0 &&
+          connect_table[cnt].second <= postProcessParams.numJoints &&
+          connect_table[cnt].second >= 0) {
           postProcessParams.jointEdges.push_back(connect_table[cnt]);
       } else {
           connect_table.erase(connect_table.begin() + cnt);
       }
   }
   for (int cnt=0; cnt < display_connect_table.size(); cnt++) {
-      if (display_connect_table[cnt].first > postProcessParams.numJoints || display_connect_table[cnt].first < 0
-           || display_connect_table[cnt].second > postProcessParams.numJoints || display_connect_table[cnt].second < 0) {
+      if (display_connect_table[cnt].first > postProcessParams.numJoints ||
+          display_connect_table[cnt].first < 0 ||
+          display_connect_table[cnt].second > postProcessParams.numJoints ||
+          display_connect_table[cnt].second < 0) {
           display_connect_table.erase(display_connect_table.begin() + cnt);
       }
   }
@@ -963,11 +1143,18 @@ main (int argc, char *argv[])
   if (!osd_sink_pad)
     g_print ("Unable to get nvinfer src pad\n");
   gst_pad_add_probe (osd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-      pgie_pad_buffer_probe, NULL, NULL);
+      pgie_pad_buffer_probe, &hand_index, NULL);
   gst_object_unref (osd_sink_pad);  
 
+  GstPad *sgie_sink_pad = gst_element_get_static_pad (gesture, "sink");
+  if (!sgie_sink_pad)
+    g_print ("Unable to get sgie sink pad\n");
+  gst_pad_add_probe (sgie_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
+      sgie_sink_pad_buffer_probe, NULL, NULL);
+  gst_object_unref (sgie_sink_pad);
+
   /* Set the pipeline to "playing" state */
-  g_print ("Now playing: %s\n", argv[3]);
+  g_print ("Now playing: %s\n", argv[4]);
   gst_element_set_state (pipeline, GST_STATE_PLAYING);
 
   /* Wait till pipeline encounters an error or EOS */

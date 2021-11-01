@@ -73,6 +73,8 @@ struct PacketInfo {
   guint frame_num;
 };
 
+std::map<size_t, string> emotionsList;
+
 static std::string get_absolute_path(std::string path) {
     if (path == "" || path[0] == '/') {
       /*Empty or Abs path, return as is. */
@@ -442,6 +444,14 @@ bool EmotionAlgorithm::SetInitParams(DSCustom_CreateParams *params)
                       EngineGenParam.networkMode = NvDsInferNetworkMode_FP32;
                   else if (param_strs[1] == "int8")
                       EngineGenParam.networkMode = NvDsInferNetworkMode_INT8;                      
+              } else if (param_strs[0] == "label") {
+                  std::vector<std::string> label_strs = split(param_strs[1], ",");
+                  if ( !(label_strs[0].empty())  && ! (label_strs[1].empty()) ) {
+                      std::istringstream index_str(label_strs[0]);
+                      size_t index;
+                      index_str >> index;
+                      emotionsList[index]=label_strs[1];
+                  }
               } else {
                   std::istringstream isStr(param_strs[1]);
                   isStr >> value;
@@ -483,6 +493,32 @@ bool EmotionAlgorithm::SetInitParams(DSCustom_CreateParams *params)
           if (!generate_trt_engine(InferCtxParams)) {
               GST_ERROR("build engine failed \n");
               return false;
+          }
+
+	      if (access( engine_path.c_str(), F_OK ) == -1) {
+              // Still no named engine found, check the degradingn engines
+              if(EngineGenParam.networkMode == NvDsInferNetworkMode_INT8) {
+                  engine_path = etlt_path +  "_b" + std::to_string(ModelInputParams.maxBatchSize) + "_" +
+                            devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP16) + ".engine";
+                  if (access( engine_path.c_str(), F_OK ) == -1) {
+                      //Degrade again
+                      engine_path = etlt_path +  "_b" + std::to_string(ModelInputParams.maxBatchSize) + "_" +
+                          devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+                      if (access( engine_path.c_str(), F_OK ) == -1) {
+                          //failed
+                          GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+                          return false;
+                      }
+                  }
+              } else if (EngineGenParam.networkMode == NvDsInferNetworkMode_FP16) {
+                  engine_path = etlt_path +  "_b" + std::to_string(ModelInputParams.maxBatchSize) + "_" +
+                      devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+                  if (access( engine_path.c_str(), F_OK ) == -1) {
+                      //failed
+                      GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+                      return false;
+                  }
+              }
           }
       }
   }
@@ -716,26 +752,17 @@ void EmotionAlgorithm::OutputThread(void)
           l_user != NULL; l_user = l_user->next) {
           NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
           if(user_meta->base_meta.meta_type ==
-            (NvDsMetaType)NVDS_USER_JARVIS_META_FACEMARK) {
-            /* cvcore::emotions::Emotions::EMOTIONS is the string group
-             * of emotions.
-             * {"neutral",
-             *  "happy",
-             *  "surprise",
-             *  "squint",
-             *  "disgust",
-             *  "scream" }
-             */
-            auto & emotionsList = cvcore::emotions::Emotions::EMOTIONS;
+            (NvDsMetaType)NVDS_USER_RIVA_META_FACEMARK) {
+
             NvDsFacePointsMetaData *facepoints_meta =
               (NvDsFacePointsMetaData *)user_meta->user_meta_data;
             cvcore::Array<cvcore::ArrayN<cvcore::Vector2f,
               cvcore::emotions::Emotions::NUM_FACIAL_LANDMARKS>> landmarks(1);
             landmarks.setSize(1);
             cvcore::Array<cvcore::ArrayN<float,
-              cvcore::emotions::Emotions::NUM_EMOTIONS>> results(1, true);
+              cvcore::emotions::Emotions::TOP_EMOTIONS>> results(1, true);
             results.setSize(1);
-            cvcore::Array<cvcore::emotions::Emotions::Category> topEmotions(1,true);
+            cvcore::Array<cvcore::ArrayN<std::size_t,cvcore::emotions::Emotions::TOP_EMOTIONS>> topEmotions(1,true);
             topEmotions.setSize(1);
             for(std::size_t j = 0; j < cvcore::emotions::Emotions::
               NUM_FACIAL_LANDMARKS; ++j){
@@ -746,13 +773,11 @@ void EmotionAlgorithm::OutputThread(void)
             /* The emotions model is a classifier, the classifier meta
              * can store the output labels */
             float confidence = 0.0;
-            for (int count=0; count < cvcore::emotions::Emotions::NUM_EMOTIONS;
-              count++){
+            for (int count=0; count < results[0].getSize(); count++){
               if(results[0][count] > confidence)
                 confidence = results[0][count];
             }
-            g_stpcpy(obj_meta->obj_label, emotionsList[static_cast<std::size_t>
-              (topEmotions[0])].c_str());
+            g_stpcpy(obj_meta->obj_label, emotionsList[topEmotions[0][0]].c_str());
             NvDsClassifierMeta *classifier_meta =
               nvds_acquire_classifier_meta_from_pool (batch_meta);
             NvDsLabelInfo *label_info =
@@ -761,12 +786,11 @@ void EmotionAlgorithm::OutputThread(void)
             label_info->result_class_id = 1;
             label_info->result_prob = confidence;
             g_strlcpy (label_info->result_label, emotionsList
-              [static_cast<std::size_t>(topEmotions[0])].c_str(),
+              [topEmotions[0][0]].c_str(),
               MAX_LABEL_SIZE);
             gchar *temp = obj_meta->text_params.display_text;
             obj_meta->text_params.display_text =
-              g_strconcat (temp, " ", emotionsList[static_cast<std::size_t>
-              (topEmotions[0])].c_str(), nullptr);
+              g_strconcat (temp, " ", emotionsList[topEmotions[0][0]].c_str(), nullptr);
             g_free (temp);
             nvds_add_classifier_meta_to_object (obj_meta, classifier_meta);
           }

@@ -32,8 +32,8 @@ extern "C"
 {
 #endif
 
-#define NVDS_USER_JARVIS_META_FACEMARK (nvds_get_user_meta_type((gchar*)"NVIDIA.JARVIS.USER_META_FACEMARK"))
-#define FACEMARK_TOTAL_NUM 80
+#define NVDS_USER_RIVA_META_FACEMARK (nvds_get_user_meta_type((gchar*)"NVIDIA.RIVA.USER_META_FACEMARK"))
+#define FACEMARK_TOTAL_NUM 200
 
 typedef struct{
     float x;
@@ -57,7 +57,7 @@ typedef struct
 }NvDsFacePointsMetaData;
 
 gboolean nvds_add_facemark_meta (NvDsBatchMeta *batch_meta, NvDsObjectMeta *obj_meta,
-         cvcore::ArrayN<cvcore::Vector2f, cvcore::faciallandmarks::FacialLandmarks::NUM_FACIAL_LANDMARKS> &marks,
+         cvcore::ArrayN<cvcore::Vector2f, cvcore::faciallandmarks::FacialLandmarks::MAX_NUM_FACIAL_LANDMARKS> &marks,
          float *confidence);
 
 #ifdef __cplusplus

@@ -53,7 +53,7 @@ gboolean nvds_add_gaze_meta (NvDsBatchMeta *batch_meta, NvDsObjectMeta *obj_meta
 {
     NvDsUserMeta *user_meta = NULL;
     user_meta = nvds_acquire_user_meta_from_pool (batch_meta);
-    NvDsMetaType user_meta_type = (NvDsMetaType) NVDS_USER_JARVIS_META_GAZE;
+    NvDsMetaType user_meta_type = (NvDsMetaType) NVDS_USER_RIVA_META_GAZE;
     NvDsGazeMetaData *p_gaze_meta_data = new NvDsGazeMetaData;
     
     int params_num = params.getSize();

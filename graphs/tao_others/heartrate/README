@@ -21,37 +21,40 @@
 #CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 This sample builds on top of the "deepstream-test1" graph to demonstrate how to
-use NvDsBodyPose2D related extensions.
+use NvDsVideoTemplate related extensions.
 
-The graph contains additional "NvDsBodyPose2D" extension which include (PostProcess),
-it will generate a NvDs2DposeMetaData user meta and attach it to person object.
+The graph contains additional "NvDsVideoTemplate" and "NvDsHeartRateTemplateLib"
+components required to estimate human heart rate.
 
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.0 (https://developer.nvidia.com/deepstream-sdk-6.0-early-access)
-- Graph-Composer 0.5.0 (https://developer.nvidia.com/deepstream-sdk-6.0-early-access)
+- DeepStreamSDK 6.0
+- Graph-Composer 1.0.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
 
 ================================================================================
-Download models for bodypose2d
+Download models for heartrate
 ================================================================================
-1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/bodypose2d/
-2. place the bodypose2d.etlt under above directory
+1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/heartrate
+2. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/heartratenet/versions/deployable_v1.0/files/model.etlt \
+    -O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/heartrate/heartrate.etlt
 
-please note we don't provide a bodypose2d pretrained model, you need to train your own bodypose2d model
-based on a backbone from https://ngc.nvidia.com/catalog/models/nvidia:tlt_bodyposenet
-, refer https://github.com/NVIDIA-AI-IOT/deepstream_tlt_apps/tree/release/tlt3.0/apps/tlt_others#readme
+Refer https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao3.0/apps/tao_others#readme
 for more info.
 
 ================================================================================
 Running the graph
 ================================================================================
 $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.0/lib/cvcore_libs/
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tlt_pretrained_models/bodypose2d
-$ /opt/nvidia/graph-composer/execute_graph.sh App-BodyPose2d.yaml App-BodyPose2d.parameters.yaml
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/facenet
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/heartrate
+For x86_64 platform
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Heartrate.yaml App-Heartrate.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_x86_64.yaml
+For Jetson
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Heartrate.yaml App-Heartrate.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_aarch64.yaml
 
-NOTE: App-BodyPose2d.yaml is the main graph file describing the DeepStream
+NOTE: App-Heartrate.yaml is the main graph file describing the DeepStream
 graph(pipeline) along with the configuration parameters for the components in the
-graph. App-BodyPose2d.parameters.yaml can be used to override these parameter values.
+graph. App-Heartrate.parameters.yaml can be used to override these parameter values.

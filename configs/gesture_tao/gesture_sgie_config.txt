@@ -48,31 +48,34 @@
 
 [property]
 gpu-id=0
-model-engine-file=../../models/bodypose2d/model.etlt_b32_gpu0_fp16.engine
-tlt-encoded-model=../../models/bodypose2d/model.etlt
+model-engine-file=../../models/gesture/gesture.etlt_b8_gpu0_int8.engine
+tlt-encoded-model=../../models/gesture/gesture.etlt
+int8-calib-file=../../models/gesture/int8_calibration.txt
+labelfile-path=./gesture_labels.txt
 tlt-model-key=nvidia_tlt
-int8-calib-file=../../models/bodypose2d/int8_calibration_288_384.txt
-network-input-order=1
-infer-dims=3;288;384
+#network-input-order=1
+infer-dims=3;160;160
 #dynamic batch size
-batch-size=32
+batch-size=8
 ## 0=FP32, 1=INT8, 2=FP16 mode
-network-mode=2
-num-detected-classes=1
-gie-unique-id=1
-output-blob-names=conv2d_transpose_1/BiasAdd:0;heatmap_out/BiasAdd:0
+network-mode=1
+gie-unique-id=2
+output-blob-names=activation_18
 #0=Detection 1=Classifier 2=Segmentation 100=other
-network-type=100
+network-type=1
+is-classifier=1
 # Enable tensor metadata output
-output-tensor-meta=1
+#output-tensor-meta=1
 #1-Primary  2-Secondary
-process-mode=1
+process-mode=2
 net-scale-factor=0.00390625
 offsets=128.0;128.0;128.0
 #0=RGB 1=BGR 2=GRAY
 model-color-format=0
 maintain-aspect-ratio=1
 symmetric-padding=1
+operate-on-gie-id=1
+operate-on-class-ids=2
 scaling-filter=1
 
 [class-attrs-all]

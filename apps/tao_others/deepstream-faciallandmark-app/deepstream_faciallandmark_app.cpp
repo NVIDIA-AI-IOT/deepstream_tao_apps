@@ -39,6 +39,13 @@
 #include "ds_facialmark_meta.h"
 #include "cv/core/Tensor.h"
 #include "nvbufsurface.h"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <map>
+
+using namespace std;
+using std::string;
 
 #define MAX_DISPLAY_LEN 64
 
@@ -71,6 +78,8 @@ gint total_face_num = 0;
 
 #define PRIMARY_DETECTOR_UID 1
 #define SECOND_DETECTOR_UID 2
+
+std::unique_ptr<cvcore::faciallandmarks::FacialLandmarksPostProcessor> facemarkpost;
 
 typedef struct _perf_measure{
   GstClockTime pre_time;
@@ -182,7 +191,7 @@ tile_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
           l_user != NULL; l_user = l_user->next) {
         NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
         if(user_meta->base_meta.meta_type ==
-            (NvDsMetaType)NVDS_USER_JARVIS_META_FACEMARK) {
+            (NvDsMetaType)NVDS_USER_RIVA_META_FACEMARK) {
           NvDsFacePointsMetaData *facepoints_meta =
               (NvDsFacePointsMetaData *)user_meta->user_meta_data;
           /*Get the face marks and mark with dots*/
@@ -334,10 +343,6 @@ pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
 static GstPadProbeReturn
 sgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
 {
-  std::unique_ptr<cvcore::faciallandmarks::FacialLandmarksPostProcessor>
-      facemarkpost(new cvcore::faciallandmarks::FacialLandmarksPostProcessor(
-        cvcore::faciallandmarks::defaultModelInputParams));
-
   NvDsBatchMeta *batch_meta =
       gst_buffer_get_nvds_batch_meta (GST_BUFFER (info->data));
 
@@ -387,7 +392,7 @@ sgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
         }
 
         cvcore::Tensor<cvcore::CL, cvcore::CX, cvcore::F32> tempheatmap(
-            cvcore::faciallandmarks::FacialLandmarks::NUM_FACIAL_LANDMARKS, 1,
+            cvcore::faciallandmarks::FacialLandmarks::MAX_NUM_FACIAL_LANDMARKS, 1,
             (float *)heatmap_data, true);
         cvcore::Array<cvcore::BBox> faceBBox(1);
         faceBBox.setSize(1);
@@ -395,7 +400,7 @@ sgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
             (int)obj_meta->rect_params.height};
         //Prepare output array
         cvcore::Array<cvcore::ArrayN<cvcore::Vector2f,
-            cvcore::faciallandmarks::FacialLandmarks::NUM_FACIAL_LANDMARKS>>
+            cvcore::faciallandmarks::FacialLandmarks::MAX_NUM_FACIAL_LANDMARKS>>
             output(1, true);
         output.setSize(1);
       
@@ -589,6 +594,27 @@ create_source_bin (DsSourceBinStruct *ds_source_struct, gchar * uri)
   return true;
 }
 
+std::vector<std::string> split(std::string str, std::string pattern)
+{
+    std::string::size_type pos;
+    std::vector<std::string> result;
+    str += pattern;
+    int size = str.size();
+    for (int i = 0; i < size; i++)
+    {
+        pos = str.find(pattern, i);
+        if (pos < size)
+        {
+            std::string s = str.substr(i, pos - i);
+            s.erase(0,s.find_first_not_of(" "));
+            s.erase(s.find_last_not_of(" ") + 1);
+            result.push_back(s);
+            i = pos + pattern.size() - 1;
+        }
+    }
+    return result;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -617,11 +643,13 @@ main (int argc, char *argv[])
   gchar pad_name_sink[16] = "sink_0";
   gchar pad_name_src[16] = "src";
   gchar *filename;
+  ifstream fconfig;
+  std::map<string, float> postprocess_params_list;
     
   /* Check input arguments */
-  if (argc < 4 || argc > 131 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
+  if (argc < 5 || argc > 132 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
       atoi(argv[1]) != 3)) {
-    g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink] "
+    g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink] <model config file> "
       "<input file> ... <inputfile> <out H264 filename>\n", argv[0]);
     return -1;
   }
@@ -650,10 +678,10 @@ main (int argc, char *argv[])
 
  
   /* Multiple source files */
-  for (src_cnt=0; src_cnt<(guint)argc-3; src_cnt++) {
+  for (src_cnt=0; src_cnt<(guint)argc-4; src_cnt++) {
     /* Source element for reading from the file */
     source_struct[src_cnt].index = src_cnt;
-    if (!create_source_bin (&(source_struct[src_cnt]), argv[src_cnt + 2]))
+    if (!create_source_bin (&(source_struct[src_cnt]), argv[src_cnt + 3]))
     {
       g_printerr ("Source bin could not be created. Exiting.\n");
       return -1;
@@ -714,8 +742,8 @@ main (int argc, char *argv[])
   queue7 = gst_element_factory_make ("queue", "queue7");
 
   if (atoi(argv[1]) == 1) {
-    if (g_strrstr (argv[2], ".jpg") || g_strrstr (argv[2], ".png")
-       || g_strrstr (argv[2], ".jpeg")) {
+    if (g_strrstr (argv[3], ".jpg") || g_strrstr (argv[3], ".png")
+       || g_strrstr (argv[3], ".jpeg")) {
         outenc = gst_element_factory_make ("jpegenc", "jpegenc");
         caps =
             gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
@@ -829,6 +857,46 @@ main (int argc, char *argv[])
 #endif
   }
 
+  /* Read cvcore parameters from config file.*/
+  fconfig.open(argv[2]);
+  if (!fconfig.is_open()) {
+      g_print("The model config file open is failed!\n");
+      return -1;
+  }
+
+  while (!fconfig.eof()) {
+      string strParam;
+	  if ( getline(fconfig, strParam) ) {
+          std::vector<std::string> param_strs = split(strParam, "=");
+          float value;
+          if (param_strs.size() < 2)
+              continue;
+          if(!(param_strs[0].empty()) && !(param_strs[1].empty())) {
+              std::istringstream isStr(param_strs[1]);
+              isStr >> value;
+              postprocess_params_list[param_strs[0]] = value;
+          }
+	  }
+  }
+  fconfig.close();
+
+  size_t numFaciallandmarks = 80;
+  cvcore::ModelInputParams ModelInputParams = {32, 80, 80, cvcore::Y_F32};
+
+  if (postprocess_params_list.count("maxBatchSize"))
+      ModelInputParams.maxBatchSize = (size_t)postprocess_params_list["maxBatchSize"];
+  if (postprocess_params_list.count("inputLayerWidth"))
+      ModelInputParams.inputLayerWidth = (size_t)postprocess_params_list["inputLayerWidth"];
+  if (postprocess_params_list.count("inputLayerHeight"))
+      ModelInputParams.inputLayerHeight = (size_t)postprocess_params_list["inputLayerHeight"];
+  if (postprocess_params_list.count("numLandmarks"))
+      numFaciallandmarks = (size_t)postprocess_params_list["numLandmarks"];
+
+ std::unique_ptr< cvcore::faciallandmarks::FacialLandmarksPostProcessor > faciallandmarkpostinit(
+    new cvcore::faciallandmarks::FacialLandmarksPostProcessor (
+    ModelInputParams,numFaciallandmarks));
+  facemarkpost = std::move(faciallandmarkpostinit);
+
   /* Display the facemarks output on video. Fakesink do not need to display. */
   if(atoi(argv[1]) != 2) {    
     osd_sink_pad = gst_element_get_static_pad (nvtile, "sink");
@@ -867,7 +935,7 @@ main (int argc, char *argv[])
   gst_object_unref (osd_sink_pad);  
 
   /* Set the pipeline to "playing" state */
-  g_print ("Now playing: %s\n", argv[2]);
+  g_print ("Now playing: %s\n", argv[3]);
   gst_element_set_state (pipeline, GST_STATE_PLAYING);
 
   /* Wait till pipeline encounters an error or EOS */

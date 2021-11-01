@@ -20,7 +20,7 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-APP:= deepstream-heartrate-app
+APP:= deepstream-gesture-app
 
 CUDA_VER?=
 ifeq ($(CUDA_VER),)
@@ -37,21 +37,23 @@ ifeq ($(TARGET_DEVICE),aarch64)
   CFLAGS:= -DPLATFORM_TEGRA
 endif
 
-##SRCS:= $(wildcard *.c)
+SRCS:= $(wildcard *.c)
+CPPSRCS+= $(wildcard *.cpp)
+CPPSRCS+= ../deepstream-bodypose2d-app/deepstream_bodypose2d_meta.cpp
 
 INCS:= $(wildcard *.h)
+INCS+= ../deepstream-bodypose2d-app/ds_bodypose2d_meta.h
 
-ifeq ($(TARGET_DEVICE),aarch64)
-	PKGS:= gstreamer-1.0
-else
-	PKGS:= gstreamer-1.0
-endif
+PKGS:= gstreamer-1.0
 
-OBJS:= deepstream_heartrate_app.o
+COBJS:= $(SRCS:.c=.o)
+CPPOBJS:= $(CPPSRCS:.cpp=.o)
+OBJS:= $(COBJS) $(CPPOBJS)
 
-CFLAGS+= -I /opt/nvidia/deepstream/deepstream/sources/includes \
-         -I /opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
+CFLAGS+= -I/opt/nvidia/deepstream/deepstream/sources/includes \
+	 -I/opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
          -I /usr/local/cuda-$(CUDA_VER)/include \
+         -I ../deepstream-bodypose2d-app
 
 CFLAGS+= `pkg-config --cflags $(PKGS)`
 
@@ -61,22 +63,21 @@ LIBS:= `pkg-config --libs $(PKGS)`
 
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvds_inferutils \
        -lnvds_utils -lm -lstdc++ \
-       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda \
        -L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs \
-	   -lnvcv_faciallandmarks -lnvcv_core -lnvcv_tensorops -lnvcv_trtbackend \
+       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda \
+       -lnvcv_bodypose2d -lnvcv_core -lnvcv_tensorops -lnvcv_trtbackend \
        -Wl,-rpath,$(LIB_INSTALL_DIR)
 
 all: $(APP)
 
-%.o: %.c $(INCS) Makefile
-	$(CC) -c -o $@ $(CFLAGS) $<
+%.o : %.c $(INCS) Makefile
+	$(CXX) -c -o $@ $(CFLAGS) $<
 
-deepstream_heartrate_app.o: deepstream_heartrate_app.cpp $(INCS) Makefile
-	$(CXX) -c -o $@ -fpermissive -Wall -Werror $(CFLAGS) $<
-
+%.o : %.cpp $(INCS) Makefile
+	$(CXX) -c -o $@ $(CFLAGS) $<
 
 $(APP): $(OBJS) Makefile
-	$(CC) -o $(APP) $(OBJS) $(LIBS)
+	$(CXX) -o $(APP) $(OBJS) $(LIBS)
 
 clean:
 	rm -rf $(OBJS) $(APP)

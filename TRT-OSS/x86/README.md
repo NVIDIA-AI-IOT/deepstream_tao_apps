@@ -1,19 +1,19 @@
 # Build x86 TensorRT OSS Plugin
 
-Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT)  for Jetson libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
+Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT)  for x86 libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
 
-## libnvinfer_plugin.so.7.0.0.1 Provided Here
+## libnvinfer_plugin.so.8.0.1 Provided Here
 
- **libnvinfer_plugin.so.7.0.0** provided in this folder was built with:
+ **libnvinfer_plugin.so.8.0.** provided in this folder was built with:
 
 > Ubuntu 18.04.3 LTS  
-> cuda-10.2  
-> cuDNN 7.6.5  
-> TensorRT 7.0.0.11
+> cuda-11.4
+> cuDNN 8.2.1
+> TensorRT 8.0.1
 
 **Note**
 
-You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/o4gt2b50qfga71qd3kognf0v9iv6o2hx.1 -O libnvinfer_plugin.so.7.0.0.1` if you met some LFS issue.
+You can get the prebuild lib using `wget https://nvidia.box.com/shared/static/7u2ocnwenwgrsx1yq8vv4hkfr0dg1rtm -O libnvinfer_plugin.so.8.0.1` if you met some LFS issue.
 
 If the environment is different from above, you **MUST** build the TRT OSS plugin by yourself. 
 
@@ -45,10 +45,10 @@ sudo make install
 | 5.0.1               | TRT 7.0.0       | release/7.0           |
 | 5.1                 | TRT 7.2.X       |                       |
 | 6.0 EA              | TRT 7.2.2       | 21.03                 |
-
+| 6.0 GA              | TRT 8.0.1       | release/8.0           |
 
 ```
-git clone -b $TRT_OSS_CHECKOUT_TAG  https://github.com/nvidia/TensorRT   # find TRT_OSS_CHECKOUT_TAG in above table
+git clone -b $TRT_OSS_CHECKOUT_TAG https://github.com/nvidia/TensorRT //check TRT_OSS_CHECKOUT_TAG in the above table
 cd TensorRT/
 git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
@@ -65,10 +65,10 @@ After building ends successfully, libnvinfer_plugin.so* will be generated under 
 ### 3. Replace "libnvinfer_plugin.so*"
 
 ```
-// backup original libnvinfer_plugin.so.x.y, e.g. libnvinfer_plugin.so.7.0.0
-sudo mv /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.7.p.q ${HOME}/libnvinfer_plugin.so.7.p.q.bak
-// only replace the real file, don't touch the link files, e.g. libnvinfer_plugin.so, libnvinfer_plugin.so.7
-sudo cp $TRT_SOURCE/`pwd`/out/libnvinfer_plugin.so.7.m.n  /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.7.p.q
+// backup original libnvinfer_plugin.so.x.y, e.g. libnvinfer_plugin.so.8.0.0
+sudo mv /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.8.p.q ${HOME}/libnvinfer_plugin.so.8.p.q.bak
+// only replace the real file, don't touch the link files, e.g. libnvinfer_plugin.so, libnvinfer_plugin.so.8
+sudo cp $TRT_SOURCE/`pwd`/out/libnvinfer_plugin.so.8.m.n  /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.8.p.q
 sudo ldconfig
 ```
 
@@ -101,3 +101,4 @@ Device 0: "Tesla T4"
   CUDA Driver Version / Runtime Version          10.2 / 10.2
   CUDA Capability Major/Minor version number:    7.5
 ```
+
