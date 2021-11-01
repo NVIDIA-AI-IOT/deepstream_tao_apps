@@ -33,7 +33,7 @@ This sample is to show the following TAO3.0 models runing with DeepStream
   
   There is blog for introducing training and optimization for bodypose 2D estimation model:
   
-  https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tlt-part-1/
+  https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tao-toolkit-part-1
 
 * Download x86 or Jetson tao-converter which is compatible to your platform from the following links.
 
