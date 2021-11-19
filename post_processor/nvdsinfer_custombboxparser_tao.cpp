@@ -53,6 +53,13 @@ bool NvDsInferParseCustomBatchedNMSTLT (
          std::vector<NvDsInferObjectDetectionInfo> &objectList);
 
 extern "C"
+bool NvDsInferParseCustomEfficientDetTAO (
+         std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+         NvDsInferNetworkInfo  const &networkInfo,
+         NvDsInferParseDetectionParams const &detectionParams,
+         std::vector<NvDsInferObjectDetectionInfo> &objectList);
+
+extern "C"
 bool NvDsInferParseCustomNMSTLT (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
                                    NvDsInferNetworkInfo  const &networkInfo,
                                    NvDsInferParseDetectionParams const &detectionParams,
@@ -243,7 +250,83 @@ bool NvDsInferParseCustomMrcnnTLTV2 (std::vector<NvDsInferLayerInfo> const &outp
     return true;
 
 }
+
+extern "C"
+bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+                                   NvDsInferNetworkInfo  const &networkInfo,
+                                   NvDsInferParseDetectionParams const &detectionParams,
+                                   std::vector<NvDsInferObjectDetectionInfo> &objectList) {
+    if(outputLayersInfo.size() != 4)
+    {
+        std::cerr << "Mismatch in the number of output buffers."
+                  << "Expected 4 output buffers, detected in the network :"
+                  << outputLayersInfo.size() << std::endl;
+        return false;
+    }
+
+    int* p_keep_count = (int *) outputLayersInfo[0].buffer;
+
+    float* p_bboxes = (float *) outputLayersInfo[1].buffer;
+    NvDsInferDims inferDims_p_bboxes = outputLayersInfo[1].inferDims;
+    int numElements_p_bboxes=inferDims_p_bboxes.numElements;
+
+    float* p_scores = (float *) outputLayersInfo[2].buffer;
+    float* p_classes = (float *) outputLayersInfo[3].buffer;
+
+    const int out_class_size = detectionParams.numClassesConfigured;
+    const float threshold = detectionParams.perClassThreshold[0];
+
+    float max_bbox=0;
+    for (int i=0; i < numElements_p_bboxes; i++)
+    {
+        // std::cout <<"p_bboxes: "
+              // <<p_bboxes[i] << std::endl;
+        if ( max_bbox < p_bboxes[i] )
+            max_bbox=p_bboxes[i];
+    }
+    int normalized = (max_bbox < 2.0);
+
+
+    if (p_keep_count[0] > 0)
+    {
+        assert (normalized == 0);
+        for (int i = 0; i < p_keep_count[0]; i++) {
+
+
+            if ( p_scores[i] < threshold) continue;
+            assert((int) p_classes[i] < out_class_size);
+
+
+            // std::cout << "label/conf/ x/y x/y -- "
+                      // << (int)p_classes[i] << " " << p_scores[i] << " "
+                      // << p_bboxes[4*i] << " " << p_bboxes[4*i+1] << " " << p_bboxes[4*i+2] << " "<< p_bboxes[4*i+3] << " " << std::endl;
+
+            if(p_bboxes[4*i+2] < p_bboxes[4*i] || p_bboxes[4*i+3] < p_bboxes[4*i+1])
+                continue;
+
+            NvDsInferObjectDetectionInfo object;
+            object.classId = (int) p_classes[i];
+            object.detectionConfidence = p_scores[i];
+
+
+            object.left=p_bboxes[4*i+1];
+            object.top=p_bboxes[4*i];
+            object.width=( p_bboxes[4*i+3] - object.left);
+            object.height= ( p_bboxes[4*i+2] - object.top);
+
+            object.left=CLIP(object.left, 0, networkInfo.width - 1);
+            object.top=CLIP(object.top, 0, networkInfo.height - 1);
+            object.width=CLIP(object.width, 0, networkInfo.width - 1);
+            object.height=CLIP(object.height, 0, networkInfo.height - 1);
+
+            objectList.push_back(object);
+        }
+    }
+    return true;
+}
+
 /* Check that the custom function has been defined correctly */
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomNMSTLT);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomBatchedNMSTLT);
 CHECK_CUSTOM_INSTANCE_MASK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomMrcnnTLTV2);
+CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomEfficientDetTAO);

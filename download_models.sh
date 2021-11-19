@@ -41,7 +41,7 @@
 echo "==================================================================="
 echo "begin download models for Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/"
 echo "==================================================================="
-wget https://nvidia.box.com/shared/static/511552h6b1ecw4gd20ptuihoiidz13cs -O models.zip
+wget https://nvidia.box.com/shared/static/3a00fdf8e1s2k3nezoxmfyykydxiyxy7 -O models.zip
 unzip models.zip
 rm models.zip
 
