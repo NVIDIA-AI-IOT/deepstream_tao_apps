@@ -20,7 +20,7 @@
       - [8. PeopleSegNet](#8-peoplesegnet)
       - [9~10. UNET/PeopleSemSegNet](#910-unetpeoplesemsegnet)
       - [11. multi_task](#11-multi_task)
-      - [12. EfficientDet] (#12-efficientdet)
+      - [12. EfficientDet](#12-efficientdet)
     - [TRT Plugins Requirements](#trt-plugins-requirements)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
