@@ -15,11 +15,12 @@
     - [Label Files](#label-files)
     - [DeepStream configuration file](#deepstream-configuration-file)
     - [Model Outputs](#model-outputs)
-      - [1~2. Yolov3 / YoloV4](#12-yolov3--yolov4)
-      - [3~6. RetinaNet / DSSD / SSD/ FasterRCNN](#36-retinanet--dssd--ssd-fasterrcnn)
-      - [7. PeopleSegNet](#7-peoplesegnet)
-      - [8~9. UNET/PeopleSemSegNet](#89-unetpeoplesemsegnet)
-      - [10. multi_task](#10-multi_task)
+      - [1~3. Yolov3 / YoloV4 / yolov4-tiny](#13-yolov3--yolov4-yolov4-tiny)
+      - [4~7. RetinaNet / DSSD / SSD/ FasterRCNN](#47-retinanet--dssd--ssd-fasterrcnn)
+      - [8. PeopleSegNet](#8-peoplesegnet)
+      - [9~10. UNET/PeopleSemSegNet](#910-unetpeoplesemsegnet)
+      - [11. multi_task](#11-multi_task)
+      - [12. EfficientDet] (#12-efficientdet)
     - [TRT Plugins Requirements](#trt-plugins-requirements)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
@@ -144,7 +145,7 @@ Please refer to [DeepStream Development Guide](https://docs.nvidia.com/metropoli
 
 ### Model Outputs
 
-#### 1~3. Yolov3 / YoloV4 /yolov4-tiny```
+#### 1~3. Yolov3 / YoloV4 /yolov4-tiny
 
 The model has the following four outputs:
 
