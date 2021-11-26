@@ -46,7 +46,7 @@ git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
 cd $TRT_SOURCE
 mkdir -p build && cd build
-$HOME/install/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
+$HOME/install/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DCUDA_VERSION=10.2 -DTRT_BIN_DIR=`pwd`/out
 make nvinfer_plugin -j$(nproc)
 ```
 
