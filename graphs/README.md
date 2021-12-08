@@ -8,7 +8,7 @@ These deepstream sample graphs are based on Graph Composer tools and the DeepStr
 Please refer to DeepStream SDK 6.0 document for details
 
 ## Model List
-The samples use the following TLT models:
+The samples use the following TAO models:
 
 * 2D bodypose
 * FaceDetect
