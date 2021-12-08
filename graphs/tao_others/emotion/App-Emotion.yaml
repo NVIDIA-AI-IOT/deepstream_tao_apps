@@ -35,7 +35,7 @@ dependencies:
   version: 0.0.4
 - extension: NvDsFacialLandmarks
   uuid: 78969c67-6287-44b0-83bf-afe920eb4874
-  version: 0.0.4
+  version: 0.0.7
 - extension: NvDsVisualizationExt
   uuid: 25903cd4-fc5c-4139-987b-47bb27e8b424
   version: 0.0.3
@@ -50,7 +50,7 @@ dependencies:
   version: 0.0.3
 - extension: NvDsEmotionExt
   uuid: 790289c2-915d-4cb4-b3dd-ae0c2052d5ac
-  version: 0.0.4
+  version: 0.0.5
 ---
 components:
 - name: nv_ds_multi_src_input15..a160
