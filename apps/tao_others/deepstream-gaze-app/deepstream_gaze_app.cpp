@@ -399,11 +399,11 @@ sgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
             meta->output_layers_info + meta->num_output_layers);
           //Prepare CVCORE input layers
           if (strcmp(outputLayersInfo[i].layerName,
-              "softargmax/strided_slice:0") == 0) {
+              "softargmax") == 0) {
             //This layer output landmarks coordinates
             heatmap_data = (float *)meta->out_buf_ptrs_host[i];
           } else if (strcmp(outputLayersInfo[i].layerName,
-              "softargmax/strided_slice_1:0") == 0) {
+              "softargmax:1") == 0) {
             confidence = (float *)meta->out_buf_ptrs_host[i];
           }
         }

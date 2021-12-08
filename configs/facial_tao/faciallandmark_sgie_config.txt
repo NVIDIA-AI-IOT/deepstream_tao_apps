@@ -57,7 +57,7 @@ batch-size=32
 ## 0=FP32, 1=INT8, 2=FP16 mode
 network-mode=1
 num-detected-classes=1
-output-blob-names=softargmax/strided_slice:0;softargmax/strided_slice_1:0
+output-blob-names=softargmax,softargmax:1,conv_keypoints_m80
 #0=Detection 1=Classifier 2=Segmentation 100=other
 network-type=100
 # Enable tensor metadata output

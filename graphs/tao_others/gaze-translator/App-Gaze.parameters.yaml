@@ -1,0 +1,31 @@
+################################################################################
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#
+# NVIDIA Corporation and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA Corporation is strictly prohibited.
+#
+################################################################################
+
+components:
+- name: nv_ds_multi_src_input144..1a58
+  parameters:
+    uri-list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h265.mp4
+name: NvDsMultiSrcInput..3198
+---
+components:
+- name: nv_ds_stream_mux147..b588
+  parameters:
+    batch-size: 1
+    batched-push-timeout: 40000
+    height: 1080
+    width: 1920
+name: NvDsStreamMux..96d8
+---
+components:
+- name: nv_ds_infer159..3710
+  parameters:
+    batch-size: 1
+name: NvDsInferVideo..cb00

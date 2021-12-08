@@ -73,8 +73,8 @@ echo "begin downloading facial landmarks model "
 echo "==================================================================="
 mkdir -p ./models/faciallandmark
 cd ./models/faciallandmark
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v2.0/files/model.etlt -O faciallandmarks.etlt
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v2.0/files/int8_calibration.txt -O int8_calibration.txt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v3.0/files/model.etlt -O faciallandmarks.etlt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v3.0/files/int8_calibration.txt -O fpenet_cal.txt
 wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0/files/model.etlt -O facenet.etlt
 wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0/files/int8_calibration.txt -O int8_calibration.txt
 
@@ -100,7 +100,7 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/heartrate
 cd ./models/heartrate
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/heartratenet/versions/deployable_v1.0/files/model.etlt -O heartrate.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/heartratenet/versions/deployable_v2.0/files/model.etlt -O heartrate.etlt
 
 echo "==================================================================="
 echo "begin downloading GestureNet model "
