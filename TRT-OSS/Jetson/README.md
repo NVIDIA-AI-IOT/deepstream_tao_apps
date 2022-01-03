@@ -28,6 +28,7 @@ mkdir $HOME/install
 make -j$(nproc)
 sudo make install
 ```
+Note: "sudo apt-get install libssl-dev" to install OpenSSL if it's missing 
 
 ### 2. Build TensorRT OSS Plugin
 
