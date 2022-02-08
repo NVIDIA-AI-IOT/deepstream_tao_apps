@@ -491,6 +491,9 @@ pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
         bool isValidBBox =
             handBoxPtr->execute(boundingBoxes[0], output[0][i], frame_width,
             frame_height);
+	if (!isValidBBox){
+          continue;
+        }
         
         NvDsObjectMeta *obj_meta_hand = nvds_acquire_obj_meta_from_pool
           (batch_meta);
@@ -506,6 +509,10 @@ pgie_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
             isValidBBox =
             handBoxPtr2->execute(boundingBoxes[0], output[0][i], frame_width,
             frame_height);
+
+	    if (!isValidBBox){
+              continue;
+            }
 
             obj_meta_hand = nvds_acquire_obj_meta_from_pool(batch_meta);
             if(!add_cvcoreBBox_to_ds_obj_meta(boundingBoxes[0],
@@ -562,7 +569,7 @@ sgie_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_dat
             rect_params.height};
         AppLogD("x1/y1/x2/y2 %d/%d/%d/%d/\n", bbox.xmin, bbox.ymin,
             bbox.xmax, bbox.ymax);
-        if(bbox.isValid() && bbox.xmin <= frame_width && bbox.ymin <= frame_height) {
+        if(bbox.isValid() && bbox.xmin < frame_width && bbox.ymin < frame_height) {
           cvcore::BBox new_bbox = std::move(bbox.squarify({0, 0, frame_width,
             frame_height}));
           rect_params.left = new_bbox.xmin;
@@ -571,7 +578,8 @@ sgie_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_dat
           rect_params.height = new_bbox.getHeight();
           AppLogD("x/y/w/h/ %f/%f/%f/%f/\n", rect_params.left, rect_params.top,
             rect_params.width, rect_params.height);
-        } else {
+        }
+	else {
           nvds_remove_obj_meta_from_frame(frame_meta, obj_meta);
         }
       }
@@ -891,6 +899,7 @@ main (int argc, char *argv[])
 
   /* Create OSD to draw on the converted RGBA buffer */
   nvosd = gst_element_factory_make ("nvdsosd", "nv-onscreendisplay");
+  g_object_set (G_OBJECT (nvosd), "process-mode", 1, NULL);
 
   nvvidconv1 = gst_element_factory_make ("nvvideoconvert", "nvvid-converter1");
 

@@ -25,6 +25,8 @@
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
     - [About misc folder](#about-misc-folder)
+  - [Others Models](#others-models)
+  - [Graph Composer Samples](#graph-composer-samples)
   - [Known issues](#known-issues)
 
 ## Description
