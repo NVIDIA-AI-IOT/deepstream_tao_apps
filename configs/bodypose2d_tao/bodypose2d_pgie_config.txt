@@ -74,6 +74,7 @@ model-color-format=0
 maintain-aspect-ratio=1
 symmetric-padding=1
 scaling-filter=1
+scaling-compute-hw=1
 
 [class-attrs-all]
 threshold=0.0

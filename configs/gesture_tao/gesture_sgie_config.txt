@@ -77,6 +77,7 @@ symmetric-padding=1
 operate-on-gie-id=1
 operate-on-class-ids=2
 scaling-filter=1
+scaling-compute-hw=1
 
 [class-attrs-all]
 threshold=0.0
