@@ -2,16 +2,17 @@
 
 Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT) on Jetson device for Jetson libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
 
-## libnvinfer_plugin.so.8.0.1 Provided Here
+## libnvinfer_plugin.so.8.2.1 Provided Here
 
- **libnvinfer_plugin.so.8.0.1** provided in this folder was built with:
+ **libnvinfer_plugin.so.8.2.1** provided in this folder was built with:
 
-> Jetson Xavier  
-> Jetpack4.6 (CUDA-10.2, cuDNN v8.0, TensorRT )
+> Jetson Xavier
+> Jetpack4.6 (CUDA-10.2, cuDNN v8.2, TensorRT8.2.1 )
 
 **Note**
 
-You can get teh prebuild lib using `wget https://nvidia.box.com/shared/static/2lf1kx4dguucrpdk8z46oepvu2f7997w libnvinfer_plugin.so.8.0.1` if you met some LFS issue.
+You can get the prebuild lib by using "wget https://nvidia.box.com/shared/static/5trpgqjadn65r6ypqij21zqj5pb6ew1i -O libnvinfer_plugin.so.8.2.1" if you met some LFS issue.
+
 
 ## Build TensorRT OSS Plugin - libnvinfer_plugin.so
 
@@ -28,7 +29,6 @@ mkdir $HOME/install
 make -j$(nproc)
 sudo make install
 ```
-Note: "sudo apt-get install libssl-dev" to install OpenSSL if it's missing 
 
 ### 2. Build TensorRT OSS Plugin
 
@@ -39,6 +39,7 @@ Note: "sudo apt-get install libssl-dev" to install OpenSSL if it's missing
 | 5.1                 | 4.5.1            | TRT 7.1.3       | release/7.1           |
 | 6.0 EA              | 4.5.1            | TRT 7.1.3       | release/7.1           |
 | 6.0 GA              | 4.6              | TRT 8.0.1       | release/8.0           |
+| 6.0.1               | 4.6.1            | TRT 8.2.1       | release/8.2           |
 
 ```
 git clone -b $TRT_OSS_CHECKOUT_TAG https://github.com/nvidia/TensorRT        // replace with release/8.x for  TensorRT 8.X
@@ -47,7 +48,7 @@ git submodule update --init --recursive
 export TRT_SOURCE=`pwd`
 cd $TRT_SOURCE
 mkdir -p build && cd build
-$HOME/install/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DCUDA_VERSION=10.2 -DTRT_BIN_DIR=`pwd`/out
+$HOME/install/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
 make nvinfer_plugin -j$(nproc)
 ```
 
