@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -47,23 +47,23 @@ else
 	PKGS:= gstreamer-1.0
 endif
 
-OBJS:= deepstream_heartrate_app.o
+OBJS:= deepstream_heartrate_app.o ds_yml_parse.o
 
 CFLAGS+= -I /opt/nvidia/deepstream/deepstream/sources/includes \
          -I /opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
-         -I /usr/local/cuda-$(CUDA_VER)/include \
+         -I /usr/local/cuda-$(CUDA_VER)/include -I ../common
 
 CFLAGS+= `pkg-config --cflags $(PKGS)`
 
-CFLAGS+= -D_GLIBCXX_USE_CXX11_ABI=1 -Wno-sign-compare
+CFLAGS+= -D_GLIBCXX_USE_CXX11_ABI=1 -Wno-sign-compare -Wno-deprecated-declarations
 
 LIBS:= `pkg-config --libs $(PKGS)`
 
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvds_inferutils \
-       -lnvds_utils -lm -lstdc++ \
-       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda \
+       -lnvds_utils -lm -lstdc++ -lnvds_yml_parser -lgstrtspserver-1.0 \
+       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda -lyaml-cpp \
        -L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs \
-	   -lnvcv_faciallandmarks -lnvcv_core -lnvcv_tensorops -lnvcv_trtbackend \
+       -lnvcv_faciallandmarks -lnvcv_core -lnvcv_tensorops -lnvcv_trtbackend \
        -Wl,-rpath,$(LIB_INSTALL_DIR)
 
 all: $(APP)
@@ -71,14 +71,14 @@ all: $(APP)
 %.o: %.c $(INCS) Makefile
 	$(CC) -c -o $@ $(CFLAGS) $<
 
-deepstream_heartrate_app.o: deepstream_heartrate_app.cpp $(INCS) Makefile
+deepstream_heartrate_app.o: deepstream_heartrate_app.cpp $(INCS)
 	$(CXX) -c -o $@ -fpermissive -Wall -Werror $(CFLAGS) $<
 
+ds_yml_parse.o: ../common/ds_yml_parse.cpp $(INCS)
+	$(CXX) -c -o $@ -Wall -Werror $(CFLAGS) $<
 
 $(APP): $(OBJS) Makefile
 	$(CC) -o $(APP) $(OBJS) $(LIBS)
 
 clean:
 	rm -rf $(OBJS) $(APP)
-
-

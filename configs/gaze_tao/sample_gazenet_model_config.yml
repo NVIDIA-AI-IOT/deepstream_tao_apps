@@ -1,0 +1,6 @@
+enginePath: ../../../../models/gazenet/gazenet_facegrid.etlt_b8_gpu0_fp16.engine
+etltPath: ../../../../models/gazenet/gazenet_facegrid.etlt
+etltKey: nvidia_tlt
+## networkMode can be int8, fp16 or fp32
+networkMode: fp16
+batchSize: 16

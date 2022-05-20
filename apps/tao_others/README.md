@@ -33,7 +33,7 @@ This sample is to show the following TAO3.0 models runing with DeepStream
   
   There is blog for introducing training and optimization for bodypose 2D estimation model:
   
-  https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tao-toolkit-part-1
+ https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tao-toolkit-part-1
 
 * Download x86 or Jetson tao-converter which is compatible to your platform from the following links.
 
@@ -54,7 +54,7 @@ This sample is to show the following TAO3.0 models runing with DeepStream
 
 1. Download Project with HTTPS
 ```
-    git clone -b release/tao3.0_ds6.0ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+    git clone -b release/tao3.0_ds6.1ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 2. Prepare Models and TensorRT engine
 
@@ -78,15 +78,11 @@ Go into the application folder
 
 For dGPU
 ```
-    export CUDA_VER=11.4
+    export CUDA_VER=11.6
     make
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cvcore_libs
 ```
 For Jetson
-
-Copy the gst-nvdsvideotemplate plugin source code from DeepStream for servers and workstations package and copy from the following folder:
-
-/opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate
 
 ```
     cd /opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate
@@ -98,7 +94,7 @@ And then back to the sample application folder and build the applications.
 
 ```
     cd -
-    export CUDA_VER=10.2
+    export CUDA_VER=11.4
     make
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cvcore_libs
 ```
@@ -106,8 +102,9 @@ And then back to the sample application folder and build the applications.
 Start to run the 2D bodypose application
 ```
     cd deepstream-bodypose2d-app
-    ./deepstream-bodypose2d-app [1:file sink|2:fakesink|3:display sink]  \
-     <bodypose2d model config file> <input uri> ... <input uri> <out filename>
+    ./deepstream-bodypose2d-app [1:file sink|2:fakesink|3:display sink|4:rtsp output]  \
+     <bodypose2d model config file> <udp port> <rtsp port> <input uri> \
+     ... <input uri> <out filename>
 ```
 Start to run the facial landmark application
 ```
@@ -146,7 +143,7 @@ Start to run the heartrate application
 
 A sample of 2D bodypose:
 
-`./deepstream-bodypose2d-app 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt file:///usr/data/bodypose2d_test.png ./body2dout`
+`./deepstream-bodypose2d-app 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt 0 0 file:///usr/data/bodypose2d_test.png ./body2dout`
 
 A sample of facial landmark:
 

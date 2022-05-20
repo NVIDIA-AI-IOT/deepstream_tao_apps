@@ -1,0 +1,24 @@
+source-list:
+  list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4;file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4
+
+output:
+  ## 1:file ouput  2:fake output 3:eglsink output
+  type: 2
+  ## 0: H264 encoder  1:H265 encoder
+  enc: 0
+  bitrate: 2000000
+  ##The file name without suffix
+  filename: test
+
+streammux:
+  width: 1280
+  height: 720
+  batched-push-timeout: 40000
+
+primary-gie:
+  config-file-path: ../../../configs/facial_tao/config_infer_primary_facenet.yml
+  unique-id: 1
+
+video-template:
+  customlib-name: ./heartrateinfer_impl/libnvds_heartrateinfer.so
+  customlib-props: config-file:../../../../configs/heartrate_tao/sample_heartrate_model_config.yml

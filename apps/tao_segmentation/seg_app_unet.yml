@@ -1,0 +1,17 @@
+source:
+  location: /opt/nvidia/deepstream/deepstream/samples/streams/sample_720p.h264
+
+streammux:
+  batch-size: 1
+  width: 1280
+  height: 720
+  batched-push-timeout: 40000
+
+primary-gie:
+  config-file-path: ../../configs/unet_tao/pgie_unet_tao_config.yml
+
+eglsink:
+  enable: 1
+
+filesink:
+  enable: 0

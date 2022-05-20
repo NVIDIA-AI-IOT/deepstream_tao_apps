@@ -12,7 +12,7 @@
 components:
 - name: nv_ds_multi_src_input144..1a58
   parameters:
-    uri-list: file:///opt/nvidia/deepstream/deepstream-6.0/samples/streams/sample_1080p_h265.mp4
+    uri-list: file:///opt/nvidia/deepstream/deepstream-6.1/samples/streams/sample_1080p_h265.mp4
 name: NvDsMultiSrcInput..3198
 ---
 components:

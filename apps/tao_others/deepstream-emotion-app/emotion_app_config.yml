@@ -1,0 +1,31 @@
+source-list:
+  list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4;file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4
+
+output:
+  ## 1:file ouput  2:fake output 3:eglsink output
+  type: 1
+  ## 0: H264 encoder  1:H265 encoder
+  enc: 0
+  bitrate: 2000000
+  ##The file name without suffix
+  filename: test
+
+streammux:
+  width: 1280
+  height: 720
+  batched-push-timeout: 40000
+
+primary-gie:
+  config-file-path: ../../../configs/facial_tao/config_infer_primary_facenet.yml
+  unique-id: 1
+
+secondary-gie:
+  config-file-path: ../../../configs/facial_tao/faciallandmark_sgie_config.yml
+  unique-id: 2
+
+video-template:
+  customlib-name: ./emotion_impl/libnvds_emotion_impl.so
+  customlib-props: config-file:../../../configs/emotion_tao/sample_emotion_model_config.yml
+
+model-config:
+  config-file-path: ../../../configs/facial_tao/sample_faciallandmarks_config.yml

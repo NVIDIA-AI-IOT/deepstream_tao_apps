@@ -2,23 +2,23 @@
 
 Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT) on Jetson device for Jetson libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
 
-## libnvinfer_plugin.so.8.2.1 Provided Here
+## libnvinfer_plugin.so.8.4.0.11 Provided Here
 
- **libnvinfer_plugin.so.8.2.1** provided in this folder was built with:
+ **libnvinfer_plugin.so.8.4.0.11** provided in this folder was built with:
 
 > Jetson Xavier
-> Jetpack4.6 (CUDA-10.2, cuDNN v8.2, TensorRT8.2.1 )
+> Jetpack5.0.1 (CUDA-11.6, cuDNN v8.2, TensorRT8.4.0.11 )
 
 **Note**
 
-You can get the prebuild lib by using "wget https://nvidia.box.com/shared/static/5trpgqjadn65r6ypqij21zqj5pb6ew1i -O libnvinfer_plugin.so.8.2.1" if you met some LFS issue.
+You can get the prebuild lib by using "wget https://nvidia.box.com/shared/static/gcp6ylk1ku0zfobhj0sv8vpraz6yzaf9 -O libnvinfer_plugin.so.8.4.0.11" if you met some LFS issue.
 
 
 ## Build TensorRT OSS Plugin - libnvinfer_plugin.so
 
 ### 1. Upgrade Cmake
 
-TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 18.04 is cmake 3.10.2, so upgrade it by
+TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 20.04 is cmake 3.10.2, so upgrade it by
 
 ```
 wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
@@ -40,6 +40,7 @@ sudo make install
 | 6.0 EA              | 4.5.1            | TRT 7.1.3       | release/7.1           |
 | 6.0 GA              | 4.6              | TRT 8.0.1       | release/8.0           |
 | 6.0.1               | 4.6.1            | TRT 8.2.1       | release/8.2           |
+| 6.1                 | 5.0.1            | TRT 8.4.0.11    | release/8.4           |
 
 ```
 git clone -b $TRT_OSS_CHECKOUT_TAG https://github.com/nvidia/TensorRT        // replace with release/8.x for  TensorRT 8.X

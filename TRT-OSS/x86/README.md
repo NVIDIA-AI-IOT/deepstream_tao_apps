@@ -2,18 +2,18 @@
 
 Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT)  for x86 libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
 
-## libnvinfer_plugin.so.8.0.1 Provided Here
+## libnvinfer_plugin.so.8.2.5.1 Provided Here
 
- **libnvinfer_plugin.so.8.0.** provided in this folder was built with:
+ **libnvinfer_plugin.so.8.2.5.1** provided in this folder was built with:
 
-> Ubuntu 18.04.3 LTS  
-> cuda-11.4
+> Ubuntu 20.04 LTS  
+> cuda-11.6
 > cuDNN 8.2.1
-> TensorRT 8.0.1
+> TensorRT 8.2.5.1
 
 **Note**
 
-You can get the prebuild lib using `wget https://nvidia.box.com/shared/static/7u2ocnwenwgrsx1yq8vv4hkfr0dg1rtm -O libnvinfer_plugin.so.8.0.1` if you met some LFS issue.
+You can get the prebuild lib using `wget https://nvidia.box.com/shared/static/mwtq4z847uz3v37ba8ntmk3ahfv5fnrm -O libnvinfer_plugin.so.8.2.5.1` if you met some LFS issue.
 
 If the environment is different from above, you **MUST** build the TRT OSS plugin by yourself. 
 
@@ -46,6 +46,8 @@ sudo make install
 | 5.1                 | TRT 7.2.X       | 21.03                 |
 | 6.0 EA              | TRT 7.2.2       | 21.03                 |
 | 6.0 GA              | TRT 8.0.1       | release/8.0           |
+| 6.0.1               | TRT 8.2.1       | release/8.2           |
+| 6.1                 | TRT 8.2.5.1     | release/8.2           |
 
 ```
 git clone -b $TRT_OSS_CHECKOUT_TAG https://github.com/nvidia/TensorRT //check TRT_OSS_CHECKOUT_TAG in the above table

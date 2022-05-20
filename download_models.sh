@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 # Check following part for how to download the TLT 3.0 models:
 
 # For Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/:
-# wget https://nvidia.box.com/shared/static/511552h6b1ecw4gd20ptuihoiidz13cs -O models.zip
+# wget https://nvidia.box.com/shared/static/em2dh1h4isjhfu7qf0hh6ggzbusdg129 -O models.zip
 
 # For peopleSemSegNet:
 # wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_v1.0/zip \
@@ -41,7 +41,7 @@
 echo "==================================================================="
 echo "begin download models for Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/"
 echo "==================================================================="
-wget https://nvidia.box.com/shared/static/3a00fdf8e1s2k3nezoxmfyykydxiyxy7 -O models.zip
+wget https://nvidia.box.com/shared/static/em2dh1h4isjhfu7qf0hh6ggzbusdg129 -O models.zip
 unzip models.zip
 rm models.zip
 
@@ -112,7 +112,7 @@ wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deploya
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/int8_calibration.txt -O int8_calibration.txt
 
 echo "==================================================================="
-echo "begin downloading BodyposeNet model "
+echo "begin downloading BodyPose2d model "
 echo "==================================================================="
 cd -
 mkdir -p ./models/bodypose2d

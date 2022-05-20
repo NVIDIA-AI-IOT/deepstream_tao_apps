@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,6 +44,9 @@
 #include "app_utils.h"
 #include <fstream>
 #include <sstream>
+#include "nvds_yml_parser.h"
+#include "ds_yml_parse.h"
+#include <yaml-cpp/yaml.h>
 
 using namespace std;
 using std::string;
@@ -118,6 +121,7 @@ typedef struct _DsSourceBin
     GstElement *vidconv;
     GstElement *nvvidconv;
     GstElement *capsfilt;
+    GstElement *capsraw;
     gint index;
     bool is_imagedec;
 }DsSourceBinStruct;
@@ -637,7 +641,8 @@ cb_newpad (GstElement * decodebin, GstPad * decoder_src_pad, gpointer data)
         g_printerr ("Failed to link decoderbin src pad to converter sink pad\n");
       }
       g_object_unref(conv_sink_pad);
-      if (!gst_element_link (bin_struct->vidconv, bin_struct->nvvidconv)) {
+      if (!gst_element_link_many (bin_struct->vidconv, bin_struct->capsraw,
+         bin_struct->nvvidconv, NULL)) {
          g_printerr ("Failed to link videoconvert to nvvideoconvert\n");
       }
     } else {
@@ -670,7 +675,13 @@ decodebin_child_added (GstChildProxy * child_proxy, GObject * object,
   if (g_strstr_len (name, -1, "pngdec") == name) {
     bin_struct->vidconv = gst_element_factory_make ("videoconvert",
         "source_vidconv");
-    gst_bin_add (GST_BIN (bin_struct->source_bin), bin_struct->vidconv);
+    bin_struct->capsraw = gst_element_factory_make ("capsfilter",
+        "raw_caps");
+    GstCaps *caps = gst_caps_new_simple ("video/x-raw", "format",
+        G_TYPE_STRING, "I420", NULL);
+    g_object_set (G_OBJECT (bin_struct->capsraw), "caps", caps, NULL);
+    gst_bin_add_many (GST_BIN (bin_struct->source_bin), bin_struct->vidconv,
+      bin_struct->capsraw, NULL);
     bin_struct->is_imagedec=true;
   } else {
     bin_struct->vidconv = NULL;
@@ -813,21 +824,37 @@ main (int argc, char *argv[])
   GstPad *sinkpad, *srcpad;
   gchar pad_name_sink[16] = "sink_0";
   gchar pad_name_src[16] = "src";
-  gchar *filename;
+  gchar *filepath;
   ifstream fconfig;
   std::map<string, float> postprocess_params_list;
   int hand_index = 0;
-    
+  bool isYAML=false;
+  bool isImage=false;
+  bool isStreaming=false;
+  GList* g_list = NULL;
+  GList* iterator = NULL;
+  bool isH264 = true;
+
   /* Check input arguments */
-  if (argc < 6 || argc > 133 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
+  if (argc == 2 && (g_str_has_suffix(argv[1], ".yml")
+      || (g_str_has_suffix(argv[1], ".yaml")))) {
+    isYAML=TRUE;
+  } else {
+    if (argc < 6 || argc > 133 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
       atoi(argv[1]) != 3) || (atoi(argv[2]) != 1 && atoi(argv[2]) != 2 &&
       atoi(argv[2]) != 3)) {
-    g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink] "
+      g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink] "
       "[1:right hand|2:left hand|3:both hands] <model configure file> "
       "<input file> ... <inputfile> <out H264 filename>\n", argv[0]);
-    return -1;
+      return -1;
+    }
   }
-  hand_index = atoi(argv[2]);
+
+  if (isYAML) {
+    hand_index = ds_parse_group_type(argv[1], "hand-options");
+  } else {
+    hand_index = atoi(argv[2]);
+  }
 
   /* Standard GStreamer initialization */
   gst_init (&argc, &argv);
@@ -851,17 +878,38 @@ main (int argc, char *argv[])
 
   gst_bin_add (GST_BIN(pipeline), streammux);
 
- 
+  if(!isYAML) {
+    for (src_cnt=0; src_cnt<(guint)argc-5; src_cnt++) {
+      g_list = g_list_append(g_list, argv[src_cnt + 4]);
+    }
+  } else {
+      if (NVDS_YAML_PARSER_SUCCESS != nvds_parse_source_list(&g_list, argv[1], "source-list")) {
+        g_printerr ("No source is found. Exiting.\n");
+        return -1;
+      }
+  }
+
   /* Multiple source files */
-  for (src_cnt=0; src_cnt<(guint)argc-5; src_cnt++) {
+  for (iterator = g_list, src_cnt=0; iterator; iterator = iterator->next,src_cnt++) {
     /* Source element for reading from the file */
     source_struct[src_cnt].index = src_cnt;
-    if (!create_source_bin (&(source_struct[src_cnt]), argv[src_cnt + 4]))
+    if (g_strrstr ((gchar *)iterator->data, ".jpg") || g_strrstr ((gchar *)iterator->data, ".jpeg")
+        || g_strrstr ((gchar *)iterator->data, ".png"))
+      isImage = true;
+    else
+      isImage = false;
+    if (g_strrstr ((gchar *)iterator->data, "rtsp://") || g_strrstr ((gchar *)iterator->data, "v4l2://")
+        || g_strrstr ((gchar *)iterator->data, "http://") || g_strrstr ((gchar *)iterator->data, "rtmp://")) {
+      isStreaming = true;
+    } else {
+      isStreaming = false;
+    }
+    if (!create_source_bin (&(source_struct[src_cnt]), (gchar *)iterator->data))
     {
       g_printerr ("Source bin could not be created. Exiting.\n");
       return -1;
     }
-      
+
     gst_bin_add (GST_BIN (pipeline), source_struct[src_cnt].source_bin);
       
     g_snprintf (pad_name_sink, 64, "sink_%d", src_cnt);
@@ -916,32 +964,64 @@ main (int argc, char *argv[])
   queue6 = gst_element_factory_make ("queue", "queue6");
   gesture_queue = gst_element_factory_make ("queue", "gesture_queue");
 
-  if (atoi(argv[1]) == 1) {
-    if (g_strrstr (argv[4], ".jpg") || g_strrstr (argv[4], ".png")
-       || g_strrstr (argv[4], ".jpeg")) {
-        outenc = gst_element_factory_make ("jpegenc", "jpegenc");
-        caps =
-            gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
-            "I420", NULL);
-        g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
-        filename = g_strconcat(argv[argc-1],".jpg",NULL);
+  guint output_type = 0;
+  if (isYAML) {
+    output_type = ds_parse_group_type(argv[1], "output");
+    if(!output_type){
+      g_printerr ("No output setting. Exiting.\n");
+      return -1;
+    }
+  } else {
+    output_type = atoi(argv[1]);
+  }
+
+  if (output_type == 1) {
+    GString * filename = NULL;
+    if (isYAML)
+        filename = ds_parse_file_name(argv[1], "output");
+    else
+        filename = g_string_new(argv[argc-1]);
+
+    if (isImage) {
+      outenc = gst_element_factory_make ("jpegenc", "jpegenc");
+      caps =
+          gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
+          "I420", NULL);
+      g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
+      filepath = g_strconcat(filename->str,".jpg",NULL);
     }
     else {
-        outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
-        caps =
-            gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
-            "I420", NULL);
-        feature = gst_caps_features_new ("memory:NVMM", NULL);
-        gst_caps_set_features (caps, 0, feature);
-        g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
+      if(isYAML) {
+        isH264 = !(ds_parse_enc_type(argv[1], "output"));
+      }
+
+      if(!isH264) {
+          outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h265enc");
+          filepath = g_strconcat(filename->str,".265",NULL);
+      }
+      else {
+          outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
+          filepath = g_strconcat(filename->str,".264",NULL);
+      }
+      if (isYAML) {
+        ds_parse_enc_config (outenc, argv[1], "output");
+      } else {
         g_object_set (G_OBJECT (outenc), "bitrate", 4000000, NULL);
-        filename = g_strconcat(argv[argc-1],".264",NULL);
+      }
+
+      caps =
+          gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
+          "I420", NULL);
+      feature = gst_caps_features_new ("memory:NVMM", NULL);
+      gst_caps_set_features (caps, 0, feature);
+      g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
     }
+    g_string_free(filename, TRUE);
     sink = gst_element_factory_make ("filesink", "nvvideo-renderer");
   }
-  else if (atoi(argv[1]) == 2)
+  else if (output_type == 2)
     sink = gst_element_factory_make ("fakesink", "fake-renderer");
-  else if (atoi(argv[1]) == 3) {
+  else if (output_type == 3) {
 #ifdef PLATFORM_TEGRA
     transform = gst_element_factory_make ("nvegltransform", "nvegltransform");
     if(!transform) {
@@ -958,22 +1038,34 @@ main (int argc, char *argv[])
     return -1;
   }
 
-  g_object_set (G_OBJECT (streammux), "width", MUXER_OUTPUT_WIDTH, "height",
-      MUXER_OUTPUT_HEIGHT, "batch-size", src_cnt,
-      "batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC, NULL);
+  if (isYAML)
+    nvds_parse_streammux(streammux, argv[1], "streammux");
+  else
+    g_object_set (G_OBJECT (streammux), "width", MUXER_OUTPUT_WIDTH, "height",
+      MUXER_OUTPUT_HEIGHT, "batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC,
+      NULL);
+  if (isStreaming)
+    g_object_set (G_OBJECT (streammux), "live-source", true, NULL);
+  g_object_set (G_OBJECT (streammux), "batch-size", src_cnt, NULL);
 
   tiler_rows = (guint) sqrt (src_cnt);
   tiler_columns = (guint) ceil (1.0 * src_cnt / tiler_rows);
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
       tiler_columns, "width", 1280, "height", 720, NULL);
 
-  g_object_set (G_OBJECT (primary_detector), "config-file-path",
+  if(isYAML)
+    nvds_parse_gie (primary_detector, argv[1], "primary-gie");
+  else
+    g_object_set (G_OBJECT (primary_detector), "config-file-path",
       "../../../configs/bodypose2d_tao/bodypose2d_pgie_config.txt",
       "unique-id", PRIMARY_DETECTOR_UID, NULL);
 
-  g_object_set (G_OBJECT (gesture), "config-file-path",
+  if(isYAML)
+    nvds_parse_gie (gesture, argv[1], "secondary-gie");
+  else
+    g_object_set (G_OBJECT (gesture), "config-file-path",
       "../../../configs/gesture_tao/gesture_sgie_config.txt", NULL);
-  
+
   /* we add a bus message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
   bus_watch_id = gst_bus_add_watch (bus, bus_call, loop);
@@ -992,8 +1084,8 @@ main (int argc, char *argv[])
 
   g_object_set (G_OBJECT (sink), "sync", 0, "async", false,NULL);
 
-  if (atoi(argv[1]) == 1) {
-    g_object_set (G_OBJECT (sink), "location", filename,NULL);
+  if (output_type == 1) {
+    g_object_set (G_OBJECT (sink), "location", filepath,NULL);
     g_object_set (G_OBJECT (sink), "enable-last-sample", false,NULL);
     gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
         queue5, queue6, NULL);
@@ -1003,13 +1095,13 @@ main (int argc, char *argv[])
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
     }
-    g_free(filename);
-  } else if (atoi(argv[1]) == 2) {
+    g_free(filepath);
+  } else if (output_type == 2) {
     if (!gst_element_link (nvosd, sink)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
     }
-  } else if (atoi(argv[1]) == 3) {
+  } else if (output_type == 3) {
 #ifdef PLATFORM_TEGRA
     gst_bin_add_many (GST_BIN (pipeline), transform, queue5, NULL);
     if (!gst_element_link_many (nvosd, queue5, transform, sink, NULL)) {
@@ -1026,15 +1118,116 @@ main (int argc, char *argv[])
   }
 
   /* Read cvcore parameters from config file.*/
-  fconfig.open(argv[3]);
-  if (!fconfig.is_open()) {
+  std::vector<std::pair<uint32_t, uint32_t>> connect_table;
+  if(isYAML) {
+    GString * temp = ds_parse_config_yml_filepath(argv[1], "model-config");
+
+    YAML::Node config = YAML::LoadFile(temp->str);
+
+    if (config.IsNull()) {
+      g_printerr ("config file is NULL.\n");
+      return -1;
+    }
+
+    if (config["nmsWindowSize"]) {
+      postprocess_params_list["nmsWindowSize"] =
+        config["nmsWindowSize"].as<float>();
+    }
+    if (config["featUpsamplingFactor"]) {
+      postprocess_params_list["featUpsamplingFactor"] =
+        config["featUpsamplingFactor"].as<float>();
+    }
+    if (config["threshHeat"]) {
+      postprocess_params_list["threshHeat"] =
+        config["threshHeat"].as<float>();
+    }
+    if (config["threshVectorScore"]) {
+      postprocess_params_list["threshVectorScore"] =
+        config["threshVectorScore"].as<float>();
+    }
+    if (config["threshVectorCnt1"]) {
+      postprocess_params_list["threshVectorCnt1"] =
+        config["threshVectorCnt1"].as<float>();
+    }
+    if (config["threshPartCnt"]) {
+      postprocess_params_list["threshPartCnt"] =
+        config["threshPartCnt"].as<float>();
+    }
+    if (config["threshHumanScore"]) {
+      postprocess_params_list["threshHumanScore"] =
+        config["threshHumanScore"].as<float>();
+    }
+    if (config["batchSize"]) {
+      postprocess_params_list["batchSize"] =
+        config["batchSize"].as<float>();
+    }
+    if (config["imageType"]) {
+      postprocess_params_list["imageType"] =
+        config["imageType"].as<float>();
+    }
+    if (config["numJoints"]) {
+      postprocess_params_list["numJoints"] =
+        config["numJoints"].as<float>();
+    }
+    if (config["jointEdges"]) {
+      YAML::Node primes = config["jointEdges"];
+      for (YAML::const_iterator it=primes.begin();it!=primes.end();++it) {
+
+        std::string seq = it->as<std::string>();
+        std::vector<std::string> token_vec;
+        std::string token;
+        std::stringstream ss(seq);
+        while(std::getline(ss, token, ',')){
+          gchar *str = (char *) token.c_str();
+          token_vec.push_back(str);
+        }
+        int  vec_size = token_vec.size();
+        if (vec_size != 2)
+          continue;
+
+        std::pair<uint32_t, uint32_t> edge_pair;
+        std::istringstream x_pos_str(token_vec[0]);
+        std::istringstream y_pos_str(token_vec[1]);
+        x_pos_str >> edge_pair.first;
+        y_pos_str >> edge_pair.second;
+        connect_table.push_back(edge_pair);
+        token_vec.clear();
+      }
+    }
+    if (config["connections"]) {
+      YAML::Node primes = config["connections"];
+      for (YAML::const_iterator it=primes.begin();it!=primes.end();++it) {
+        std::string seq = it->as<std::string>();
+        std::vector<std::string> token_vec;
+        std::string token;
+        std::stringstream ss(seq);
+
+        while(std::getline(ss, token, ',')){
+          gchar *str = (char *) token.c_str();
+          token_vec.push_back(str);
+        }
+        int  vec_size = token_vec.size();
+        if (vec_size != 2)
+          continue;
+
+        std::istringstream x_pos_str(token_vec[0]);
+        std::istringstream y_pos_str(token_vec[1]);
+        std::pair<uint32_t, uint32_t> connection_pair;
+        x_pos_str >> connection_pair.first;
+        y_pos_str >> connection_pair.second;
+        display_connect_table.push_back(connection_pair);
+        token_vec.clear();
+      }
+    }
+    g_string_free(temp, TRUE);
+  } else {
+    fconfig.open(argv[3]);
+    if (!fconfig.is_open()) {
       g_print("The model config file open is failed!\n");
       return -1;
-  }
+    }
 
-  std::vector<std::pair<uint32_t, uint32_t>> connect_table;
-
-  while (!fconfig.eof()) {
+    while (!fconfig.eof()) {
       string strParam;
 	  if ( getline(fconfig, strParam) ) {
           std::vector<std::string> param_strs = split(strParam, "=");
@@ -1073,8 +1266,9 @@ main (int argc, char *argv[])
               }
           }
 	  }
+    }
+    fconfig.close();
   }
-  fconfig.close();
 
   cvcore::bodypose2d::BodyPose2DPostProcessorParams postProcessParams = {};
   cvcore::ModelInputParams ModelInputParams = {8, 384, 288, cvcore::RGB_U8};
