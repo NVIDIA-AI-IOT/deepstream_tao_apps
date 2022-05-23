@@ -31,7 +31,7 @@ heart rate and translate between heart rate user meta and the GXF messags.
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.0
+- DeepStreamSDK 6.1
 - Graph-Composer 1.0.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
@@ -39,9 +39,9 @@ Pre-requisites
 ================================================================================
 Download models for heartrate
 ================================================================================
-1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/heartrate
+1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/heartrate
 2. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/heartratenet/versions/deployable_v1.0/files/model.etlt \
-    -O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/heartrate/heartrate.etlt
+    -O /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/heartrate/heartrate.etlt
 
 Refer https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao3.0/apps/tao_others#readme
 for more info.
@@ -49,13 +49,13 @@ for more info.
 ================================================================================
 Running the graph
 ================================================================================
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.0/lib/cvcore_libs/
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/facenet
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/heartrate
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.1/lib/cvcore_libs/
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/facenet
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/heartrate
 For x86_64 platform
-$ /opt/nvidia/graph-composer/execute_graph.sh App-HeartRate.yaml App-HeartRate.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_x86_64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-HeartRate.yaml App-HeartRate.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.1/reference_graphs/common/target_x86_64.yaml
 For Jetson
-$ /opt/nvidia/graph-composer/execute_graph.sh App-HeartRate.yaml App-HeartRate.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_aarch64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-HeartRate.yaml App-HeartRate.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.1/reference_graphs/common/target_aarch64.yaml
 
 NOTE: App-HeartRate.yaml is the main graph file describing the DeepStream
 graph(pipeline) along with the configuration parameters for the components in the

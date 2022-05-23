@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,6 +45,8 @@
 #include "cv/emotions/Emotions.h"
 #include "ds_facialmark_meta.h"
 #include "nvdsinfer_context.h"
+#include "ds_yml_parse.h"
+#include <yaml-cpp/yaml.h>
 
 using namespace std;
 using std::string;
@@ -145,6 +147,8 @@ public:
 
   /* Pass GST events to the library */
   virtual bool HandleEvent(GstEvent *event);
+
+  virtual char *QueryProperties ();
 
   /* Process Incoming Buffer */
   virtual BufferResult ProcessBuffer(GstBuffer *inbuf);
@@ -413,20 +417,71 @@ bool EmotionAlgorithm::SetInitParams(DSCustom_CreateParams *params)
   std::map<string, float> model_params_list;
   std::string etlt_path;
   /* Parse emotion model config file*/
-  fconfig.open(m_config_file_path);
-  if (!fconfig.is_open()) {
-      g_print("The model config file %s open is failed!\n", m_config_file_path.c_str());
-      return -1;
-  }
+  if (!m_config_file_path.empty()) {
+      /* Parse model config file*/
+      if ( g_str_has_suffix(m_config_file_path.c_str(), ".yml")
+        || (g_str_has_suffix(m_config_file_path.c_str(), ".yaml"))) {
 
-  while (!fconfig.eof()) {
-      string strParam;
-	  if (getline(fconfig, strParam)) {
-          std::vector<std::string> param_strs = split(strParam, "=");
-          float value;
-          if (param_strs.size() < 2)
+        YAML::Node config = YAML::LoadFile(m_config_file_path.c_str());
+
+        if (config.IsNull()) {
+            g_printerr ("config file is NULL.\n");
+            return -1;
+        }
+
+        if (config["enginePath"]) {
+            string s =
+              get_absolute_path(config["enginePath"].as<std::string>().c_str());
+            struct stat buffer;
+            if(stat (s.c_str(), &buffer) == 0){
+              eMotionInferenceParams.engineFilePath = s;
+            }
+        }
+        if (config["etltPath"]) {
+            etlt_path =
+              get_absolute_path(config["etltPath"].as<std::string>().c_str());
+        }
+        if (config["etltKey"]) {
+            EngineGenParam.decodeKey = config["etltKey"].as<std::string>().c_str();
+        }
+        if (config["networkMode"]) {
+            std::string type_name = config["networkMode"].as<std::string>();
+            if (type_name.c_str() == "fp16")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_FP16;
+            else if (type_name.c_str() == "fp32")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_FP32;
+            else if (type_name.c_str() == "int8")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_INT8;
+        }
+        if (config["label"]) {
+            YAML::Node primes = config["label"];
+            for (YAML::const_iterator it=primes.begin();it!=primes.end();++it) {
+
+              std::string seq = it->as<std::string>();
+              std::vector<std::string> label_strs = split(seq.c_str(), ",");
+              if ( !(label_strs[0].empty())  && ! (label_strs[1].empty()) ) {
+                  std::istringstream index_str(label_strs[0]);
+                  size_t index;
+                  index_str >> index;
+                  emotionsList[index]=label_strs[1];
+              }
+            }
+        }
+      } else {
+        fconfig.open(m_config_file_path);
+        if (!fconfig.is_open()) {
+            g_print("The model config file %s open is failed!\n", m_config_file_path.c_str());
+            return -1;
+        }
+
+        while (!fconfig.eof()) {
+            string strParam;
+	        if (getline(fconfig, strParam)) {
+            std::vector<std::string> param_strs = split(strParam, "=");
+            float value;
+            if (param_strs.size() < 2)
               continue;
-          if(!(param_strs[0].empty()) && !(param_strs[1].empty())) {
+            if(!(param_strs[0].empty()) && !(param_strs[1].empty())) {
               if(param_strs[0] == "enginePath"){
                   string s = get_absolute_path(param_strs[1]);
                   struct stat buffer;
@@ -457,8 +512,10 @@ bool EmotionAlgorithm::SetInitParams(DSCustom_CreateParams *params)
                   isStr >> value;
                   model_params_list[param_strs[0]] = value;
               }
+            }
           }
-	  }
+	    }
+      }
   }
   fconfig.close();
   
@@ -603,6 +660,13 @@ GstCaps* EmotionAlgorithm::GetCompatibleCaps (GstPadDirection direction,
   return result;
 }
 
+char *EmotionAlgorithm::QueryProperties ()
+{
+    char *str = new char[1000];
+    strcpy (str, "EMOTION LIBRARY PROPERTIES\n \t\t\tcustomlib-props=\"config-file\" : path of the model config file");
+    return str;
+}
+
 bool EmotionAlgorithm::HandleEvent (GstEvent *event)
 {
   switch (GST_EVENT_TYPE(event))
@@ -637,7 +701,7 @@ bool EmotionAlgorithm::SetProperty(Property &prop)
   try
   {
     if (prop.key.compare("config-file") == 0) {
-      m_config_file_path=get_absolute_path(prop.value);
+      m_config_file_path.assign(prop.value);
     }
   }
   catch(std::invalid_argument& e)

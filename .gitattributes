@@ -10,3 +10,5 @@ models/mrcnn/mask_rcnn_resnet50.etlt filter=lfs diff=lfs merge=lfs -text
 TRT-OSS/Jetson/TRT8.0/libnvinfer_plugin.so.8.0.1 filter=lfs diff=lfs merge=lfs -text
 TRT-OSS/x86/TRT8.0/libnvinfer_plugin.so.8.0.1 filter=lfs diff=lfs merge=lfs -text
 TRT-OSS/Jetson/TRT8.2/libnvinfer_plugin.so.8.2.1 filter=lfs diff=lfs merge=lfs -text
+TRT-OSS/Jetson/TRT8.4/libnvinfer_plugin.so.8.4.0.11 filter=lfs diff=lfs merge=lfs -text
+TRT-OSS/x86/TRT8.2/libnvinfer_plugin.so.8.2.5.1 filter=lfs diff=lfs merge=lfs -text

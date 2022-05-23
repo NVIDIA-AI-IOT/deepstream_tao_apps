@@ -37,10 +37,22 @@ extern "C"
 typedef struct
 {
   float gaze_params[cvcore::gazenet::GazeNet::OUTPUT_SIZE];
+  int left_start_x;
+  int left_start_y;
+  int left_end_x;
+  int left_end_y;
+  int right_start_x;
+  int right_start_y;
+  int right_end_x;
+  int right_end_y;
 }NvDsGazeMetaData;
 
 gboolean nvds_add_gaze_meta (NvDsBatchMeta *batch_meta, NvDsObjectMeta *obj_meta, 
-        cvcore::ArrayN<float, cvcore::gazenet::GazeNet::OUTPUT_SIZE> &params);
+        cvcore::ArrayN<float, cvcore::gazenet::GazeNet::OUTPUT_SIZE> &params,
+        cvcore::Array<cvcore::Vector2i> &leftStart,
+        cvcore::Array<cvcore::Vector2i> &leftEnd,
+        cvcore::Array<cvcore::Vector2i> &rightStart,
+        cvcore::Array<cvcore::Vector2i> &rightEnd);
 
 #ifdef __cplusplus
 }

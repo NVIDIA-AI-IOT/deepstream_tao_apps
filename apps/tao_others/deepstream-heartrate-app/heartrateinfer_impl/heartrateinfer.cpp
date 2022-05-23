@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,8 @@
 #include <map>
 #include <unistd.h>
 
+#include "ds_yml_parse.h"
+#include <yaml-cpp/yaml.h>
 #include "nvbufsurface.h"
 #include "nvbufsurftransform.h"
 #include "gst-nvquery.h"
@@ -149,6 +151,8 @@ public:
 
   /* Pass GST events to the library */
   virtual bool HandleEvent(GstEvent *event);
+
+  virtual char *QueryProperties ();
 
   /* Process Incoming Buffer */
   virtual BufferResult ProcessBuffer(GstBuffer *inbuf);
@@ -400,7 +404,6 @@ bool HeartRateAlgorithm::SetInitParams(DSCustom_CreateParams *params)
     return false;
   }
 
-
   if(m_process_surf->memType == NVBUF_MEM_SURFACE_ARRAY) {
     if (NvBufSurfaceMapEglImage (m_process_surf, 0) != 0) {
       GST_ERROR ("Error:Could not map EglImage from NvBufSurface for nvinfer");
@@ -466,106 +469,143 @@ bool HeartRateAlgorithm::SetInitParams(DSCustom_CreateParams *params)
   memset(InferCtxParams, 0, sizeof (*InferCtxParams));
 
   if (!m_config_file_path.empty()) {
+    /* Parse model config file*/
+    if ( g_str_has_suffix(m_config_file_path.c_str(), ".yml")
+        || (g_str_has_suffix(m_config_file_path.c_str(), ".yaml"))) {
+
+      YAML::Node config = YAML::LoadFile(m_config_file_path.c_str());
+      if (config.IsNull()) {
+        g_printerr ("config file (%s) is NULL.\n", m_config_file_path.c_str());
+        return -1;
+      }
+
+      if (config["enginePath"]) {
+        string s =
+          get_absolute_path(config["enginePath"].as<std::string>().c_str());
+        struct stat buffer;
+        if(stat (s.c_str(), &buffer) == 0) {
+          heartRateInferenceParams.engineFilePath = s;
+        }
+      }
+      if (config["etltPath"]) {
+        etlt_path =
+          get_absolute_path(config["etltPath"].as<std::string>().c_str());
+      }
+      if (config["etltKey"]) {
+        EngineGenParam.decodeKey = config["etltKey"].as<std::string>().c_str();
+      }
+      if (config["networkMode"]) {
+        std::string type_name = config["networkMode"].as<std::string>();
+        if (type_name.c_str() == "fp16")
+          EngineGenParam.networkMode = NvDsInferNetworkMode_FP16;
+        else if (type_name.c_str() == "fp32")
+          EngineGenParam.networkMode = NvDsInferNetworkMode_FP32;
+        else if (type_name.c_str() == "int8")
+          EngineGenParam.networkMode = NvDsInferNetworkMode_INT8;
+      }
+    } else {
       /* Parse model config file*/
       fconfig.open(m_config_file_path);
       if (!fconfig.is_open()) {
-          g_print("The model config file open is failed!\n");
-          return -1;
+        g_print("The model config file open is failed!\n");
+        return -1;
       }
 
       while (!fconfig.eof()) {
-          string strParam;
-	      if (getline(fconfig, strParam)) {
-              std::vector<std::string> param_strs = split(strParam, "=");
-              float value;
-              if (param_strs.size() < 2)
-                  continue;
-              if(!(param_strs[0].empty()) && !(param_strs[1].empty())) {
-                  if(param_strs[0] == "enginePath"){
-                      string s = get_absolute_path(param_strs[1]);
-                      struct stat buffer;
-                      if(stat (s.c_str(), &buffer) == 0){
-                        heartRateInferenceParams.engineFilePath = s;
-                      }
-                  }else if(param_strs[0] == "etltPath") {
-                      etlt_path = get_absolute_path(param_strs[1]);
-                  } else if(param_strs[0] == "etltKey") {
-                      EngineGenParam.decodeKey = param_strs[1];
-                  } else if(param_strs[0] == "networkMode") {
-                      if (param_strs[1] == "fp16")
-                          EngineGenParam.networkMode = NvDsInferNetworkMode_FP16;
-                      else if (param_strs[1] == "fp32")
-                          EngineGenParam.networkMode = NvDsInferNetworkMode_FP32;
-                      else if (param_strs[1] == "int8")
-                          EngineGenParam.networkMode = NvDsInferNetworkMode_INT8;
-                  } else {
-                      std::istringstream isStr(param_strs[1]);
-                      isStr >> value;
-                      model_params_list[param_strs[0]] = value;
-                  }
+        string strParam;
+        if (getline(fconfig, strParam)) {
+          std::vector<std::string> param_strs = split(strParam, "=");
+          float value;
+          if (param_strs.size() < 2)
+            continue;
+          if(!(param_strs[0].empty()) && !(param_strs[1].empty())) {
+            if(param_strs[0] == "enginePath"){
+              string s = get_absolute_path(param_strs[1]);
+              struct stat buffer;
+              if(stat (s.c_str(), &buffer) == 0){
+                heartRateInferenceParams.engineFilePath = s;
               }
-	      }
+            }else if(param_strs[0] == "etltPath") {
+              etlt_path = get_absolute_path(param_strs[1]);
+            } else if(param_strs[0] == "etltKey") {
+              EngineGenParam.decodeKey = param_strs[1];
+            } else if(param_strs[0] == "networkMode") {
+              if (param_strs[1] == "fp16")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_FP16;
+              else if (param_strs[1] == "fp32")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_FP32;
+              else if (param_strs[1] == "int8")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_INT8;
+            } else {
+              std::istringstream isStr(param_strs[1]);
+              isStr >> value;
+              model_params_list[param_strs[0]] = value;
+            }
+          }
+        }
       }
       fconfig.close();
-    
-    g_print("HeartRate model config file: %s\n",heartRateInferenceParams.engineFilePath.c_str());
+    }
   }
 
-  string engine_path =  heartRateInferenceParams.engineFilePath;
- 
+  g_print("HeartRate model config file: %s\n",
+      heartRateInferenceParams.engineFilePath.c_str());
+
+  string engine_path =heartRateInferenceParams.engineFilePath;
+
   if( access( engine_path.c_str(), F_OK ) == -1 ) {
-      get_infer_params(InferCtxParams, heartRateInferenceParams,
-          hr::HeartRate::defaultModelInputParams, hr::HeartRate::defaultPreProcessorParams, EngineGenParam, etlt_path);
-      std::string devId = std::string("gpu0");
-      engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
-         devId + "_" + networkMode2Str(EngineGenParam.networkMode) + ".engine";
-      if (access(engine_path.c_str(), F_OK ) == -1) {
-          if (!generate_trt_engine(InferCtxParams)) {
-              GST_ERROR("build engine failed \n");
-              return false;
-          }
-	  if (access( engine_path.c_str(), F_OK ) == -1) {
-              // Still no named engine found, check the degradingn engines
-              if (EngineGenParam.networkMode == NvDsInferNetworkMode_INT8) {
-                  engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
-                       devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP16) + ".engine";
-                  if (access( engine_path.c_str(), F_OK ) == -1) {
-                      //Degrade again
-                      engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
-                       devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
-                      if (access( engine_path.c_str(), F_OK ) == -1) {
-                          //failed
-                          GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
-                          return false;
-                      }
-                  }
-              } else if (EngineGenParam.networkMode == NvDsInferNetworkMode_FP16) {
-                  engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
-                       devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
-                  if (access( engine_path.c_str(), F_OK ) == -1) {
-                      //failed
-                      GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
-                      return false;
-                  }
-              }
-          }
+    get_infer_params(InferCtxParams, heartRateInferenceParams,
+        hr::HeartRate::defaultModelInputParams, hr::HeartRate::defaultPreProcessorParams, EngineGenParam, etlt_path);
+    std::string devId = std::string("gpu0");
+    engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
+      devId + "_" + networkMode2Str(EngineGenParam.networkMode) + ".engine";
+    if (access(engine_path.c_str(), F_OK ) == -1) {
+      if (!generate_trt_engine(InferCtxParams)) {
+        GST_ERROR("build engine failed \n");
+        return false;
       }
+      if (access( engine_path.c_str(), F_OK ) == -1) {
+        // Still no named engine found, check the degradingn engines
+        if (EngineGenParam.networkMode == NvDsInferNetworkMode_INT8) {
+          engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
+            devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP16) + ".engine";
+          if (access( engine_path.c_str(), F_OK ) == -1) {
+            //Degrade again
+            engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
+              devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+            if (access( engine_path.c_str(), F_OK ) == -1) {
+              //failed
+              GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+              return false;
+            }
+          }
+        } else if (EngineGenParam.networkMode == NvDsInferNetworkMode_FP16) {
+          engine_path = etlt_path +  "_b" + std::to_string(hr::HeartRate::defaultModelInputParams.maxBatchSize) + "_" +
+            devId + "_" + networkMode2Str(NvDsInferNetworkMode_FP32) + ".engine";
+          if (access( engine_path.c_str(), F_OK ) == -1) {
+            //failed
+            GST_ERROR("No proper engine generated %s\n", engine_path.c_str());
+            return false;
+          }
+        }
+      }
+    }
   }
 
   heartRateInferenceParams.engineFilePath = engine_path;
   // Creating the HeartRate object
   m_objHeartRate = std::make_unique<hr::HeartRate>(
-          hr::HeartRate::defaultPreProcessorParams,
-          hr::HeartRate::defaultModelInputParams,
-          heartRateInferenceParams,
-          hr::HeartRate::defaultExtraParams);
+      hr::HeartRate::defaultPreProcessorParams,
+      hr::HeartRate::defaultModelInputParams,
+      heartRateInferenceParams,
+      hr::HeartRate::defaultExtraParams);
 
   return true;
 }
 
 // Return Compatible Output Caps based on input caps
 GstCaps* HeartRateAlgorithm::GetCompatibleCaps (GstPadDirection direction,
-        GstCaps* in_caps, GstCaps* othercaps)
+    GstCaps* in_caps, GstCaps* othercaps)
 {
   GstCaps* result = NULL;
   GstStructure *s1, *s2;
@@ -594,7 +634,7 @@ GstCaps* HeartRateAlgorithm::GetCompatibleCaps (GstPadDirection direction,
 
     // Check for desired color format
     if ((strncmp(inputFmt, FORMAT_NV12, strlen(FORMAT_NV12)) == 0) ||
-            (strncmp(inputFmt, FORMAT_RGBA, strlen(FORMAT_RGBA)) == 0))
+        (strncmp(inputFmt, FORMAT_RGBA, strlen(FORMAT_RGBA)) == 0))
     {
       //Set these output caps
       gst_structure_get_int (s1, "width", &m_batch_width);
@@ -632,6 +672,13 @@ GstCaps* HeartRateAlgorithm::GetCompatibleCaps (GstPadDirection direction,
   return result;
 }
 
+char *HeartRateAlgorithm::QueryProperties ()
+{
+    char *str = new char[1000];
+    strcpy (str, "HEARTRATE LIBRARY PROPERTIES\n \t\t\tcustomlib-props=\"config-file\" : the path of model config file");
+    return str;
+}
+
 bool HeartRateAlgorithm::HandleEvent (GstEvent *event)
 {
   switch (GST_EVENT_TYPE(event))
@@ -666,8 +713,9 @@ bool HeartRateAlgorithm::SetProperty(Property &prop)
   try
   {
     if (prop.key.compare("config-file") == 0) {
-      m_config_file_path=get_absolute_path(prop.value);
+        m_config_file_path=get_absolute_path(prop.value);
     }
+
   }
   catch(std::invalid_argument& e)
   {

@@ -1,54 +1,68 @@
-################################################################################
-## Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
-##
-## NVIDIA Corporation and its licensors retain all intellectual property
-## and proprietary rights in and to this software, related documentation
-## and any modifications thereto.  Any use, reproduction, disclosure or
-## distribution of this software and related documentation without an express
-## license agreement from NVIDIA Corporation is strictly prohibited.
-##
-#################################################################################
+#############################################################################
+# The MIT License (MIT)
+#
+# Copyright (c) 2021-2022 NVIDIA CORPORATION
+#
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in
+#the Software without restriction, including without limitation the rights to
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+#the Software, and to permit persons to whom the Software is furnished to do so,
+#subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all
+#copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+#FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+#COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+#IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+#CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+###############################################################################
+
+application:
+  name: App-Gaze
+---
 dependencies:
 - extension: NvDsSourceExt
   uuid: a632d022-3425-4848-9074-e6483ef74366
-  version: 0.0.6
+  version: 1.0.0
 - extension: NvDsBaseExt
   uuid: 56d7e3ec-62c6-4652-bcc8-4f1c3b00df03
-  version: 0.0.4
+  version: 1.0.0
 - extension: NvDsMuxDemuxExt
   uuid: 89b8398c-5820-4051-835c-a91f2d49766b
-  version: 0.0.4
+  version: 1.0.0
 - extension: NvDsInferenceExt
   uuid: 0b02963e-c24e-4c13-ace0-c4cdf36c7c71
-  version: 0.0.4
+  version: 1.0.0
 - extension: NvDsFacialLandmarks
   uuid: 78969c67-6287-44b0-83bf-afe920eb4874
-  version: 0.0.7
+  version: 1.0.0
 - extension: NvDsVisualizationExt
   uuid: 25903cd4-fc5c-4139-987b-47bb27e8b424
-  version: 0.0.3
+  version: 1.0.0
 - extension: StandardExtension
   uuid: 8ec2d5d6-b5df-48bf-8dee-0252606fdd7e
-  version: 1.0.1
+  version: 2.0.0
 - extension: NvDsGazeExt
   uuid: e7eaff36-de8b-329c-aad0-0952ddfc96b8
-  version: 0.0.5
+  version: 1.0.0
 - extension: NvDsOutputSinkExt
   uuid: 3fc9ad87-03e7-47a8-bbfc-8501c3f7ff2f
-  version: 0.0.3
+  version: 1.0.0
 - extension: NvDsInferenceUtilsExt
   uuid: 27856a43-5ad4-4d8e-be36-0ec2cf9bbb58
-  version: 0.0.5
+  version: 1.0.0
 - extension: NvDsTemplateExt
   uuid: 845a7fd3-51e8-4076-b3d9-e2974880925e
-  version: 0.0.3
+  version: 1.0.0
 ---
 components:
 - name: nv_ds_multi_src_input144..1a58
   parameters:
     audio-%u-out: nv_ds_multi_output145..1be0
-    cudadec-memtype: '0'
-    peer-pad-id-same-as-source-id: 'False'
     uri-list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h265.mp4
     video-%u-out: nv_ds_multi_output146..1c88
   type: nvidia::deepstream::NvDsMultiSrcInput
@@ -69,7 +83,6 @@ components:
     batch-size: 1
     batched-push-timeout: 40000
     height: 1080
-    nvbuf-memory-type: '0'
     video-in-%u: nv_ds_on_request_input148..b5f8
     video-out: nv_ds_static_output149..b6a0
     width: 1920
@@ -148,8 +161,6 @@ components:
     border-width: 1
     clock-color: 4278190335
     display-clock: false
-    font: Serif
-    process-mode: '0'
     property-controller: nv_ds_osd_property_controller6..d470
     reformat-object-labels: true
     text-bg-color: 1296911871
@@ -200,7 +211,6 @@ components:
 - name: nv_ds_to_gxf_bridge246..25f8
   parameters:
     allocator: unbounded_allocator261..4518
-    data-storage-type: '0'
     data-tx: double_buffer_transmitter253..fb00
     frame-tx: double_buffer_transmitter252..6e48
     in: nv_ds_static_input247..cc88
@@ -291,7 +301,6 @@ components:
     target: NvDsTiler..36a0/nv_ds_static_input185..9940
   type: nvidia::deepstream::NvDsConnection
 name: node..e400
-ui_property: {}
 ---
 components:
 - name: connection258..b6d8
@@ -300,7 +309,6 @@ components:
     target: NvGxfToDsBridge..f1d0/double_buffer_receiver256..2588
   type: nvidia::gxf::Connection
 name: node..4cf8
-ui_property: {}
 ---
 components:
 - name: connection259..4a20
@@ -309,7 +317,6 @@ components:
     target: NvGxfToDsBridge..f1d0/double_buffer_receiver257..bd30
   type: nvidia::gxf::Connection
 name: node..bd68
-ui_property: {}
 ---
 components:
 - name: greedy_scheduler286..3748
@@ -353,14 +360,10 @@ components:
     target: NvDsFileOut..4b00/nv_ds_static_input1..0f98
   type: nvidia::deepstream::NvDsConnection
 name: node..39e8
-ui_property: {}
 ---
 components:
 - name: nv_ds_fps_measurement0..dda0
   parameters:
-    enable: 'True'
-    interval: '5'
-    print-time: 'False'
     probe-connector: nv_ds_probe_connector1..03c8
   type: nvidia::deepstream::NvDsFpsMeasurement
 - name: nv_ds_probe_connector1..03c8
@@ -399,7 +402,6 @@ components:
     target: NvDsInferVideo..fc50/nv_ds_static_input2..95c0
   type: nvidia::deepstream::NvDsConnection
 name: node..e080
-ui_property: {}
 ---
 components:
 - name: pre_process7..bac8
@@ -422,7 +424,6 @@ components:
     target: NvDsInferVideo..cb00/nv_ds_static_input160..a2e8
   type: nvidia::deepstream::NvDsConnection
 name: node..a470
-ui_property: {}
 ---
 components:
 - name: nv_ds_probe10..bf28
@@ -431,7 +432,6 @@ components:
     probe-connector: PreProcess..f550/nv_ds_probe_connector8..1b00
   type: nvidia::deepstream::NvDsProbe
 name: node..0c88
-ui_property: {}
 ---
 components:
 - name: post_process11..4550
@@ -454,7 +454,6 @@ components:
     probe-connector: NvDsFpsMeasurement..b0f0/nv_ds_probe_connector1..03c8
   type: nvidia::deepstream::NvDsProbe
 name: node..4438
-ui_property: {}
 ---
 components:
 - name: nv_ds_probe10..dcc0
@@ -463,7 +462,6 @@ components:
     probe-connector: PostProcess..9828/nv_ds_probe_connector12..0da0
   type: nvidia::deepstream::NvDsProbe
 name: node..a278
-ui_property: {}
 ---
 components:
 - name: nv_ds_video_template11..32b0
@@ -492,7 +490,6 @@ components:
     target: NvDsVideoTemplate..8d68/nv_ds_static_input12..8f98
   type: nvidia::deepstream::NvDsConnection
 name: node..2b00
-ui_property: {}
 ---
 components:
 - name: nv_ds_connection16..6e10
@@ -501,4 +498,24 @@ components:
     target: NvDsToGxfBridge..2518/nv_ds_static_input247..cc88
   type: nvidia::deepstream::NvDsConnection
 name: node..48d0
-ui_property: {}
+---
+components:
+- name: post_process3
+  parameters:
+    probe-connector: nv_ds_probe_connector4
+  type: nvidia::Gaze::PostProcess
+- name: nv_ds_probe_connector4
+  type: nvidia::deepstream::NvDsProbeConnector
+name: PostProcess
+ui_property:
+  position:
+    x: 419.2902526855469
+    y: 829.130126953125
+---
+components:
+- name: nv_ds_probe5
+  parameters:
+    io: NvGxfToDsBridge..f1d0/nv_ds_static_output249..3748
+    probe-connector: PostProcess/nv_ds_probe_connector4
+  type: nvidia::deepstream::NvDsProbe
+name: node

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <iostream>
 #include "gstnvdsmeta.h"
+#include "nvds_yml_parser.h"
 
 /* The muxer output resolution must be set if the input streams will be of
  * different resolution. The muxer will scale all the input frames to this
@@ -70,11 +71,13 @@ det_bus_call (GstBus * bus, GstMessage * msg, gpointer data) {
 
 static void printUsage(const char* cmd) {
     g_printerr ("\tUsage: %s -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH] [-d]\n", cmd);
+    g_printerr ("\tOR\n\t %s yaml_config_file\n", cmd);
     g_printerr ("-h: \n\tprint help info \n");
     g_printerr ("-c: \n\tpgie config file, e.g. pgie_frcnn_tao_config.txt  \n");
     g_printerr ("-i: \n\tH264 or JPEG input file  \n");
     g_printerr ("-b: \n\tbatch size, this will override the value of \"batch-size\" in pgie config file  \n");
     g_printerr ("-d: \n\tenable display, otherwise dump to output H264 or JPEG file  \n");
+    g_printerr ("yml_config_file: \n\tYAML config file, e.g. seg_app_unet.yml \n");
 }
 int
 main (int argc, char *argv[]) {
@@ -102,59 +105,39 @@ main (int argc, char *argv[]) {
     std::string pgie_config;
     std::string input_file;
     gboolean showMask = FALSE;
+    gboolean isYAML = FALSE;
 
-    while ((c = getopt(argc, argv, optStr)) != -1) {
-        switch (c) {
-            case 'b':
-                batchSize = std::atoi(optarg);
-                batchSize = batchSize == 0 ? 1:batchSize;
-                break;
-            case 'c':
-                pgie_config.assign(optarg);
-                break;
-            case 'd':
-                useDisplay = TRUE;
-                break;
-            case 'i':
-                input_file.assign(optarg);
-                break;
-            case 'h':
-            default:
-                printUsage(argv[0]);
-                return -1;
-          }
-     }
+    if (argc==2 && (g_str_has_suffix(argv[1], ".yml") ||
+        g_str_has_suffix(argv[1], ".yaml"))) {
+        isYAML = TRUE;
+    } else {
+        while ((c = getopt(argc, argv, optStr)) != -1) {
+            switch (c) {
+                case 'b':
+                    batchSize = std::atoi(optarg);
+                    batchSize = batchSize == 0 ? 1:batchSize;
+                    break;
+                case 'c':
+                    pgie_config.assign(optarg);
+                    break;
+                case 'd':
+                    useDisplay = TRUE;
+                    break;
+                case 'i':
+                    input_file.assign(optarg);
+                    break;
+                case 'h':
+                default:
+                    printUsage(argv[0]);
+                    return -1;
+            }
+        }
+    }
 
     /* Check input arguments */
     if (argc == 1) {
         printUsage(argv[0]);
         return -1;
-    }
-
-    const gchar *p_end = input_file.c_str() + strlen(input_file.c_str());
-    if(!strncmp(p_end - strlen("h264"), "h264", strlen("h264"))) {
-        isH264 = TRUE;
-    } else if(!strncmp(p_end - strlen("jpg"), "jpg", strlen("jpg")) || !strncmp(p_end - strlen("jpeg"), "jpeg", strlen("jpeg"))) {
-        isH264 = FALSE;
-    } else {
-        g_printerr("input file only support H264 and JPEG\n");
-        return -1;
-    }
-
-    const char* use_display = std::getenv("USE_DISPLAY");
-    if(use_display != NULL && std::stoi(use_display) == 1) {
-        useDisplay = true;
-    }
-
-    const char* batch_size = std::getenv("BATCH_SIZE");
-    if(batch_size != NULL ) {
-        batchSize = std::stoi(batch_size);
-        g_printerr("batch size is %d \n", batchSize);
-    }
-
-    const char* show_mask = std::getenv("SHOW_MASK");
-    if(show_mask != NULL && std::stoi(show_mask) == 1) {
-        showMask= TRUE;
     }
 
     /* Standard GStreamer initialization */
@@ -167,6 +150,46 @@ main (int argc, char *argv[]) {
 
     /* Source element for reading from the file */
     source = gst_element_factory_make ("filesrc", "file-source");
+    if(!source) {
+        g_printerr ("filesrc could not be created. Exiting.\n");
+        return -1;
+    }
+
+    const gchar *p_end = NULL;
+    if(isYAML) {
+        if(NVDS_YAML_PARSER_SUCCESS!=nvds_parse_file_source(source, argv[1], "source")){
+            g_printerr("Do not support input file\n");
+            return -1;
+        }
+        gchar * filename = NULL;
+        g_object_get(G_OBJECT (source), "location", &filename, NULL);
+        g_print("get INPUT file %s\n", filename);
+        p_end = filename + strlen(filename);
+    } else {
+        /* we set the input filename to the source element */
+        g_object_set (G_OBJECT (source), "location", input_file.c_str(), NULL);
+        p_end = input_file.c_str() + strlen(input_file.c_str());
+    }
+
+    if(!strncmp(p_end - strlen("h264"), "h264", strlen("h264"))) {
+        isH264 = TRUE;
+    } else if(!strncmp(p_end - strlen("jpg"), "jpg", strlen("jpg")) || !strncmp(p_end - strlen("jpeg"), "jpeg", strlen("jpeg"))) {
+        isH264 = FALSE;
+    } else {
+        g_printerr("input file only support H264 and JPEG\n");
+        return -1;
+    }
+
+    const char* batch_size = std::getenv("BATCH_SIZE");
+    if(batch_size != NULL ) {
+        batchSize = std::stoi(batch_size);
+        g_printerr("batch size is %d \n", batchSize);
+    }
+
+    const char* show_mask = std::getenv("SHOW_MASK");
+    if(show_mask != NULL && std::stoi(show_mask) == 1) {
+        showMask= TRUE;
+    }
 
     /* Since the data format in the input file is elementary h264 stream,
      * we need a h264parser */
@@ -204,6 +227,27 @@ main (int argc, char *argv[]) {
 #ifdef PLATFORM_TEGRA
     transform = gst_element_factory_make ("nvegltransform", "nvegl-transform");
 #endif
+
+    if(isYAML) {
+        GstElement *eglsink = gst_element_factory_make ("nveglglessink", "test-egl-sink");
+        GstElement *filesink = gst_element_factory_make ("filesink", "test-file-sink");
+        if(NVDS_YAML_PARSER_DISABLED != nvds_parse_egl_sink(eglsink, argv[1], "eglsink")){
+            useDisplay=TRUE;
+        } else if (NVDS_YAML_PARSER_DISABLED != nvds_parse_file_sink(filesink, argv[1], "filesink")){
+            useDisplay=FALSE;
+        } else {
+            g_printerr ("No sink is configured. Exiting.\n");
+            return -1;
+        }
+        g_object_unref(eglsink);
+        g_object_unref(filesink);
+    }
+
+    const char* use_display = std::getenv("USE_DISPLAY");
+    if(use_display != NULL && std::stoi(use_display) == 1) {
+        useDisplay = true;
+    }
+
     if(useDisplay == FALSE) {
         if(isH264 == TRUE){
             parser1 = gst_element_factory_make ("h264parse", "h264-parser1");
@@ -214,14 +258,14 @@ main (int argc, char *argv[]) {
         }
         nvvidconv1 = gst_element_factory_make ("nvvideoconvert", "nvvideo-converter1");
         sink = gst_element_factory_make ("filesink", "file-sink");
-        if (!source || !parser || !parser1 || !decoder || !tee || !pgie
+        if (!parser || !parser1 || !decoder || !tee || !pgie
                 || !tiler || !nvvidconv || !nvvidconv1 || !nvdsosd || !enc || !sink) {
             g_printerr ("One element could not be created. Exiting.\n");
             return -1;
         }
     } else {
         sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
-        if (!source || !parser || !decoder || !tee || !pgie
+        if (!parser || !decoder || !tee || !pgie
                 || !tiler || !nvvidconv || !nvdsosd || !sink) {
             g_printerr ("One element could not be created. Exiting.\n");
             return -1;
@@ -235,9 +279,6 @@ main (int argc, char *argv[]) {
     }
 #endif
 
-    /* we set the input filename to the source element */
-    g_object_set (G_OBJECT (source), "location", input_file.c_str(), NULL);
-
     //save the file to local dir
     if(useDisplay == FALSE) {
         if(isH264 == TRUE)
@@ -245,14 +286,28 @@ main (int argc, char *argv[]) {
         else
             g_object_set (G_OBJECT (sink), "location", "./out.jpg", NULL);
     }
-    g_object_set (G_OBJECT (streammux), "width", MUXER_OUTPUT_WIDTH, "height",
+
+    if(isYAML) {
+        nvds_parse_streammux(streammux, argv[1], "streammux");
+        if(batchSize)
+            g_object_set (G_OBJECT (streammux),"batch-size", batchSize, NULL);
+        else {
+            g_object_get(G_OBJECT (streammux), "batch-size", &batchSize, NULL);
+        }
+    } else {
+        g_object_set (G_OBJECT (streammux), "width", MUXER_OUTPUT_WIDTH, "height",
                   MUXER_OUTPUT_HEIGHT, "batch-size", batchSize,
                   "batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC, NULL);
+    }
 
     /* Set all the necessary properties of the nvinfer element,
      * the necessary ones are : */
-    g_object_set (G_OBJECT (pgie),
+    if(isYAML) {
+        nvds_parse_gie (pgie, argv[1], "primary-gie");
+    } else {
+        g_object_set (G_OBJECT (pgie),
                   "config-file-path", pgie_config.c_str(), NULL);
+    }
 
     /* Override the batch-size set in the config file with the number of sources. */
     g_object_get (G_OBJECT (pgie), "batch-size", &pgie_batch_size, NULL);

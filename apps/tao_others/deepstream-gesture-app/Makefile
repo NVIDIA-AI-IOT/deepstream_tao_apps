@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -39,10 +39,12 @@ endif
 
 SRCS:= $(wildcard *.c)
 CPPSRCS+= $(wildcard *.cpp)
-CPPSRCS+= ../deepstream-bodypose2d-app/deepstream_bodypose2d_meta.cpp
+CPPSRCS+= ../deepstream-bodypose2d-app/deepstream_bodypose2d_meta.cpp \
+          ../common/ds_yml_parse.cpp
 
 INCS:= $(wildcard *.h)
-INCS+= ../deepstream-bodypose2d-app/ds_bodypose2d_meta.h
+INCS+= ../deepstream-bodypose2d-app/ds_bodypose2d_meta.h \
+       ../common/ds_yml_parse.h
 
 PKGS:= gstreamer-1.0
 
@@ -53,18 +55,18 @@ OBJS:= $(COBJS) $(CPPOBJS)
 CFLAGS+= -I/opt/nvidia/deepstream/deepstream/sources/includes \
 	 -I/opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
          -I /usr/local/cuda-$(CUDA_VER)/include \
-         -I ../deepstream-bodypose2d-app
+         -I ../deepstream-bodypose2d-app -I ../common
 
 CFLAGS+= `pkg-config --cflags $(PKGS)`
 
-CFLAGS+= -D_GLIBCXX_USE_CXX11_ABI=1 -Wno-sign-compare
+CFLAGS+= -D_GLIBCXX_USE_CXX11_ABI=1 -Wno-sign-compare -Wno-deprecated-declarations
 
 LIBS:= `pkg-config --libs $(PKGS)`
 
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvds_inferutils \
-       -lnvds_utils -lm -lstdc++ \
+       -lnvds_utils -lm -lstdc++ -lnvds_yml_parser -lgstrtspserver-1.0 \
        -L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs \
-       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda \
+       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda -lyaml-cpp \
        -lnvcv_bodypose2d -lnvcv_core -lnvcv_tensorops -lnvcv_trtbackend \
        -Wl,-rpath,$(LIB_INSTALL_DIR)
 

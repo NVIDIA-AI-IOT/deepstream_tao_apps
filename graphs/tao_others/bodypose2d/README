@@ -29,7 +29,7 @@ it will generate a NvDs2DposeMetaData user meta and attach it to person object.
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.0
+- DeepStreamSDK 6.1
 - Graph-Composer 1.0.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
@@ -37,21 +37,21 @@ Pre-requisites
 ================================================================================
 Download models for bodypose2d
 ================================================================================
-1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/bodypose2d/
+1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/bodypose2d/
 2. sudo wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/bodyposenet/versions/deployable_v1.0.1/files/model.etlt \
--O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/bodypose2d/bodypose2d.etlt
+-O /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/bodypose2d/bodypose2d.etlt
 3. sudo wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/bodyposenet/versions/deployable_v1.0.1/files/int8_calibration_288_384.txt \
--O /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/bodypose2d/calibration.bin
+-O /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/bodypose2d/calibration.bin
 
 ================================================================================
 Running the graph
 ================================================================================
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.0/lib/cvcore_libs/
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.0/samples/models/tao_pretrained_models/bodypose2d
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.1/lib/cvcore_libs/
+$ chmod 775 /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/bodypose2d
 For x86_64 platform
-$ /opt/nvidia/graph-composer/execute_graph.sh App-BodyPose2d.yaml App-BodyPose2d.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_x86_64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-BodyPose2d.yaml App-BodyPose2d.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.1/reference_graphs/common/target_x86_64.yaml
 For Jetson
-$ /opt/nvidia/graph-composer/execute_graph.sh App-BodyPose2d.yaml App-BodyPose2d.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.0/reference_graphs/common/target_aarch64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-BodyPose2d.yaml App-BodyPose2d.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.1/reference_graphs/common/target_aarch64.yaml
 
 NOTE: App-BodyPose2d.yaml is the main graph file describing the DeepStream
 graph(pipeline) along with the configuration parameters for the components in the

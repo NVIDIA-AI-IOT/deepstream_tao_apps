@@ -49,7 +49,11 @@ void nvds_release_gaze_meta (gpointer data,  gpointer user_data)
 /* Gazenet model outputs 5 float parameters */
 extern "C"
 gboolean nvds_add_gaze_meta (NvDsBatchMeta *batch_meta, NvDsObjectMeta *obj_meta, 
-        cvcore::ArrayN<float, cvcore::gazenet::GazeNet::OUTPUT_SIZE> &params)
+        cvcore::ArrayN<float, cvcore::gazenet::GazeNet::OUTPUT_SIZE> &params,
+        cvcore::Array<cvcore::Vector2i> &leftStart,
+        cvcore::Array<cvcore::Vector2i> &leftEnd,
+        cvcore::Array<cvcore::Vector2i> &rightStart,
+        cvcore::Array<cvcore::Vector2i> &rightEnd)
 {
     NvDsUserMeta *user_meta = NULL;
     user_meta = nvds_acquire_user_meta_from_pool (batch_meta);
@@ -61,6 +65,14 @@ gboolean nvds_add_gaze_meta (NvDsBatchMeta *batch_meta, NvDsObjectMeta *obj_meta
     for (int n = 0; n < params_num; n++) {
         p_gaze_meta_data->gaze_params[n] = params[n];
     }
+    p_gaze_meta_data->left_start_x=leftStart[0].x;
+    p_gaze_meta_data->left_start_y=leftStart[0].y;
+    p_gaze_meta_data->left_end_x=leftEnd[0].x;
+    p_gaze_meta_data->left_end_y=leftEnd[0].y;
+    p_gaze_meta_data->right_start_x=rightStart[0].x;
+    p_gaze_meta_data->right_start_y=rightStart[0].y;
+    p_gaze_meta_data->right_end_x=rightEnd[0].x;
+    p_gaze_meta_data->right_end_y=rightEnd[0].y;
 
     user_meta->user_meta_data = (void *) (p_gaze_meta_data);
     user_meta->base_meta.meta_type = user_meta_type;

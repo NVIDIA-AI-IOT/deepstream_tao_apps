@@ -1,0 +1,51 @@
+nmsWindowSize: 7
+featUpsamplingFactor: 4
+threshHeat: 0.05
+threshVectorScore: 0.05
+threshVectorCnt1: 8
+threshPartCnt: 4
+threshHumanScore: 0.4
+batchSize: 32
+##refer to enum ImageType in cv/core/Image.h
+imageType: 8
+numJoints: 18
+##refer to cv/bodypose2d/BodyPose2D.h
+jointEdges: 
+  - 1,8
+  - 8,9
+  - 9,10
+  - 1,11
+  - 11,12
+  - 12,13
+  - 1,2
+  - 2,3
+  - 3,4
+  - 2,16
+  - 1,5
+  - 5,6
+  - 6,7
+  - 5,17
+  - 1,0
+  - 0,14
+  - 0,15
+  - 14,16
+  - 15,17
+connections:
+  - 0,1
+  - 1,2
+  - 1,5
+  - 2,3
+  - 3,4
+  - 5,6
+  - 6,7
+  - 2,8
+  - 8,9
+  - 9,10
+  - 5,11
+  - 11,12
+  - 12,13
+  - 0,14
+  - 14,16
+  - 8,11
+  - 15,17
+  - 0,15

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -28,26 +28,26 @@ endif
 TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
 CXX:= g++
 
-SRCS:= heartrateinfer.cpp
+SRCS:= heartrateinfer.cpp ../../common/ds_yml_parse.cpp
 
 INCS:= $(wildcard *.h)
 LIB:=libnvds_heartrateinfer.so
 
-CFLAGS+= -fPIC -DDS_VERSION=\"6.0.0\" \
+CFLAGS+= -fPIC -DDS_VERSION=\"6.1.0\" \
 	 -I /usr/local/cuda-$(CUDA_VER)/include \
 	 -I ../../../includes \
 	 -I /opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate/includes \
 	 -I /opt/nvidia/deepstream/deepstream/sources/includes \
 	 -I /opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
-	 -I ../
+	 -I ../ -I ../../common/
 
 GST_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream/lib/gst-plugins/
 LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream/lib/
 
-LIBS := -shared -Wl,-no-undefined \
+LIBS := -shared -Wl,-no-undefined -lnvds_yml_parser -lgstrtspserver-1.0 \
 	-L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda -ldl -lpthread \
 	-L$(LIB_INSTALL_DIR) -lnvdsgst_helper -lnvdsgst_meta -lnvds_meta -lnvds_infer\
-	-L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs \
+	-L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs -lyaml-cpp \
 	-lnvbufsurface -lnvbufsurftransform -lnvdsbufferpool -lnvcv_core -lnvcv_heartrate \
 	-Wl,-rpath,$(LIB_INSTALL_DIR) \
 	-Wl,-rpath,$(LIB_INSTALL_DIR)cvcore_libs/
@@ -61,7 +61,7 @@ OBJS:= $(SRCS:.cpp=.o)
 PKGS:= gstreamer-1.0 gstreamer-base-1.0 gstreamer-video-1.0
 
 CFLAGS+=$(shell pkg-config --cflags $(PKGS))
-CFLAGS+= -ggdb
+CFLAGS+=-Wno-deprecated-declarations
 LIBS+=$(shell pkg-config --libs $(PKGS))
 
 all: $(LIB)

@@ -115,6 +115,12 @@ Usage: ds-tao-detection -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH
 
  note:for PeopleSegNet, you need to set SHOW_MASK=1 if you need to display the instance mask
 ```
+The TAO apps can also accept yaml config file as the parameters.
+ e.g.
+  Run the detector app with Frcnn model on x86 platform
+```
+  ./apps/tao_detection/ds-tao-detection det_app_frcnn.yml
+```
 
 ## Information for Customization
 
@@ -192,6 +198,10 @@ The model has the following four outputs:
 >- **SSD/DSSD/RetinaNet**:  batchTilePlugin, nmsPlugin
 >- **YOLOV3/YOLOV4**:  batchTilePlugin, resizeNearestPlugin, batchedNMSPlugin
 >- **PeopleSegNet**:  generateDetectionPlugin, MultilevelCropAndResize, MultilevelProposeROI
+
+### Calibration file with TensorRT version
+
+For INT8 for Frcnn, yoloV3, yoloV4 and yolov4-tiny models, the calibration files are different on different TensorRT versions to guarantee the accuracy.
 
 ## FAQ
 

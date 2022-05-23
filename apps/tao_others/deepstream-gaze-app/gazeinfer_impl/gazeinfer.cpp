@@ -49,6 +49,8 @@
 #include "ds_gaze_meta.h"
 #include "cv/gazenet/GazeNet.h"
 #include "cv/core/Memory.h"
+#include "ds_yml_parse.h"
+#include <yaml-cpp/yaml.h>
 
 using namespace std;
 using std::string;
@@ -70,6 +72,8 @@ inline bool CHECK_(int e, int iLine, const char *szFile) {
 /* This quark is required to identify NvDsMeta when iterating through
  * the buffer metadatas */
 static GQuark _dsmeta_quark = g_quark_from_static_string (NVDS_META_STRING);
+const cvcore::CameraIntrinsics cameraParams = {960.5037478246579, 960.1507947013808, 643.5179717135431,
+                                               365.1361007229173};
 
 /* Strcture used to share between the threads */
 struct PacketInfo {
@@ -149,6 +153,8 @@ public:
   /* Pass GST events to the library */
   virtual bool HandleEvent(GstEvent *event);
 
+  virtual char *QueryProperties ();
+
   /* Process Incoming Buffer */
   virtual BufferResult ProcessBuffer(GstBuffer *inbuf);
 
@@ -195,11 +201,13 @@ public:
   NvBufSurfTransformParams m_transform_params;
   NvBufSurfTransformConfigParams m_transform_config_params;
   std::unique_ptr<cvcore::gazenet::GazeNet> m_objGaze;
+  std::unique_ptr<cvcore::gazenet::GazeNetVisualizer> m_objGazeVisualizer;
   std::string m_config_file_path;
   CUgraphicsResource m_cuda_resource;
   CUeglFrame m_egl_frame;
 };
 
+extern "C" IDSCustomLibrary *CreateCustomAlgoCtx(DSCustom_CreateParams *params);
 // Create Custom Algorithm / Library Context
 extern "C" IDSCustomLibrary *CreateCustomAlgoCtx(DSCustom_CreateParams *params)
 {
@@ -464,13 +472,48 @@ bool GazeAlgorithm::SetInitParams(DSCustom_CreateParams *params)
 
   if (!m_config_file_path.empty()) {
       /* Parse model config file*/
-      fconfig.open(m_config_file_path);
-      if (!fconfig.is_open()) {
+      if ( g_str_has_suffix(m_config_file_path.c_str(), ".yml")
+        || (g_str_has_suffix(m_config_file_path.c_str(), ".yaml"))) {
+
+        YAML::Node config = YAML::LoadFile(m_config_file_path.c_str());
+
+        if (config.IsNull()) {
+            g_printerr ("config file is NULL.\n");
+            return -1;
+        }
+
+        if (config["enginePath"]) {
+            string s =
+              get_absolute_path(config["enginePath"].as<std::string>().c_str());
+            struct stat buffer;
+            if(stat (s.c_str(), &buffer) == 0){
+              GazeInferenceParams.engineFilePath = s;
+            }
+        }
+        if (config["etltPath"]) {
+            etlt_path =
+              get_absolute_path(config["etltPath"].as<std::string>().c_str());
+        }
+        if (config["etltKey"]) {
+            EngineGenParam.decodeKey = config["etltKey"].as<std::string>().c_str();
+        }
+        if (config["networkMode"]) {
+            std::string type_name = config["networkMode"].as<std::string>();
+            if (type_name.c_str() == "fp16")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_FP16;
+            else if (type_name.c_str() == "fp32")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_FP32;
+            else if (type_name.c_str() == "int8")
+                EngineGenParam.networkMode = NvDsInferNetworkMode_INT8;
+        }
+      } else {
+        fconfig.open(m_config_file_path);
+        if (!fconfig.is_open()) {
           g_print("The model config file open is failed!\n");
           return -1;
-      }
+        }
 
-      while (!fconfig.eof()) {
+        while (!fconfig.eof()) {
           string strParam;
 	      if (getline(fconfig, strParam)) {
               std::vector<std::string> param_strs = split(strParam, "=");
@@ -497,8 +540,9 @@ bool GazeAlgorithm::SetInitParams(DSCustom_CreateParams *params)
                   }
               }
 	      }
+        }
+        fconfig.close();
       }
-      fconfig.close();
 
       string engine_path =  GazeInferenceParams.engineFilePath;
  
@@ -552,7 +596,11 @@ bool GazeAlgorithm::SetInitParams(DSCustom_CreateParams *params)
   std::unique_ptr<cvcore::gazenet::GazeNet> objGaze(new 
      cvcore::gazenet::GazeNet(cvcore::gazenet::defaultPreProcessorParams,
      GazeModelInputParams, GazeInferenceParams));
+  std::unique_ptr<cvcore::gazenet::GazeNetVisualizer> objGazeVisualizer(
+        new cvcore::gazenet::GazeNetVisualizer(cameraParams));
+
   m_objGaze = std::move(objGaze);
+  m_objGazeVisualizer = std::move(objGazeVisualizer);
 
   return true;
 }
@@ -648,6 +696,13 @@ bool GazeAlgorithm::HandleEvent (GstEvent *event)
       gst_nvevent_parse_stream_eos (event, &source_id);
   }
   return true;
+}
+
+char *GazeAlgorithm::QueryProperties ()
+{
+    char *str = new char[1000];
+    strcpy (str, "GAZENET LIBRARY PROPERTIES\n \t\t\tconfig-file=GAZENET MODEL CONFIG FILE\n");
+    return str;
 }
 
 // Set Custom Library Specific Properties
@@ -853,6 +908,15 @@ void GazeAlgorithm::OutputThread(void)
           if (landmark_flag) {
               cvcore::Array<cvcore::BBox> gazeFaceBBoxes(1);
               gazeFaceBBoxes.setSize(1);
+              cvcore::Array<cvcore::Vector2i> leftEndPt(1, true);
+              cvcore::Array<cvcore::Vector2i> rightEndPt(1, true);
+              cvcore::Array<cvcore::Vector2i> leftStartPt(1, true);
+              cvcore::Array<cvcore::Vector2i> rightStartPt(1, true);
+              leftEndPt.setSize(1);
+              rightEndPt.setSize(1);
+              leftStartPt.setSize(1);
+              rightStartPt.setSize(1);
+
       
               cvcore::Array<cvcore::ArrayN<float,
                   cvcore::gazenet::GazeNet::OUTPUT_SIZE>> gazeOutput(1, true);
@@ -874,7 +938,10 @@ void GazeAlgorithm::OutputThread(void)
 
               m_objGaze->execute(gazeOutput, inputImageDevice, gazeFaceBBoxes,
                   gazeInputLandmarks);
-              nvds_add_gaze_meta (batch_meta, obj_meta, gazeOutput[0]);
+              m_objGazeVisualizer->execute(leftEndPt, leftStartPt, rightEndPt, rightStartPt, gazeInputLandmarks,
+                                       gazeOutput);
+              nvds_add_gaze_meta (batch_meta, obj_meta, gazeOutput[0], leftStartPt, leftEndPt,
+                  rightStartPt, rightEndPt);
           }
       }
     }

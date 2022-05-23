@@ -1,0 +1,16 @@
+enginePath: ../../../../models/emotion/emotion.etlt_b32_gpu0_fp16.engine
+etltPath: ../../../../models/emotion/emotion.etlt
+etltKey: nvidia_tlt
+## networkMode can be int8, fp16 or fp32
+networkMode: fp16
+batchSize: 32
+inputWidth: 136
+inputHeight: 1
+inputType: 
+label:
+  - 0,neutral
+  - 1,happy
+  - 2,surprise
+  - 3,squint
+  - 4,disgust
+  - 5,scream

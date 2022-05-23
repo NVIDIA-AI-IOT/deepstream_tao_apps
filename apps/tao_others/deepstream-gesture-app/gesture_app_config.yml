@@ -1,0 +1,31 @@
+source-list:
+  list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4;file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4
+
+output:
+  ## 1:file ouput  2:fake output 3:eglsink output
+  type: 1
+  ## 0: H264 encoder  1:H265 encoder
+  enc: 0
+  bitrate: 2000000
+  ##The file name without suffix
+  filename: test
+
+hand-options:
+  ## 1:right hand  2:left hand  3:both hands
+  type: 1
+
+streammux:
+  width: 1280
+  height: 720
+  batched-push-timeout: 40000
+
+primary-gie:
+  config-file-path: ../../../configs/bodypose2d_tao/bodypose2d_pgie_config.yml
+  unique-id: 1
+
+secondary-gie:
+  config-file-path: ../../../configs/gesture_tao/gesture_sgie_config.yml
+  unique-id: 2
+
+model-config:
+  config-file-path: ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.yml
