@@ -68,9 +68,9 @@ H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detec
 
 ```
 // SSH
-git clone git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao3.0_ds6.0.1 git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao3.0_ds6.0.1 https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 ### 2. Download Models
 Run below script to download models except multi_task model.
