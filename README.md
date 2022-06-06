@@ -22,6 +22,7 @@
       - [11. multi_task](#11-multi_task)
       - [12. EfficientDet](#12-efficientdet)
     - [TRT Plugins Requirements](#trt-plugins-requirements)
+    - [Calibration file with TensorRT version](#calibration-file-with-tensorrt-version)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
     - [About misc folder](#about-misc-folder)
@@ -54,7 +55,7 @@ H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detec
 
    Make sure deepstream-test1 sample can run successful to verify your installation
 
-   Note, For all TAO models, you must use DS 6.0 GA or later release.
+   Note, For all TAO models, you must use DS 6.1 or later release.
 
 * [TensorRT OSS (release/8.x branch)](https://github.com/NVIDIA/TensorRT/tree/release/8.0)
 
@@ -226,7 +227,7 @@ trtexec --batch=2 --useSpinWait --loadEngine=yolo_resnet18.etlt_b2_gpu0_fp16.eng
 ```
 ## Others Models
 
-There are some special models which are not exactly detector, classifier or segmetation. The sample application of these special models are put in apps/tao_others. These samples should run on DeepStream 6.0 or above versions. Please refer to apps/tao_others/README.md document for details.
+There are some special models which are not exactly detector, classifier or segmetation. The sample application of these special models are put in apps/tao_others. These samples should run on DeepStream 6.1 or above versions. Please refer to apps/tao_others/README.md document for details.
 
 ## Graph Composer Samples
 
