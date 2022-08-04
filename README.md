@@ -15,12 +15,14 @@
     - [Label Files](#label-files)
     - [DeepStream configuration file](#deepstream-configuration-file)
     - [Model Outputs](#model-outputs)
-      - [1~3. Yolov3 / YoloV4 / yolov4-tiny](#13-yolov3--yolov4-yolov4-tiny)
-      - [4~7. RetinaNet / DSSD / SSD/ FasterRCNN](#47-retinanet--dssd--ssd-fasterrcnn)
+      - [1~3. Yolov3 / YoloV4 / Yolov4-tiny](#13-yolov3-yolov4-yolov4-tiny)
+      - [4~7. RetinaNet / DSSD / SSD/ FasterRCNN](#47-retinanet-dssd-ssd-fasterrcnn)
       - [8. PeopleSegNet](#8-peoplesegnet)
       - [9~10. UNET/PeopleSemSegNet](#910-unetpeoplesemsegnet)
       - [11. multi_task](#11-multi_task)
       - [12. EfficientDet](#12-efficientdet)
+      - [13. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet](#13-facedetect-facial-landmarks-estimation-emotionnet-gaze-estimation-gesturenet-heartratenet-bodyposenet)
+
     - [TRT Plugins Requirements](#trt-plugins-requirements)
     - [Calibration file with TensorRT version](#calibration-file-with-tensorrt-version)
   - [FAQ](#faq)
@@ -44,9 +46,11 @@ This repository provides a DeepStream sample application based on [NVIDIA DeepSt
 The pipeline of the sample:
 
 ```
-                                                                                                |---> encode --->filesink (save the output in local dir)  
-H264/JPEG-->decoder-->tee -->| -- (batch size) -->|-->streammux--> nvinfer(detection)-->nvosd -->        
-                                                                                                |---> display
+                                                                           |-->filesink(save the output in local dir)
+                                                            |--> encode -->
+                                                                           |-->fakesink(use -f option)
+uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
+                                                            |--> display
 ```
 
 ## Prerequisites
@@ -102,26 +106,33 @@ make
 ## Run
 
 ```
-Usage: ds-tao-detection -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH] [-d]
+
+1.Usage: ds-tao-detection -c pgie_config_file -i <H264 or JPEG file uri> [-b BATCH] [-d] [-f] [-l]
     -h: print help info
     -c: pgie config file, e.g. pgie_frcnn_tao_config.txt
-    -i: H264 or JPEG input file
+    -i: uri of the input file, start with the file:///, e.g. file:///.../video.mp4
     -b: batch size, this will override the value of "batch-size" in pgie config file
-    -d: enable display, otherwise dump to output H264 or JPEG file
- 
- e.g.
- ./apps/tao_segmentation/ds-tao-segmentation -c configs/unet_tao/pgie_unet_tao_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
- ./apps/tao_classifier/ds-tao-classifier -c configs/multi_task_tao/pgie_multi_task_tao_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
- [SHOW_MASK=1] ./apps/tao_detection/ds-tao-detection  -c configs/frcnn_tao/pgie_frcnn_tao_config.txt -i $DS_SRC_PATH/samples/streams/sample_720p.h264
+    -d: enable display, otherwise it will dump to output MP4 or JPEG file without -f option
+    -f: use fakesink mode
+    -l: use loop mode
 
- note:for PeopleSegNet, you need to set SHOW_MASK=1 if you need to display the instance mask
+2.Usage: ds-tao-detection <yaml file uri>
+  e.g.
+  ./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml
+
+
+note:If you want use multi-source, you can input multi -i input(e.g., -i uri -i uri...) 
 ```
-The TAO apps can also accept yaml config file as the parameters.
- e.g.
-  Run the detector app with Frcnn model on x86 platform
-```
-  ./apps/tao_detection/ds-tao-detection det_app_frcnn.yml
-```
+For detailed model information, pleasing refer to the following table:
+note:The default $DS_SRC_PATH is /opt/nvidia/deepstream/deepstream
+
+|Model Type|Tao Model|Demo|
+|-----------|----------|----|
+|detector|dssd, efficientdet, frcnn, retinanet, ssd, yolov3, yolov4-tiny, yolov4|./apps/tao_detection/ds-tao-detection -c configs/dssd_tao/pgie_dssd_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml|
+|classifier|multi-task|./apps/tao_classifier/ds-tao-classifier -c configs/multi_task_tao/pgie_multi_task_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_classifier/ds-tao-classifier configs/app/multi_task_app_config.yml|
+|segmentation|peopleSemSegNet, unet|./apps/tao_segmentation/ds-tao-segmentation -c configs/peopleSemSegNet_tao/pgie_peopleSemSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_segmentation/ds-tao-segmentation configs/app/seg_app_unet.yml|
+|instance segmentation|peopleSegNet|export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection -c configs/peopleSegNet_tao/pgie_peopleSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection configs/app/ins_seg_app_peopleSegNet.yml|
+|others|FaceDetect, Facial Landmarks Estimation, EmotionNet, Gaze Estimation, GestureNet, HeartRateNet, BodyPoseNet|refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model|
 
 ## Information for Customization
 
@@ -154,7 +165,7 @@ Please refer to [DeepStream Development Guide](https://docs.nvidia.com/metropoli
 
 ### Model Outputs
 
-#### 1~3. Yolov3 / YoloV4 /yolov4-tiny
+#### 1~3. Yolov3 / YoloV4 / Yolov4-tiny
 
 The model has the following four outputs:
 
@@ -192,6 +203,9 @@ The model has the following four outputs:
 - **detection_boxes**: This is a [batch_size, max_output_boxes, 4] tensor of data type float32 or float16, containing the coordinates of non-max suppressed boxes. The output coordinates will always be in BoxCorner format, regardless of the input code type.
 - **detection_scores**: This is a [batch_size, max_output_boxes] tensor of data type float32 or float16, containing the scores for the boxes.
 - **detection_classes**: This is a [batch_size, max_output_boxes] tensor of data type int32, containing the classes for the boxes.
+
+#### 13. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet
+- refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model
 
 ### TRT Plugins Requirements
 
