@@ -156,37 +156,49 @@ OR
 A sample of 2D bodypose:
 
 `./deepstream-bodypose2d-app 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt 0 0 file:///usr/data/bodypose2d_test.png ./body2dout`
+
 OR
+
 `./deepstream-bodypose2d-app ./bodypose2d_app_config.yml`
 
 A sample of facial landmark:
 
 `./deepstream-faciallandmark-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./landmarkout`
+
 OR
+
 `./deepstream-faciallandmark-app ./faciallandmark_app_config.yml`
 
 A sample of emotions:
 
 `./deepstream-emotion-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./emotion`
+
 OR
+
 `./deepstream-emotion-app ./emotion_app_config.yml`
 
 A sample of gazenet:
 
 `./deepstream-gaze-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./gazenet`
+
 OR
+
 `./deepstream-gaze-app ./gazenet_app_config.yml`
 
 A sample of gesture:
 
 `./deepstream-gesture-app 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt file:///usr/data/bodypose2d_test.png ./gesture`
+
 OR
+
 `./deepstream-gesture-app ./gesture_app_config.yml`
 
 A sample of heartrate:
 
 `./deepstream-heartrate-app 1 file:///usr/data/test_video.mp4 ./heartrate`
+
 OR
+
 `./deepstream-heartrate-app ./heartrate_app_config.yml`
 
 ## Known Issue
