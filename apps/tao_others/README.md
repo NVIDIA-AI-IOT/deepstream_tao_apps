@@ -105,18 +105,24 @@ Start to run the 2D bodypose application
     ./deepstream-bodypose2d-app [1:file sink|2:fakesink|3:display sink|4:rtsp output]  \
      <bodypose2d model config file> <udp port> <rtsp port> <input uri> \
      ... <input uri> <out filename>
+OR
+    ./deepstream-bodypose2d-app <app YAML config file>
 ```
 Start to run the facial landmark application
 ```
     cd deepstream-faciallandmark-app
     ./deepstream-faciallandmark-app [1:file sink|2:fakesink|3:display sink]  \
     <faciallandmark model config file> <input uri> ... <input uri> <out filename>
+OR
+    ./deepstream-faciallandmark-app <app YAML config file>
 ```
 Start to run the emotions application
 ```
     cd deepstream-emotion-app
     ./deepstream-emotion-app [1:file sink|2:fakesink|3:display sink]  \
      <faciallandmark model config> <input uri> ... <input uri> <out filename>
+OR
+    ./deepstream-emotion-app <app YAML config file>
 ```
 
 Start to run the gazenet application
@@ -124,6 +130,8 @@ Start to run the gazenet application
     cd deepstream-gaze-app
     ./deepstream-gaze-app [1:file sink|2:fakesink|3:display sink]  \
     <faciallandmark model config> <input uri> ... <input uri> <out filename>
+OR
+    ./deepstream-gaze-app <app YAML config file>
 ```
 
 Start to run the gesture application
@@ -132,6 +140,8 @@ Start to run the gesture application
     ./deepstream-gesture-app [1:file sink|2:fakesink|3:display sink]  \
      [1:right hand|2:left hand|3:both hands] <bodypose2d model config file> \
      <input uri> ... <input uri> <out filename>
+OR
+    ./deepstream-gesture-app <app YAML config file>
 ```
 
 Start to run the heartrate application
@@ -139,31 +149,57 @@ Start to run the heartrate application
     cd deepstream-heartrate-app
     ./deepstream-heartrate-app [1:file sink|2:fakesink|3:display sink]  \
      <input uri> ... <input uri> <out filename>
+OR
+    ./deepstream-heartrate-app <app YAML config file>
 ```
 
 A sample of 2D bodypose:
 
 `./deepstream-bodypose2d-app 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt 0 0 file:///usr/data/bodypose2d_test.png ./body2dout`
 
+OR
+
+`./deepstream-bodypose2d-app ./bodypose2d_app_config.yml`
+
 A sample of facial landmark:
 
 `./deepstream-faciallandmark-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./landmarkout`
+
+OR
+
+`./deepstream-faciallandmark-app ./faciallandmark_app_config.yml`
 
 A sample of emotions:
 
 `./deepstream-emotion-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./emotion`
 
+OR
+
+`./deepstream-emotion-app ./emotion_app_config.yml`
+
 A sample of gazenet:
 
 `./deepstream-gaze-app 1 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./gazenet`
+
+OR
+
+`./deepstream-gaze-app ./gazenet_app_config.yml`
 
 A sample of gesture:
 
 `./deepstream-gesture-app 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt file:///usr/data/bodypose2d_test.png ./gesture`
 
+OR
+
+`./deepstream-gesture-app ./gesture_app_config.yml`
+
 A sample of heartrate:
 
 `./deepstream-heartrate-app 1 file:///usr/data/test_video.mp4 ./heartrate`
+
+OR
+
+`./deepstream-heartrate-app ./heartrate_app_config.yml`
 
 ## Known Issue
 

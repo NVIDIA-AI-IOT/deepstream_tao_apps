@@ -845,7 +845,7 @@ main (int argc, char *argv[])
       atoi(argv[2]) != 3)) {
       g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink] "
       "[1:right hand|2:left hand|3:both hands] <model configure file> "
-      "<input file> ... <inputfile> <out H264 filename>\n", argv[0]);
+      "<input file> ... <inputfile> <out H264 filename>\nOR\n%s <app YAML config file>\n", argv[0], argv[0]);
       return -1;
     }
   }

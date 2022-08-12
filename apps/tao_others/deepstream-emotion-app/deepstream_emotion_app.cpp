@@ -669,7 +669,7 @@ main (int argc, char *argv[])
     if (argc < 5 || argc > 132 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
       atoi(argv[1]) != 3)) {
       g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink] "
-        "<input file> ... <inputfile> <out H264 filename>\n", argv[0]);
+        "<input file> ... <inputfile> <out H264 filename>\nOR %s <YAML config file>\n", argv[0], argv[0]);
       return -1;
     }
   }
