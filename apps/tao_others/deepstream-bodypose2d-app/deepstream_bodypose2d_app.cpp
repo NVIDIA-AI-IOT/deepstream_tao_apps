@@ -670,7 +670,7 @@ main (int argc, char *argv[])
       g_printerr ("Usage: %s [1:file sink|2:fakesink|3:display sink|4:rtsp output] "
         "<model configure file> <udp port> <rtsp port> "
         "<input file> ... <inputfile> <out H264 filename>\n"
-        "OR\n%s <yaml config file>\n", argv[0], argv[0]);
+        "OR\n%s <app yaml config file>\n", argv[0], argv[0]);
       return -1;
     }
   }
