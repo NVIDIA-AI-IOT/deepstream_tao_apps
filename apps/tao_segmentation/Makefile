@@ -58,7 +58,7 @@ CFLAGS+= -std=c++14
 LIBS:= `pkg-config --libs $(PKGS)`
 
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvdsgst_helper\
-       -lnvds_yml_parser -Wl,-rpath,$(LIB_INSTALL_DIR)
+       -lnvds_yml_parser -lyaml-cpp -Wl,-rpath,$(LIB_INSTALL_DIR)
 
 all: $(APP)
 

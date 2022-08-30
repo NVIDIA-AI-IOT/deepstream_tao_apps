@@ -1,7 +1,7 @@
 ##############################################################################
 # The MIT License (MIT)
 #
-# Copyright (c) 2021 NVIDIA CORPORATION
+# Copyright (c) 2021-2022 NVIDIA CORPORATION
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
 #this software and associated documentation files (the "Software"), to deal in
@@ -30,8 +30,8 @@ translate between gaze user metadata and the GXF messages.
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.1
-- Graph-Composer 1.0.0
+- DeepStreamSDK 6.1.1
+- Graph-Composer 2.0.1
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
 

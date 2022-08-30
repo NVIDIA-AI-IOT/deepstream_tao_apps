@@ -23,23 +23,8 @@ The application pipeline graph
 
 ## Build And Run
 The application can be build and run seperately.
-For Jetson platform
-
-Copy the gst-nvdsvideotemplate plugin source code from DeepStream for servers and workstations package and copy from the following folder:
-
-/opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate
-
 ```
-export CUDA_VER=10.2
-cd /opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate
-make
-cp libnvdsgst_videotemplate.so /opt/nvidia/deepstream/deepstream/lib/gst-plugins/
-rm -rf ~/.cache/gstreamer-1.0/
-```
-
-For dGPU
-```
-export CUDA_VER=11.4
+export CUDA_VER=cuda version in the device
 ```
 
 Build the applications and run to inference one video.

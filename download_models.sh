@@ -24,7 +24,7 @@
 # Check following part for how to download the TLT 3.0 models:
 
 # For Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/:
-# wget https://nvidia.box.com/shared/static/em2dh1h4isjhfu7qf0hh6ggzbusdg129 -O models.zip
+# wget https://nvidia.box.com/shared/static/vynsy1tzhdeiwt7a5j44ssitqlm2a9rg -O models.zip
 
 # For peopleSemSegNet:
 # wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_v1.0/zip \
@@ -41,7 +41,7 @@
 echo "==================================================================="
 echo "begin download models for Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/"
 echo "==================================================================="
-wget https://nvidia.box.com/shared/static/em2dh1h4isjhfu7qf0hh6ggzbusdg129 -O models.zip
+wget https://nvidia.box.com/shared/static/vynsy1tzhdeiwt7a5j44ssitqlm2a9rg -O models.zip
 unzip models.zip
 rm models.zip
 
@@ -49,10 +49,10 @@ echo "==================================================================="
 echo "begin download models for peopleSegNet "
 echo "==================================================================="
 mkdir -p models/peopleSegNet/V2
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v2.0.1/zip -O peoplesegnet_deployable_v2.0.1.zip \
--O peoplesegnet_deployable_v2.0.1.zip
-unzip peoplesegnet_deployable_v2.0.1.zip -d models/peopleSegNet/V2
-rm peoplesegnet_deployable_v2.0.1.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v2.0.2/zip \
+-O peoplesegnet_deployable_v2.0.2.zip
+unzip peoplesegnet_deployable_v2.0.2.zip -d models/peopleSegNet/V2
+rm peoplesegnet_deployable_v2.0.2.zip
 
 wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v1.0/zip \
 -O peoplesegnet_deployable_v1.0.zip
@@ -62,11 +62,19 @@ rm peoplesegnet_deployable_v1.0.zip
 echo "==================================================================="
 echo "begin download models for peopleSemSegNet "
 echo "==================================================================="
-mkdir -p models/peopleSemSegNet
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_v1.0.1/zip -O peoplesemsegnet_deployable_v1.0.1.zip \
--O peoplesemsegnet_deployable_v1.0.1.zip
-unzip peoplesemsegnet_deployable_v1.0.1.zip -d models/peopleSemSegNet/
-rm peoplesemsegnet_deployable_v1.0.1.zip
+mkdir -p models/peopleSemSegNet/vanilla
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_quantized_vanilla_unet_v2.0/zip \
+-O peoplesemsegnet_deployable_quantized_vanilla_unet_v2.0.zip
+unzip peoplesemsegnet_deployable_quantized_vanilla_unet_v2.0.zip -d models/peopleSemSegNet/vanilla
+rm peoplesemsegnet_deployable_quantized_vanilla_unet_v2.0.zip
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_vanilla_unet_v2.0.1/files/peoplesemsegnet_vanilla_unet_dynamic_etlt_fp32.etlt \
+-O models/peopleSemSegNet/vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_fp32.etlt
+
+mkdir -p models/peopleSemSegNet/shuffle
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_shuffleseg_unet_v1.0/zip \
+-O deployable_shuffleseg_unet_v1.0.zip
+unzip deployable_shuffleseg_unet_v1.0.zip -d models/peopleSemSegNet/shuffle
+rm deployable_shuffleseg_unet_v1.0.zip
 
 echo "==================================================================="
 echo "begin downloading facial landmarks model "
@@ -74,9 +82,9 @@ echo "==================================================================="
 mkdir -p ./models/faciallandmark
 cd ./models/faciallandmark
 wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v3.0/files/model.etlt -O faciallandmarks.etlt
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v3.0/files/int8_calibration.txt -O fpenet_cal.txt
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0/files/model.etlt -O facenet.etlt
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0/files/int8_calibration.txt -O int8_calibration.txt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v3.0/files/int8_calibration.txt -O int8_calibration.txt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0.1/files/model.etlt -O facenet.etlt
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0.1/files/int8_calibration.txt -O int8_calibration.txt
 
 echo "==================================================================="
 echo "begin downloading emotionNet model "
@@ -110,16 +118,6 @@ mkdir -p ./models/gesture
 cd ./models/gesture
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/model.etlt -O gesture.etlt
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/int8_calibration.txt -O int8_calibration.txt
-
-echo "==================================================================="
-echo "begin downloading BodyPose2d model "
-echo "==================================================================="
-cd -
-mkdir -p ./models/bodypose2d
-cd ./models/bodypose2d
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/bodyposenet/versions/deployable_v1.0.1/zip -O bodyposenet_deployable_v1.0.1.zip
-unzip bodyposenet_deployable_v1.0.1.zip
-rm bodyposenet_deployable_v1.0.1.zip
 
 echo "==================================================================="
 echo "Download models successfully "

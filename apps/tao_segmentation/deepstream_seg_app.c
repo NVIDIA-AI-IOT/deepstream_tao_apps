@@ -27,8 +27,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <yaml-cpp/yaml.h>
+#include <string>
 #include <iostream>
 #include "gstnvdsmeta.h"
+#include "gstnvdsinfer.h"
 #include "nvds_yml_parser.h"
 
 
@@ -44,8 +48,532 @@
 
 #define TILED_OUTPUT_WIDTH 1280
 #define TILED_OUTPUT_HEIGHT 720
-#define MODEL_OUTPUT_WIDTH 960
-#define MODEL_OUTPUT_HEIGHT 608
+#define SEG_OUTPUT_WIDTH 1280
+#define SEG_OUTPUT_HEIGHT 720
+
+/* NVIDIA Decoder source pad memory feature. This feature signifies that source
+ * pads having this capability will push GstBuffers containing cuda buffers. */
+#define GST_CAPS_FEATURES_NVMM "memory:NVMM"
+
+#define MAX_SOURCE_BINS 1024
+
+static guint fileLoop;
+static guint networkType;
+static guint numDetectedClasses;
+
+typedef struct
+{
+  gdouble fps[MAX_SOURCE_BINS];
+  gdouble fps_avg[MAX_SOURCE_BINS];
+  guint num_instances;
+}PerfStruct;
+
+typedef struct
+{
+  guint buffer_cnt;
+  guint total_buffer_cnt;
+  struct timeval total_fps_time;
+  struct timeval start_fps_time;
+  struct timeval last_fps_time;
+  struct timeval last_sample_fps_time;
+}InstancePerfStruct;
+
+typedef struct
+{
+  guint num_instances;
+  GMutex struct_lock;
+  GstPad *sink_bin_pad;
+  InstancePerfStruct instance_str[MAX_SOURCE_BINS];
+} PerfStructInt;
+
+typedef struct _DsSourceBin
+{
+    GstElement *source_bin;
+    GstElement *uri_decode_bin;
+    GstElement *vidconv;
+    GstElement *nvvidconv;
+    GstElement *capsfilt;
+    GstElement *capsraw;
+    gint index;
+    gboolean is_imagedec;
+    gboolean is_streaming;
+    guint64 accumulated_base;
+    guint64 prev_accumulated_base;
+}DsSourceBinStruct;
+
+typedef struct
+{
+  guint file_loop;
+  guint network_type;
+  guint num_detected_classes;
+  std::string config_path;
+} YamlParasStruct;
+
+static void
+parse_tests_yaml (YamlParasStruct *yaml_paras, const gchar *cfg_file_path)
+{
+  YAML::Node configyml = YAML::LoadFile(cfg_file_path);
+
+  std::string paramKey = "";
+
+  for(YAML::const_iterator itr = configyml["tests"].begin();
+     itr != configyml["tests"].end(); ++itr)
+  {
+    paramKey = itr->first.as<std::string>();
+    if (paramKey == "file-loop") {
+      yaml_paras->file_loop = itr->second.as<guint>();
+    }
+  }
+
+  for(YAML::const_iterator itr = configyml["primary-gie"].begin();
+     itr != configyml["primary-gie"].end(); ++itr)
+  {
+    paramKey = itr->first.as<std::string>();
+    if (paramKey == "config-file-path") {
+      yaml_paras->config_path = itr->second.as<std::string>();
+    }
+  }
+
+  for(YAML::const_iterator itr = configyml["property"].begin();
+     itr != configyml["property"].end(); ++itr)
+  {
+    paramKey = itr->first.as<std::string>();
+    if (paramKey == "network-type") {
+      yaml_paras->network_type = itr->second.as<guint>();
+    }
+    if (paramKey == "num-detected-classes") {
+      yaml_paras->num_detected_classes = itr->second.as<guint>();
+    }
+  }
+}
+
+/*
+ * Function to seek the source stream to start.
+ * It is required to play the stream in loop.
+ */
+static gboolean
+seek_decode (gpointer data)
+{
+  DsSourceBinStruct *bin = (DsSourceBinStruct *) data;
+  gboolean ret = TRUE;
+
+  gst_element_set_state (bin->source_bin, GST_STATE_PAUSED);
+
+  ret = gst_element_seek (bin->source_bin, 1.0, GST_FORMAT_TIME,
+      (GstSeekFlags) (GST_SEEK_FLAG_KEY_UNIT | GST_SEEK_FLAG_FLUSH),
+      GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
+
+  if (!ret)
+    GST_WARNING ("Error in seeking pipeline");
+
+  gst_element_set_state (bin->source_bin, GST_STATE_PLAYING);
+
+  return FALSE;
+}
+
+/**
+ * Probe function to drop certain events to support custom
+ * logic of looping of each source stream.
+ */
+static GstPadProbeReturn
+restart_stream_buf_prob (GstPad * pad, GstPadProbeInfo * info,
+    gpointer u_data)
+{
+  GstEvent *event = GST_EVENT (info->data);
+  DsSourceBinStruct *bin = (DsSourceBinStruct *) u_data;
+
+  if ((info->type & GST_PAD_PROBE_TYPE_BUFFER)) {
+    GST_BUFFER_PTS(GST_BUFFER(info->data)) += bin->prev_accumulated_base;
+  }
+  if ((info->type & GST_PAD_PROBE_TYPE_EVENT_BOTH)) {
+    if (GST_EVENT_TYPE (event) == GST_EVENT_EOS) {
+      g_timeout_add (1, seek_decode, bin);
+    }
+
+    if (GST_EVENT_TYPE (event) == GST_EVENT_SEGMENT) {
+      GstSegment *segment;
+
+      gst_event_parse_segment (event, (const GstSegment **) &segment);
+      segment->base = bin->accumulated_base;
+      bin->prev_accumulated_base = bin->accumulated_base;
+      bin->accumulated_base += segment->stop;
+    }
+    switch (GST_EVENT_TYPE (event)) {
+      case GST_EVENT_EOS:
+        /* QOS events from downstream sink elements cause decoder to drop
+         * frames after looping the file since the timestamps reset to 0.
+         * We should drop the QOS events since we have custom logic for
+         * looping individual sources. */
+      case GST_EVENT_QOS:
+      case GST_EVENT_SEGMENT:
+      case GST_EVENT_FLUSH_START:
+      case GST_EVENT_FLUSH_STOP:
+        return GST_PAD_PROBE_DROP;
+      default:
+        break;
+    }
+  }
+  return GST_PAD_PROBE_OK;
+}
+
+static void
+release_segmentation_meta (gpointer data, gpointer user_data)
+{
+  NvDsUserMeta *user_meta = (NvDsUserMeta *) data;
+  NvDsInferSegmentationMeta *meta = (NvDsInferSegmentationMeta *) user_meta->user_meta_data;
+  if (meta->priv_data) {
+    gst_mini_object_unref (GST_MINI_OBJECT (meta->priv_data));
+  }
+  else {
+    g_free (meta->class_map);
+    g_free (meta->class_probabilities_map);
+  }
+  delete meta;
+}
+
+static gpointer
+copy_segmentation_meta (gpointer data, gpointer user_data)
+{
+  NvDsUserMeta *src_user_meta = (NvDsUserMeta *) data;
+  NvDsInferSegmentationMeta *src_meta = (NvDsInferSegmentationMeta *) src_user_meta->user_meta_data;
+  NvDsInferSegmentationMeta *meta = (NvDsInferSegmentationMeta *) g_malloc (sizeof (NvDsInferSegmentationMeta));
+
+  meta->classes = src_meta->classes;
+  meta->width = src_meta->width;
+  meta->height = src_meta->height;
+  meta->class_map = (gint *) g_memdup(src_meta->class_map, meta->width * meta->height * sizeof (gint));
+  // meta->class_probabilities_map = (gfloat *) g_memdup(src_meta->class_probabilities_map, meta->classes * meta->width * meta->height * sizeof (gfloat));
+  meta->class_probabilities_map = NULL;
+  meta->priv_data = NULL;
+
+  return meta;
+}
+
+static GstPadProbeReturn
+pgie_pad_buffer_probe_network_type100 (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
+{
+  NvDsMetaList *l_frame = NULL;
+  NvDsMetaList *l_obj = NULL;
+  NvDsMetaList *l_user = NULL;
+
+  GstBuffer *buf = (GstBuffer *)(info->data);
+  NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta(buf);
+
+  /* Iterate each frame metadata in batch */
+  for (NvDsMetaList * l_frame = batch_meta->frame_meta_list;
+      l_frame != NULL; l_frame = l_frame->next) {
+    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
+
+    if (frame_meta && frame_meta->frame_user_meta_list) {
+      NvDsFrameMetaList *fmeta_list = NULL;
+      NvDsUserMeta *of_user_meta = NULL;
+
+      for (fmeta_list = frame_meta->frame_user_meta_list;
+        fmeta_list != NULL; fmeta_list = fmeta_list->next) {
+        of_user_meta = (NvDsUserMeta *)fmeta_list->data;
+        if (of_user_meta && of_user_meta->base_meta.meta_type == NVDSINFER_TENSOR_OUTPUT_META) {
+          NvDsInferTensorMeta *meta = (NvDsInferTensorMeta *)(of_user_meta->user_meta_data);
+          if (!meta ||
+              (meta->num_output_layers != 1) ||
+              (meta->output_layers_info[0].dataType != 3))// ||// INT32
+            continue;
+
+          NvDsInferLayerInfo *info = &meta->output_layers_info[0];
+          info->buffer = meta->out_buf_ptrs_host[0];// cudaMemcpyDeviceToHost is already performed.
+
+          //---Fill NvDsInferSegmentationMeta structure---
+          // Acquire a new NvDsUserMeta object from frame_meta.
+          NvDsUserMeta *user_meta = nvds_acquire_user_meta_from_pool (frame_meta->base_meta.batch_meta);
+          NvDsInferSegmentationMeta *segmeta = (NvDsInferSegmentationMeta *) g_malloc (sizeof (NvDsInferSegmentationMeta));
+
+          segmeta->classes = numDetectedClasses;
+          // Segmentation model ALWAYS has the same W/H as the input tensor.
+          segmeta->height = meta->network_info.height;
+          segmeta->width = meta->network_info.width;
+
+          // Output tensor is the class map already. There is nothing else to parse.
+          // Referencing instead of copying info->buffer causes SegV crash.
+          segmeta->class_map = (gint *) g_memdup(info->buffer, segmeta->width * segmeta->height * sizeof (gint));
+          segmeta->class_probabilities_map = NULL;
+          segmeta->priv_data = NULL;
+
+          // Assign NvDsInferSegmentationMeta to the fields of NvDsUserMeta
+          user_meta->user_meta_data = segmeta;
+          user_meta->base_meta.meta_type = (NvDsMetaType) NVDSINFER_SEGMENTATION_META;
+          user_meta->base_meta.release_func = release_segmentation_meta;
+          user_meta->base_meta.copy_func = copy_segmentation_meta;
+
+          nvds_add_user_meta_to_frame (frame_meta, user_meta);
+          //---Fill NvDsInferSegmentationMeta structure---
+        }
+      }
+    }
+  }
+
+  // use_device_mem = 1 - use_device_mem;
+  return GST_PAD_PROBE_OK;
+}
+
+static gboolean
+perf_measurement_callback (gpointer data)
+{
+  PerfStructInt *str = (PerfStructInt *) data;
+  guint buffer_cnt[MAX_SOURCE_BINS];
+  PerfStruct perf_struct;
+  struct timeval current_fps_time;
+  guint i;
+  static guint header_print_cnt = 0;
+  if (header_print_cnt % 20 == 0) {
+    g_print ("\n**PERF:  ");
+    for (i = 0; i < str->num_instances; i++) {
+      g_print ("FPS %d (Avg)\t", i);
+    }
+    g_print ("\n");
+    header_print_cnt = 0;
+  }
+  header_print_cnt++;
+
+  time_t t = time (NULL);
+  struct tm *tm = localtime (&t);
+  g_print ("%s", asctime (tm));
+
+  g_mutex_lock (&str->struct_lock);
+
+  for (i = 0; i < str->num_instances; i++) {
+    buffer_cnt[i] =
+        str->instance_str[i].buffer_cnt;
+    str->instance_str[i].buffer_cnt = 0;
+  }
+
+  perf_struct.num_instances = str->num_instances;
+  gettimeofday (&current_fps_time, NULL);
+
+  g_print ("**PERF:  ");
+  for (i = 0; i < str->num_instances; i++) {
+    InstancePerfStruct *str1 = &str->instance_str[i];
+    gdouble time1 =
+        (str1->total_fps_time.tv_sec +
+        str1->total_fps_time.tv_usec / 1000000.0) +
+        (current_fps_time.tv_sec + current_fps_time.tv_usec / 1000000.0) -
+        (str1->start_fps_time.tv_sec +
+        str1->start_fps_time.tv_usec / 1000000.0);
+
+    gdouble time2;
+
+    if (str1->last_sample_fps_time.tv_sec == 0 &&
+        str1->last_sample_fps_time.tv_usec == 0) {
+      time2 =
+          (str1->last_fps_time.tv_sec +
+          str1->last_fps_time.tv_usec / 1000000.0) -
+          (str1->start_fps_time.tv_sec +
+          str1->start_fps_time.tv_usec / 1000000.0);
+    } else {
+      time2 =
+          (str1->last_fps_time.tv_sec +
+          str1->last_fps_time.tv_usec / 1000000.0) -
+          (str1->last_sample_fps_time.tv_sec +
+          str1->last_sample_fps_time.tv_usec / 1000000.0);
+    }
+    str1->total_buffer_cnt += buffer_cnt[i];
+    perf_struct.fps[i] = buffer_cnt[i] / time2;
+    if (isnan (perf_struct.fps[i]))
+      perf_struct.fps[i] = 0;
+
+    perf_struct.fps_avg[i] = str1->total_buffer_cnt / time1;
+    if (isnan (perf_struct.fps_avg[i]))
+      perf_struct.fps_avg[i] = 0;
+
+    str1->last_sample_fps_time = str1->last_fps_time;
+
+    g_print ("%.2f(%.2f)\t", perf_struct.fps[i], perf_struct.fps_avg[i]);
+  }
+
+  g_print("\n");
+
+  g_mutex_unlock (&str->struct_lock);
+
+  return TRUE;
+}
+
+/**
+ * Buffer probe function on element.
+ */
+static GstPadProbeReturn
+buf_probe (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
+{
+  PerfStructInt *str = (PerfStructInt *) u_data;
+  NvDsBatchMeta *batch_meta =
+      gst_buffer_get_nvds_batch_meta (GST_BUFFER (info->data));
+
+  if (!batch_meta)
+    return GST_PAD_PROBE_OK;
+
+  g_mutex_lock (&str->struct_lock);
+  for (NvDsMetaList * l_frame = batch_meta->frame_meta_list; l_frame;
+      l_frame = l_frame->next) {
+    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
+    InstancePerfStruct *str1 = &str->instance_str[frame_meta->pad_index];
+    gettimeofday (&str1->last_fps_time, NULL);
+    if (str1->start_fps_time.tv_sec == 0 && str1->start_fps_time.tv_usec == 0) {
+      str1->start_fps_time = str1->last_fps_time;
+    } else {
+      str1->buffer_cnt++;
+    }
+  }
+  g_mutex_unlock (&str->struct_lock);
+  return GST_PAD_PROBE_OK;
+}
+
+static void
+cb_newpad (GstElement * decodebin, GstPad * decoder_src_pad, gpointer data)
+{
+  g_print ("In cb_newpad\n");
+  GstCaps *caps = gst_pad_get_current_caps (decoder_src_pad);
+  const GstStructure *str = gst_caps_get_structure (caps, 0);
+  const gchar *name = gst_structure_get_name (str);
+  DsSourceBinStruct *bin_struct = (DsSourceBinStruct *) data;
+  GstCapsFeatures *features = gst_caps_get_features (caps, 0);
+
+  /* Need to check if the pad created by the decodebin is for video and not
+   * audio. */
+  if (!strncmp (name, "video", 5)) {
+    /* Link the decodebin pad to videoconvert if no hardware decoder is used */
+    if (bin_struct->vidconv) {
+      GstPad *conv_sink_pad = gst_element_get_static_pad (bin_struct->vidconv,
+          "sink");
+      if (gst_pad_link (decoder_src_pad, conv_sink_pad)) {
+        g_printerr ("Failed to link decoderbin src pad to converter sink pad\n");
+      }
+      g_object_unref(conv_sink_pad);
+      if (!gst_element_link_many (bin_struct->vidconv, bin_struct->capsraw,
+         bin_struct->nvvidconv, NULL)) {
+         g_printerr ("Failed to link videoconvert to nvvideoconvert\n");
+      }
+    } else {
+      GstPad *conv_sink_pad = gst_element_get_static_pad (bin_struct->nvvidconv,
+          "sink");
+      if (gst_pad_link (decoder_src_pad, conv_sink_pad)) {
+        g_printerr ("Failed to link decoderbin src pad to converter sink pad\n");
+      }
+      g_object_unref(conv_sink_pad);
+    }
+    if (gst_caps_features_contains (features, GST_CAPS_FEATURES_NVMM)) {
+      g_print ("###Decodebin pick nvidia decoder plugin.\n");
+    } else {
+      /* Get the source bin ghost pad */
+      g_print ("###Decodebin did not pick nvidia decoder plugin.\n");
+    }
+  }
+}
+
+static void
+decodebin_child_added (GstChildProxy * child_proxy, GObject * object,
+    gchar * name, gpointer user_data)
+{
+  g_print ("Decodebin child added: %s\n", name);
+  DsSourceBinStruct *src_bin_st = (DsSourceBinStruct *) user_data;
+  if (g_strrstr (name, "decodebin") == name) {
+    g_signal_connect (G_OBJECT (object), "child-added",
+        G_CALLBACK (decodebin_child_added), user_data);
+  }
+
+  if (g_strstr_len (name, -1, "nvv4l2decoder") == name) {
+    if (fileLoop && !src_bin_st->is_streaming) {
+      g_print ("loop model: %s\n", name);
+      GstPad *gstpad = gst_element_get_static_pad (GST_ELEMENT(object), "sink");
+      gst_pad_add_probe(gstpad, (GstPadProbeType) (GST_PAD_PROBE_TYPE_EVENT_BOTH |
+              GST_PAD_PROBE_TYPE_EVENT_FLUSH | GST_PAD_PROBE_TYPE_BUFFER), restart_stream_buf_prob, user_data, NULL);
+      gst_object_unref (gstpad);
+    }
+  }
+}
+
+static bool
+create_source_bin (DsSourceBinStruct *ds_source_struct, gchar * uri)
+{
+  gchar bin_name[16] = { };
+  GstCaps *caps = NULL;
+  GstCapsFeatures *feature = NULL;
+
+  ds_source_struct->nvvidconv = NULL;
+  ds_source_struct->capsfilt = NULL;
+  ds_source_struct->source_bin = NULL;
+  ds_source_struct->uri_decode_bin = NULL;
+
+  g_snprintf (bin_name, 15, "source-bin-%02d", ds_source_struct->index);
+  /* Create a source GstBin to abstract this bin's content from the rest of the
+   * pipeline */
+  ds_source_struct->source_bin = gst_bin_new (bin_name);
+
+  /* Source element for reading from the uri.
+   * We will use decodebin and let it figure out the container format of the
+   * stream and the codec and plug the appropriate demux and decode plugins. */
+  ds_source_struct->uri_decode_bin = gst_element_factory_make ("uridecodebin",
+      "uri-decode-bin");
+  ds_source_struct->nvvidconv = gst_element_factory_make ("nvvideoconvert",
+      "source_nvvidconv");
+  ds_source_struct->capsfilt = gst_element_factory_make ("capsfilter",
+      "source_capset");
+
+  if (!ds_source_struct->source_bin || !ds_source_struct->uri_decode_bin
+      || !ds_source_struct->nvvidconv
+      || !ds_source_struct->capsfilt) {
+    g_printerr ("One element in source bin could not be created.\n");
+    return false;
+  }
+
+  /* We set the input uri to the source element */
+  g_object_set (G_OBJECT (ds_source_struct->uri_decode_bin), "uri", uri, NULL);
+
+  /* Connect to the "pad-added" signal of the decodebin which generates a
+   * callback once a new pad for raw data has beed created by the decodebin */
+  g_signal_connect (G_OBJECT (ds_source_struct->uri_decode_bin), "pad-added",
+      G_CALLBACK (cb_newpad), ds_source_struct);
+  g_signal_connect (G_OBJECT (ds_source_struct->uri_decode_bin), "child-added",
+      G_CALLBACK (decodebin_child_added), ds_source_struct);
+
+  caps = gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING, "NV12",
+      NULL);
+  feature = gst_caps_features_new ("memory:NVMM", NULL);
+  gst_caps_set_features (caps, 0, feature);
+  g_object_set (G_OBJECT (ds_source_struct->capsfilt), "caps", caps, NULL);
+
+#ifndef PLATFORM_TEGRA
+  g_object_set (G_OBJECT (ds_source_struct->nvvidconv),
+      "nvbuf-memory-type", 3, NULL);
+#endif
+
+  gst_bin_add_many (GST_BIN (ds_source_struct->source_bin),
+      ds_source_struct->uri_decode_bin, ds_source_struct->nvvidconv,
+      ds_source_struct->capsfilt, NULL);
+
+  if (!gst_element_link (ds_source_struct->nvvidconv,
+      ds_source_struct->capsfilt)) {
+    g_printerr ("Could not link vidconv and capsfilter\n");
+    return false;
+  }
+
+  /* We need to create a ghost pad for the source bin which will act as a proxy
+   * for the video decoder src pad. The ghost pad will not have a target right
+   * now. Once the decode bin creates the video decoder and generates the
+   * cb_newpad callback, we will set the ghost pad target to the video decoder
+   * src pad. */
+  GstPad *gstpad = gst_element_get_static_pad (ds_source_struct->capsfilt,
+      "src");
+  if (!gstpad) {
+    g_printerr ("Could not find srcpad in '%s'",
+        GST_ELEMENT_NAME(ds_source_struct->capsfilt));
+      return false;
+  }
+  if(!gst_element_add_pad (ds_source_struct->source_bin,
+      gst_ghost_pad_new("src", gstpad))) {
+    g_printerr ("Could not add ghost pad in '%s'",
+        GST_ELEMENT_NAME(ds_source_struct->capsfilt));
+  }
+  gst_object_unref (gstpad);
+
+  return true;
+}
 
 static gboolean
 bus_call (GstBus * bus, GstMessage * msg, gpointer data) {
@@ -82,38 +610,64 @@ static void printUsage(const char* cmd) {
     g_printerr ("-i: \n\tH264 or JPEG input file  \n");
     g_printerr ("-b: \n\tbatch size, this will override the value of \"batch-size\" in pgie config file  \n");
     g_printerr ("-d: \n\tenable display, otherwise dump to output H264 or JPEG file  \n");
+    g_printerr ("-f: \n\tuse fake_sink to test the performace\n");
+    g_printerr ("-l: \n\tloop mode for the pipeline");
     g_printerr ("yml_config_file: \n\tYAML config file, e.g. seg_app_unet.yml \n");
 }
 int
 main (int argc, char *argv[]) {
     GMainLoop *loop = NULL;
-    GstElement *pipeline = NULL, *source = NULL, *parser = NULL,
-               *decoder = NULL, *streammux = NULL, *sink = NULL,
+    GstElement *pipeline = NULL, *source_bin = NULL,
+               *streammux = NULL, *sink = NULL,
                *pgie = NULL, *nvvidconv = NULL, *segvisual = NULL,
                *parser1 = NULL, *nvvidconv1 = NULL, *enc = NULL,
-               *tiler = NULL, *tee = NULL;
+               *tiler = NULL, *mux = NULL;
+
+    DsSourceBinStruct source_struct[128];
+
+    GstPad *sinkpad, *srcpad;
+    gchar pad_name_sink[16] = "sink_0";
+    gchar pad_name_src[16] = "src";
 
 #ifdef PLATFORM_TEGRA
     GstElement *transform = NULL;
 #endif
     GstBus *bus = NULL;
     guint bus_watch_id;
-    GstPad *osd_sink_pad = NULL;
 
-    gboolean isH264 = FALSE;
+    gboolean isImage = FALSE;
     gboolean useDisplay = FALSE;
+    gboolean useFakeSink = FALSE;
     guint tiler_rows, tiler_cols;
     guint batchSize = 0;
     guint pgie_batch_size;
     guint c;
-    const char* optStr = "b:c:dhi:";
+    const char* optStr = "b:c:dhfli:";
     std::string pgie_config;
-    std::string input_file(300,0);
     gboolean isYAML = FALSE;
+    GList* g_list = NULL;
+    GList* iterator = NULL;
+    static guint src_cnt = 0;
+    PerfStructInt str;
+    YamlParasStruct yaml_paras;
+    fileLoop = 0;
+    networkType = 2;
+    numDetectedClasses = 1;
 
     if (argc==2 && (g_str_has_suffix(argv[1], ".yml") ||
         g_str_has_suffix(argv[1], ".yaml"))) {
         isYAML = TRUE;
+        if (NVDS_YAML_PARSER_SUCCESS != nvds_parse_source_list(&g_list, argv[1], "source-list")) {
+          g_printerr ("No source is found. Exiting.\n");
+          return -1;
+        }
+        parse_tests_yaml(&yaml_paras, argv[1]);
+        fileLoop = yaml_paras.file_loop;
+        yaml_paras.config_path.erase(0,2);
+        yaml_paras.config_path = "configs" + yaml_paras.config_path;
+        parse_tests_yaml(&yaml_paras, yaml_paras.config_path.c_str());
+        networkType = yaml_paras.network_type;
+        numDetectedClasses = yaml_paras.num_detected_classes;
     } else {
         while ((c = getopt(argc, argv, optStr)) != -1) {
             switch (c) {
@@ -122,13 +676,34 @@ main (int argc, char *argv[]) {
                     batchSize = batchSize == 0 ? 1:batchSize;
                     break;
                 case 'c':
+                {
                     pgie_config.assign(optarg);
+                    GKeyFile *key_file = g_key_file_new ();
+                    GError *error = NULL;
+                    g_key_file_load_from_file (key_file, pgie_config.c_str(), G_KEY_FILE_NONE, &error);
+                    gboolean has_key;
+                    has_key = g_key_file_has_key(key_file, "property", "network-type", &error);
+                    if (has_key) {
+                      networkType = g_key_file_get_integer (key_file, "property", "network-type", &error);
+                    }
+                    has_key = g_key_file_has_key(key_file, "property", "num-detected-classes", &error);
+                    if (has_key) {
+                      numDetectedClasses = g_key_file_get_integer (key_file, "property", "num-detected-classes", &error);
+                    }
+                    g_key_file_free(key_file);
+                }
                     break;
                 case 'd':
                     useDisplay = TRUE;
                     break;
+                case 'f':
+                    useFakeSink = TRUE;
+                    break;
                 case 'i':
-                    input_file.assign(optarg);
+                    g_list = g_list_append(g_list, optarg);
+                    break;
+                case 'l':
+                    fileLoop = 1;
                     break;
                 case 'h':
                 default:
@@ -143,6 +718,8 @@ main (int argc, char *argv[]) {
         printUsage(argv[0]);
         return -1;
     }
+
+    if(useDisplay) useFakeSink = FALSE;
     
     /* Standard GStreamer initialization */
     gst_init (&argc, &argv);
@@ -152,62 +729,70 @@ main (int argc, char *argv[]) {
     /* Create Pipeline element that will form a connection of other elements */
     pipeline = gst_pipeline_new ("ds-custom-pipeline");
 
-    /* Source element for reading from the file */
-    source = gst_element_factory_make ("filesrc", "file-source");
-    if(!source) {
-        g_printerr ("filesrc could not be created. Exiting.\n");
-        return -1;
-    }
-
-    const gchar *p_end;
-    if(isYAML) {
-        if(NVDS_YAML_PARSER_SUCCESS!=nvds_parse_file_source(source, argv[1], "source")){
-            g_printerr("Do not support input file\n");
-            return -1;
-        }
-        gchar * filename = NULL;
-        g_object_get(G_OBJECT (source), "location", &filename, NULL);
-        g_print("get INPUT file %s\n", filename);
-        p_end = filename + strlen(filename);
-       
-    } else {
-        /* we set the input filename to the source element */
-        g_object_set (G_OBJECT (source), "location", input_file.c_str(), NULL);
-        p_end = input_file.c_str() + strlen(input_file.c_str());
-    }
-    //const gchar *p_end = input_file.c_str() + strlen(input_file.c_str());
-    if(!strncmp(p_end - strlen("h264"), "h264", strlen("h264"))) {
-        isH264 = TRUE;
-    } else if(!strncmp(p_end - strlen("jpg"), "jpg", strlen("jpg")) || !strncmp(p_end - strlen("jpeg"), "jpeg", strlen("jpeg"))) {
-        isH264 = FALSE;
-    } else {
-        g_printerr("input file only support H264 and JPEG\n");
-        return -1;
-    }
-
-    const char* batch_size = std::getenv("BATCH_SIZE");
-    if(batch_size != NULL ) {
-        batchSize = std::stoi(batch_size);
-        g_printerr("batch size is %d \n", batchSize);
-    }
-
-    /* Since the data format in the input file is elementary h264 stream,
-     * we need a h264parser */
-    if(isH264 == TRUE) {
-        parser = gst_element_factory_make ("h264parse", "h264-parser");
-    } else {
-        parser = gst_element_factory_make ("jpegparse", "jpeg-parser");
-    }
-
-    /* Use nvdec_h264 for hardware accelerated decode on GPU */
-    decoder = gst_element_factory_make ("nvv4l2decoder", "nvv4l2-decoder");
-
     /* Create nvstreammux instance to form batches from one or more sources. */
     streammux = gst_element_factory_make ("nvstreammux", "stream-muxer");
 
     if (!pipeline || !streammux) {
         g_printerr ("One element could not be created. Exiting.\n");
         return -1;
+    }
+
+    gst_bin_add (GST_BIN (pipeline), streammux);
+
+    for (iterator = g_list, src_cnt=0; iterator; iterator = iterator->next,src_cnt++) {
+      /* Source element for reading from the file */
+      source_struct[src_cnt].index = src_cnt;
+
+      if (g_strrstr ((gchar *)iterator->data, ".jpg") || g_strrstr ((gchar *)iterator->data, ".jpeg")
+          || g_strrstr ((gchar *)iterator->data, ".png"))
+        isImage = TRUE;
+      else
+        isImage = FALSE;
+      if (g_strrstr ((gchar *)iterator->data, "rtsp://") || g_strrstr ((gchar *)iterator->data, "v4l2://")
+          || g_strrstr ((gchar *)iterator->data, "http://") || g_strrstr ((gchar *)iterator->data, "rtmp://")) {
+        source_struct[src_cnt].is_streaming = TRUE;
+      } else {
+        source_struct[src_cnt].is_streaming = FALSE;
+      }
+      if (!create_source_bin (&(source_struct[src_cnt]), (gchar *)iterator->data))
+      {
+        g_printerr ("Source bin could not be created. Exiting.\n");
+        return -1;
+      }
+
+      gst_bin_add (GST_BIN (pipeline), source_struct[src_cnt].source_bin);
+
+      g_snprintf (pad_name_sink, 64, "sink_%d", src_cnt);
+      sinkpad = gst_element_get_request_pad (streammux, pad_name_sink);
+      g_print("Request %s pad from streammux\n",pad_name_sink);
+      if (!sinkpad) {
+        g_printerr ("Streammux request sink pad failed. Exiting.\n");
+        return -1;
+      }
+
+      srcpad = gst_element_get_static_pad (source_struct[src_cnt].source_bin,
+          pad_name_src);
+      if (!srcpad) {
+        g_printerr ("Decoder request src pad failed. Exiting.\n");
+        return -1;
+      }
+
+      if (gst_pad_link (srcpad, sinkpad) != GST_PAD_LINK_OK) {
+        g_printerr ("Failed to link decoder to stream muxer. Exiting.\n");
+        return -1;
+      }
+      gst_object_unref (sinkpad);
+      gst_object_unref (srcpad);
+
+    }
+
+    str.num_instances = src_cnt;
+    g_timeout_add (5000, perf_measurement_callback, &str);
+
+    const char* batch_size = std::getenv("BATCH_SIZE");
+    if(batch_size != NULL ) {
+        batchSize = std::stoi(batch_size);
+        g_printerr("batch size is %d \n", batchSize);
     }
 
     /* Use nvinfer to run inferencing on decoder's output,
@@ -220,7 +805,6 @@ main (int argc, char *argv[]) {
     /* Create OSD to draw on the converted RGBA buffer */
     segvisual = gst_element_factory_make ("nvsegvisual", "nv-segvisual");
 
-    tee = gst_element_factory_make("tee", "tee");
     tiler = gst_element_factory_make ("nvmultistreamtiler", "nvtiler");
 
     /* Finally render the osd output */
@@ -230,16 +814,21 @@ main (int argc, char *argv[]) {
     if(isYAML) {
         GstElement *eglsink = gst_element_factory_make ("nveglglessink", "test-egl-sink");
         GstElement *filesink = gst_element_factory_make ("filesink", "test-file-sink");
+        GstElement *fakesink = gst_element_factory_make("fakesink", "test-fake-sink");
         if(NVDS_YAML_PARSER_DISABLED != nvds_parse_egl_sink(eglsink, argv[1], "eglsink")){
-            useDisplay=TRUE;
+            useDisplay = TRUE;
         } else if (NVDS_YAML_PARSER_DISABLED != nvds_parse_file_sink(filesink, argv[1], "filesink")){
-            useDisplay=FALSE;
+            useDisplay = FALSE;
+        } else if (NVDS_YAML_PARSER_DISABLED != nvds_parse_egl_sink(eglsink, argv[1], "fakesink")){
+            useDisplay = FALSE;
+            useFakeSink = TRUE;
         } else {
             g_printerr ("No sink is configured. Exiting.\n");
             return -1;
         }
         g_object_unref(eglsink);
         g_object_unref(filesink);
+        g_object_unref(fakesink);
     }
 
     const char* use_display = std::getenv("USE_DISPLAY");
@@ -248,23 +837,41 @@ main (int argc, char *argv[]) {
     }
 
     if(useDisplay == FALSE) {
-        if(isH264 == TRUE){
+        if(isImage == FALSE){
             parser1 = gst_element_factory_make ("h264parse", "h264-parser1");
             enc = gst_element_factory_make ("nvv4l2h264enc", "h264-enc");
+            if(!useFakeSink) {
+                mux = gst_element_factory_make ("qtmux", "mp4-mux");
+                if (!mux) {
+                    g_printerr ("Failed to create mp4-mux");
+                    return -1;
+                }
+                gst_bin_add (GST_BIN (pipeline), mux);
+            }
         } else {
             parser1 = gst_element_factory_make ("jpegparse", "jpeg-parser1");
             enc = gst_element_factory_make ("jpegenc", "jpeg-enc");
         }
         nvvidconv1 = gst_element_factory_make ("nvvideoconvert", "nvvideo-converter1");
-        sink = gst_element_factory_make ("filesink", "file-sink");
-        if (!parser || !parser1 || !decoder || !tee || !pgie
+        if(!useFakeSink) {
+            sink = gst_element_factory_make ("filesink", "file-sink");
+        } else {
+            sink = gst_element_factory_make("fakesink", "file-sink");
+        }
+        if (!pgie
                 || !tiler || !nvvidconv1 || !segvisual || !enc || !sink) {
             g_printerr ("One element could not be created. Exiting.\n");
             return -1;
         }
+
+        //save the file to local dir
+        if(isImage == FALSE)
+            g_object_set (G_OBJECT (sink), "location", "./out.mp4", NULL);
+        else
+            g_object_set (G_OBJECT (sink), "location", "./out.jpg", NULL);
     } else {
         sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
-        if (!parser || !decoder || !tee || !pgie
+        if (!pgie
                 || !tiler || !segvisual || !sink) {
             g_printerr ("One element could not be created. Exiting.\n");
             return -1;
@@ -278,26 +885,26 @@ main (int argc, char *argv[]) {
     }
 #endif
 
-    //save the file to local dir
-    if(useDisplay == FALSE) {
-        if(isH264 == TRUE)
-            g_object_set (G_OBJECT (sink), "location", "./out.h264", NULL);
-        else
-            g_object_set (G_OBJECT (sink), "location", "./out.jpg", NULL);
-    }
     if(isYAML) {
         nvds_parse_streammux(streammux, argv[1], "streammux");
-        if(batchSize)
-            g_object_set (G_OBJECT (streammux),"batch-size", batchSize, NULL);
-        else {
+        if(!batchSize) {
             g_object_get(G_OBJECT (streammux), "batch-size", &batchSize, NULL);
         }
-    } else {
-        g_object_set (G_OBJECT (streammux), "width", MUXER_OUTPUT_WIDTH, "height",
-                  MUXER_OUTPUT_HEIGHT, "batch-size", batchSize,
-                  "batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC, NULL);
     }
 
+    if(!batchSize) { batchSize = src_cnt; }
+
+    g_print ("batchSize %d...\n", batchSize);
+
+    if(source_struct[0].is_streaming == TRUE)
+        g_object_set (G_OBJECT (streammux), "live-source", true, NULL);
+
+    g_object_set (G_OBJECT (streammux), "width", MUXER_OUTPUT_WIDTH, "height",
+              MUXER_OUTPUT_HEIGHT, "batch-size", batchSize,
+              "batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC, NULL);
+
+    g_object_set (G_OBJECT (segvisual), "width", SEG_OUTPUT_WIDTH, "height",
+              SEG_OUTPUT_HEIGHT, NULL);
     /* Set all the necessary properties of the nvinfer element,
      * the necessary ones are : */
     if(isYAML) {
@@ -307,7 +914,7 @@ main (int argc, char *argv[]) {
                   "config-file-path", pgie_config.c_str(), NULL);
     }
 
-        /* Override the batch-size set in the config file with the number of sources. */
+    /* Override the batch-size set in the config file with the number of sources. */
     g_object_get (G_OBJECT (pgie), "batch-size", &pgie_batch_size, NULL);
     if (pgie_batch_size != batchSize) {
         g_printerr
@@ -330,61 +937,34 @@ main (int argc, char *argv[]) {
     /* Set up the pipeline */
     /* we add all elements into the pipeline */
     if(useDisplay == FALSE) {
-        gst_bin_add_many (GST_BIN (pipeline),
-                          source, parser, decoder, tee, streammux, pgie, tiler,
+        gst_bin_add_many (GST_BIN (pipeline), pgie, tiler,
                            segvisual, nvvidconv1, enc, parser1, sink, NULL);
     } else {
 #ifdef PLATFORM_TEGRA
-        gst_bin_add_many (GST_BIN (pipeline),
-                          source, parser, decoder, tee, streammux, pgie,
+        gst_bin_add_many (GST_BIN (pipeline), pgie,
                           tiler, segvisual, transform, sink, NULL);
 #else
-        gst_bin_add_many (GST_BIN (pipeline),
-                          source, parser, decoder, tee, streammux, pgie,
+        gst_bin_add_many (GST_BIN (pipeline), pgie,
                           tiler, segvisual, sink, NULL);
 #endif
     }
 
-    for(guint i = 0; i < batchSize; i++) {
-        GstPad *sinkpad, *srcpad;
-        gchar pad_name_sink[16] = {};
-        gchar pad_name_src[16] = {};
-
-        g_snprintf (pad_name_sink, 15, "sink_%u", i);
-        g_snprintf (pad_name_src, 15, "src_%u", i);
-        sinkpad = gst_element_get_request_pad (streammux, pad_name_sink);
-        if (!sinkpad) {
-            g_printerr ("Streammux request sink pad failed. Exiting.\n");
-            return -1;
-        }
-
-        srcpad = gst_element_get_request_pad(tee, pad_name_src);
-        if (!srcpad) {
-            g_printerr ("tee request src pad failed. Exiting.\n");
-            return -1;
-        }
-
-        if (gst_pad_link (srcpad, sinkpad) != GST_PAD_LINK_OK) {
-            g_printerr ("Failed to link tee to stream muxer. Exiting.\n");
-            return -1;
-        }
-
-        gst_object_unref (sinkpad);
-        gst_object_unref (srcpad);
-    }
     /* We link the elements together */
-    /* file-source -> h264-parser -> nvv4l2decoder ->
+    /* uridocoderbin ->
      * nvinfer -> nvvideoconvert -> segvisual -> video-renderer */
-
-    if (!gst_element_link_many (source, parser, decoder, tee, NULL)) {
-        g_printerr ("Elements could not be linked: 1. Exiting.\n");
-        return -1;
-    }
     if (useDisplay == FALSE) {
-        if (!gst_element_link_many (streammux, pgie, tiler,
-                                     segvisual, nvvidconv1, enc, parser1, sink, NULL)) {
-            g_printerr ("Elements could not be linked: 2. Exiting.\n");
-            return -1;
+        if (isImage == FALSE && !useFakeSink) {
+            if (!gst_element_link_many (streammux, pgie, tiler,
+                                         segvisual, nvvidconv1, enc, parser1, mux, sink, NULL)) {
+                g_printerr ("Elements could not be linked: 2. Exiting.\n");
+                return -1;
+            }
+        } else {
+            if (!gst_element_link_many (streammux, pgie, tiler,
+                                         segvisual, nvvidconv1, enc, parser1, sink, NULL)) {
+                g_printerr ("Elements could not be linked: 2. Exiting.\n");
+                return -1;
+            }
         }
     } else {
 #ifdef PLATFORM_TEGRA
@@ -401,6 +981,27 @@ main (int argc, char *argv[]) {
         }
 #endif
     }
+
+    /*Performance measurement video fps*/
+    GstPad *streammux_src_pad = gst_element_get_static_pad (streammux, "src");
+    if (!streammux_src_pad)
+      g_print ("Unable to get streammux src pad\n");
+    else
+      gst_pad_add_probe(streammux_src_pad, GST_PAD_PROBE_TYPE_BUFFER,
+          buf_probe, &str, NULL);
+    gst_object_unref (streammux_src_pad);
+
+    /*post-process for network-type = 100*/
+    if (networkType == 100) {
+        GstPad *pgie_src_pad = gst_element_get_static_pad (pgie, "src");
+        if (!pgie_src_pad)
+          g_print ("Unable to get streammux src pad\n");
+        else
+          gst_pad_add_probe(pgie_src_pad, GST_PAD_PROBE_TYPE_BUFFER,
+              pgie_pad_buffer_probe_network_type100, NULL, NULL);
+        gst_object_unref (pgie_src_pad);
+    }
+
     /* Set the pipeline to "playing" state */
     g_print ("Now playing: %s\n", pgie_config.c_str());
     gst_element_set_state (pipeline, GST_STATE_PLAYING);

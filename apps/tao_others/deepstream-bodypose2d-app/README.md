@@ -41,16 +41,7 @@ The application can be build and run seperately.
 
 ```
 cd apps/tao_others/deepstream-bodypose2d-app
-```
-
-For Jetson platform
-```
-export CUDA_VER=10.2
-```
-
-For dGPU
-```
-export CUDA_VER=11.4
+export CUDA_VER=cuda version in the device
 ```
 
 Build the applications and run to inference one picture.

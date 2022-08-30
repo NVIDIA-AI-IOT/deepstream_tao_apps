@@ -1,5 +1,7 @@
 # Build x86 TensorRT OSS Plugin
 
+For DeepStream 6.1.1 GA, the TensorRT OSS plugin is not needed.
+
 Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT)  for x86 libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
 
 ## libnvinfer_plugin.so.8.2.5.1 Provided Here
