@@ -1,5 +1,5 @@
 ################################################################################
-## Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+## Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 ##
 ## NVIDIA Corporation and its licensors retain all intellectual property
 ## and proprietary rights in and to this software, related documentation
@@ -20,7 +20,7 @@ dependencies:
   version: 1.0.0
 - extension: NvDsVisualizationExt
   uuid: 25903cd4-fc5c-4139-987b-47bb27e8b424
-  version: 1.0.0
+  version: 1.0.1
 - extension: StandardExtension
   uuid: 8ec2d5d6-b5df-48bf-8dee-0252606fdd7e
   version: 2.0.0

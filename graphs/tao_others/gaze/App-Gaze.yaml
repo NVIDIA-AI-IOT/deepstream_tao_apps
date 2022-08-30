@@ -42,7 +42,7 @@ dependencies:
   version: 1.0.0
 - extension: NvDsVisualizationExt
   uuid: 25903cd4-fc5c-4139-987b-47bb27e8b424
-  version: 1.0.0
+  version: 1.0.1
 - extension: NvDsInferenceUtilsExt
   uuid: 27856a43-5ad4-4d8e-be36-0ec2cf9bbb58
   version: 1.0.0

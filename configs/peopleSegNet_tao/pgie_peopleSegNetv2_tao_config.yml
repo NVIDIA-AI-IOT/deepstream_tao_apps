@@ -27,7 +27,7 @@ property:
   model-color-format: 0
   tlt-model-key: nvidia_tlt
   tlt-encoded-model: ../../models/peopleSegNet/V2/peoplesegnet_resnet50.etlt
-  model-engine-file: ../../models/peopleSegNet/V2/peoplesegnet_resnet50.etlt_b1_gpu0_fp16.engine
+  model-engine-file: ../../models/peopleSegNet/V2/peoplesegnet_resnet50.etlt_b1_gpu0_int8.engine
   network-type: 3 ## 3 is for instance segmentation network
   labelfile-path: ./peopleSegNet_labels.txt
   int8-calib-file: ../../models/peopleSegNet/V2/peoplesegnet_resnet50_int8.txt

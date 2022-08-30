@@ -93,7 +93,8 @@ ds_parse_rtsp_output(GstElement * sink,
         gst_rtsp_media_factory_set_launch (factory, udpsrc_pipeline);
       }
       else if(paramKey == "rtspport") {
-        g_object_set (G_OBJECT(server), "service", itr->second.as<guint>(), NULL);
+        g_object_set (G_OBJECT(server), "service", itr->second.as<std::string>().c_str(), NULL);
+        g_print("Please reach RTSP with rtsp://ip:%s/ds-out-avc\n", itr->second.as<std::string>().c_str());
       }
       else {
         std::cerr << "!! [WARNING] Unknown param found : " << paramKey << std::endl;
