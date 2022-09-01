@@ -39,7 +39,7 @@ This sample is to show the following TAO3.0 models runing with DeepStream
 
 1. Download Project with HTTPS
 ```
-    git clone -b release/tao3.0_ds6.1ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+    git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 2. Prepare Models and TensorRT engine
 
