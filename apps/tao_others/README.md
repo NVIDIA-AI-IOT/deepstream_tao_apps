@@ -120,7 +120,7 @@ Start to run the heartrate application
     ./deepstream-heartrate-app [1:file sink|2:fakesink|3:display sink]  \
      <input uri> ... <input uri> <out filename>
 OR
-    ./deepstream-gesture-app <app YAML config file>
+    ./deepstream-heartrate-app <app YAML config file>
 ```
 
 A sample of 2D bodypose:
@@ -154,7 +154,7 @@ or
 
 A sample of gesture:
 
-`./deepstream-gesture-app 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt file:///usr/data/bodypose2d_test.png ./gesture`
+`./deepstream-gesture-app 1 1 ../../../configs/bodypose2d_tao/sample_bodypose2d_model_config.txt file:///usr/data/bodypose2d_test.png ./gesture`
 
 or
 `./deepstream-gesture-app gesture_app_config.yml`
