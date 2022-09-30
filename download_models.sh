@@ -120,5 +120,15 @@ wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deploya
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/int8_calibration.txt -O int8_calibration.txt
 
 echo "==================================================================="
+echo "begin downloading BodyPose2d model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/bodypose2d
+cd ./models/bodypose2d
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/bodyposenet/versions/deployable_v1.0.1/zip -O bodyposenet_deployable_v1.0.1.zip
+unzip bodyposenet_deployable_v1.0.1.zip
+rm bodyposenet_deployable_v1.0.1.zip
+
+echo "==================================================================="
 echo "Download models successfully "
 echo "==================================================================="
