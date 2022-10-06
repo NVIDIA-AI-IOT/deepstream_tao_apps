@@ -43,7 +43,7 @@ sudo make install
 | 6.0 GA              | 4.6              | TRT 8.0.1       | release/8.0           |
 | 6.0.1               | 4.6.1 / 4.6.2    | TRT 8.2.1       | release/8.2           |
 | 6.1                 | 5.0.1            | TRT 8.4.0.11    | release/8.4           |
-| 6.1.1               | 5.0.2            | TRT 8.4.1       | release/8.4           |
+| 6.1.1               | 5.0.2            | TRT 8.4.1       | OSS not needed        |
 ``` 
 git clone -b $TRT_OSS_CHECKOUT_TAG https://github.com/nvidia/TensorRT        // replace with release/8.x for  TensorRT 8.X
 cd TensorRT/
