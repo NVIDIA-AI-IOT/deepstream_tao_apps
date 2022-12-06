@@ -23,7 +23,7 @@
 
 # Check following part for how to download the TLT 3.0 models:
 
-# For Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/:
+# For Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ EfficientDet0/ UNET/:
 # wget https://nvidia.box.com/shared/static/vynsy1tzhdeiwt7a5j44ssitqlm2a9rg -O models.zip
 
 # For peopleSemSegNet:
