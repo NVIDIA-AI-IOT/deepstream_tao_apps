@@ -1,14 +1,14 @@
 ## Description
 The HeartRate deepstream sample application measures a person's heart rate with the face information. 
 
-The TAO 3.0 pretrained models used in this sample application:
+The TAO pretrained models used in this sample application:
 
 * [FaceNet](https://ngc.nvidia.com/catalog/models/nvidia:tao:facenet)
 * [HeartRateNet](https://ngc.nvidia.com/catalog/models/nvidia:tao:heartratenet)
 
 ## Prerequisition
 
-* DeepStream SDK 6.0 GA and above
+* DeepStream SDK 6.2 GA and above
 
 * gst-nvdsvideotemplate plugin
 
@@ -23,9 +23,6 @@ The application pipeline graph
 
 ## Build And Run
 The application can be build and run seperately.
-```
-export CUDA_VER=cuda version in the device
-```
 
 Build the applications and run to inference one video.
 ```

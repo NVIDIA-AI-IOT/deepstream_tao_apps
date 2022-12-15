@@ -3,15 +3,15 @@ The gesture sample application uses the GestureNet model to the gesture of the h
 
 ## Model
 
-The TAO 3.0 [GestureNet](https://docs.nvidia.com/tao/tao-toolkit/text/purpose_built_models/gesturenet.html) model is available in https://ngc.nvidia.com/catalog/models/nvidia:tao:gesturenet
-The bodypose2D backbone is provided by TAO 3.0 [bodypose 2D estimation](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet). 
+The TAO [GestureNet](https://docs.nvidia.com/tao/tao-toolkit/text/purpose_built_models/gesturenet.html) model is available in https://ngc.nvidia.com/catalog/models/nvidia:tao:gesturenet
+The bodypose2D backbone is provided by TAO [bodypose 2D estimation](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet). 
   
 There is blog to introduce how to train and optimize the bodypose 2D estimation model:
 https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-with-tao-toolkit-part-1
 
 ## Prerequisition
 
-* DeepStream SDK 6.0 GA and above
+* DeepStream SDK 6.2 GA and above
 
 ## Application Pipeline
 The application pipeline graph
@@ -23,7 +23,6 @@ The application can be build and run seperately.
 
 ```
 cd apps/tao_others/deepstream-gesture-app
-export CUDA_VER=cuda version in the device
 ```
 
 Build the applications and run to inference one picture.

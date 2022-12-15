@@ -3,7 +3,7 @@
 
 This is a standalone sample that run single stage multi-task network from TAO without detection.
 NVIDIA does not provide any pretrained TAO model for multi-task network. 
-To train a multi-task model please check https://docs.nvidia.com/metropolis/TAO/tao-user-guide/index.html.
+To train a multi-task model please check https://docs.nvidia.com/tao/tao-toolkit/text/multitask_image_classification.html.
 
 
 
@@ -37,19 +37,3 @@ Then the output-blob-names are base_color/Softmax and category/Softmax and seaso
 output-blob-names=base_color/Softmax;category/Softmax;season/Softmax
 ~~~
 
-
-
-### Create label mapping and set in nvdsinfer_customclassifier_multi_task_tao.cpp
-
-Create the following mapping and fill 'labels' in nvdsinfer_customclassifier_multi_task_tao.cpp. Below is an example.
-
-~~~
-static map<string , std::vector<string> > labels = {
-    {"base_color/Softmax", 
-        {"Black", "Blue", "Brown", "Green", "Grey", "Navy Blue", "Pink", "Purple", "Red", "Silver", "White"}}, 
-    {"category/Softmax", 
-        {"Bags", "Bottomwear", "Eyewear", "Fragrance", "Innerwear", "Jewellery", "Sandal", "Shoes", "Topwear", "Watches"}}, 
-    {"season/Softmax", 
-        {"Fall", "Spring", "Summer", "Winter"}}, 
-};
-~~~

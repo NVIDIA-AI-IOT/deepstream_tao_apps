@@ -24,7 +24,7 @@
 # Check following part for how to download the TLT 3.0 models:
 
 # For Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ EfficientDet0/ UNET/:
-# wget https://nvidia.box.com/shared/static/vynsy1tzhdeiwt7a5j44ssitqlm2a9rg -O models.zip
+# wget https://nvidia.box.com/shared/static/taqr2y52go17x1ymaekmg6dh8z6d43wr -O models.zip
 
 # For peopleSemSegNet:
 # wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_v1.0/zip \
@@ -41,7 +41,7 @@
 echo "==================================================================="
 echo "begin download models for Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/"
 echo "==================================================================="
-wget https://nvidia.box.com/shared/static/vynsy1tzhdeiwt7a5j44ssitqlm2a9rg -O models.zip
+wget https://nvidia.box.com/shared/static/taqr2y52go17x1ymaekmg6dh8z6d43wr -O models.zip
 unzip models.zip
 rm models.zip
 
@@ -116,8 +116,8 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/gesture
 cd ./models/gesture
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/model.etlt -O gesture.etlt
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.1/files/int8_calibration.txt -O int8_calibration.txt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.2/files/model.etlt -O gesture.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/gesturenet/versions/deployable_v2.0.2/files/int8_calibration.txt -O int8_calibration.txt
 
 echo "==================================================================="
 echo "begin downloading BodyPose2d model "

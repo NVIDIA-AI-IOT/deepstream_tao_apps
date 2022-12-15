@@ -21,7 +21,7 @@ The bodypose2D sample application uses bodypose2D model to detect human body par
 
 ## Model
 
-The bodypose2D backbone and pre-trained model are provided by TAO 3.0 [bodypose 2D estimation](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet). 
+The bodypose2D backbone and pre-trained model are provided by TAO [bodypose 2D estimation](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet). 
   
 There is blog to introduce how to train and optimize the bodypose 2D estimation model:
 
@@ -29,7 +29,7 @@ https://developer.nvidia.com/blog/training-optimizing-2d-pose-estimation-model-w
 
 ## Prerequisition
 
-* DeepStream SDK 6.0 GA and above
+* DeepStream SDK 6.2 GA and above
 
 ## Application Pipeline
 The application pipeline graph
@@ -41,7 +41,6 @@ The application can be build and run seperately.
 
 ```
 cd apps/tao_others/deepstream-bodypose2d-app
-export CUDA_VER=cuda version in the device
 ```
 
 Build the applications and run to inference one picture.

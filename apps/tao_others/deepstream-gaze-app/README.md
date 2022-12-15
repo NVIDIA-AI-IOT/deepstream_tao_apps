@@ -1,7 +1,7 @@
 ## Description
 The GazeNet deepstream sample application recognizes a person's eye gaze point of regard (X, Y, Z) and gaze vector (theta and phi). The eye gaze vector can also be derived from eye position and eye gaze points of regard. The input of the GazeNet should be the human face and the faciallandmarks.
 
-The TAO 3.0 pretrained models used in this sample application:
+The TAO pretrained models used in this sample application:
 
 * [Facial Landmark Estimation](https://ngc.nvidia.com/catalog/models/nvidia:tao:fpenet).
 * [FaceNet](https://ngc.nvidia.com/catalog/models/nvidia:tao:facenet)
@@ -41,4 +41,4 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cv
 ## Known Issue
 The GazeNet is a multiple input layers model. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the GazeNet sample application without engine, it will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, it will work.
 
-Another workaround is to generate the engines outside the applications. The 'download_models.sh' script will download the GazeNet model. Please refer to the TAO tao-converter tool document: https://developer.nvidia.com/tao-toolkit-get-started
+Another workaround is to generate the engines outside the applications. The 'download_models.sh' script will download the GazeNet model. Please refer to the TAO tao-converter tool document: https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/resources/tao-converter

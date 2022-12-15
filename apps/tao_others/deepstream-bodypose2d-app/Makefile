@@ -22,11 +22,6 @@
 
 APP:= deepstream-bodypose2d-app
 
-CUDA_VER?=
-ifeq ($(CUDA_VER),)
-  $(error "CUDA_VER is not set")
-endif
-
 CXX=g++
 
 TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
@@ -48,19 +43,19 @@ OBJS:= deepstream_bodypose2d_app.o deepstream_bodypose2d_meta.o \
 
 CFLAGS+= -I/opt/nvidia/deepstream/deepstream/sources/includes \
 	 -I/opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
-         -I /usr/local/cuda-$(CUDA_VER)/include \
+         -I /usr/local/cuda/include \
 	 -I ../common
 
 CFLAGS+= `pkg-config --cflags $(PKGS)`
 
-CFLAGS+= -D_GLIBCXX_USE_CXX11_ABI=1 -Wno-sign-compare -Wno-deprecated-declarations -std=c++11
+CFLAGS+= -D_GLIBCXX_USE_CXX11_ABI=1 -Wno-sign-compare -Wno-deprecated-declarations -std=c++14
 
 LIBS:= `pkg-config --libs $(PKGS)`
 
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvds_inferutils \
        -lnvds_utils -lm -lstdc++ -lgstrtspserver-1.0 -lnvds_yml_parser \
        -L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs \
-       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda -lyaml-cpp \
+       -L/usr/local/cuda/lib64/ -lcudart -lcuda -lyaml-cpp \
        -lnvcv_bodypose2d -lnvcv_core -lnvcv_tensorops -lnvcv_trtbackend \
        -Wl,-rpath,$(LIB_INSTALL_DIR)
 
