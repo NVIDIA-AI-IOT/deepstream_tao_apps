@@ -37,7 +37,7 @@ property:
   #DS5.x cannot parse onnx etlt model, so you need to
   #convert the etlt model to TensoRT engine first use tao-convert
 
-  int8-calib-file: ../../models/peopleSemSegNet/vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8.cache
+  int8-calib-file: ../../../models/peopleSemSegNet/vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8.cache
   tlt-encoded-model: ../../../models/peopleSemSegNet/vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8_fp16.etlt
 
   # when you use FP32 for network-mode, please change the model 
@@ -55,7 +55,7 @@ property:
   interval: 0
   gie-unique-id: 1
   network-type: 100
-  output-blob-names: softmax_1
+  output-blob-names: argmax_1
   segmentation-threshold: 0.0
 
   ##specify the output tensor order, 0(default value) for CHW and 1 for HWC

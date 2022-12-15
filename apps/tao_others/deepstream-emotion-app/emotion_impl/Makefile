@@ -20,11 +20,6 @@
 # DEALINGS IN THE SOFTWARE.
 #################################################################################
 
-CUDA_VER?=
-ifeq ($(CUDA_VER),)
-  $(error "CUDA_VER is not set")
-endif
-
 TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
 CXX:= g++
 
@@ -33,8 +28,8 @@ SRCS:= emotion_impl.cpp ../../common/ds_yml_parse.cpp
 INCS:= $(wildcard *.h)
 LIB:=libnvds_emotion_impl.so
 
-CFLAGS+= -fPIC -DDS_VERSION=\"6.1.0\" \
-	 -I /usr/local/cuda-$(CUDA_VER)/include \
+CFLAGS+= -fPIC \
+	 -I /usr/local/cuda/include \
 	 -I /opt/nvidia/deepstream/deepstream/sources/includes -I../includes \
 	 -I /opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
 	 -I /opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate/includes \
@@ -45,7 +40,7 @@ GST_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream/lib/gst-plugins/
 LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream/lib/
 
 LIBS := -shared -Wl,-no-undefined -lnvds_yml_parser -lgstrtspserver-1.0 \
-	-L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -ldl -lpthread -lyaml-cpp \
+	-L/usr/local/cuda/lib64/ -lcudart -ldl -lpthread -lyaml-cpp \
 	-L$(LIB_INSTALL_DIR) -lnvdsgst_helper -lnvdsgst_meta -lnvds_meta \
 	-lnvbufsurface -lnvbufsurftransform -lnvdsbufferpool -lnvds_infer\
 	-L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs -lnvcv_emotions -lnvcv_core -lnvcv_trtbackend \

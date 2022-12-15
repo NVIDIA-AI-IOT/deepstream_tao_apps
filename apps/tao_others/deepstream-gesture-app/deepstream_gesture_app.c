@@ -878,6 +878,10 @@ main (int argc, char *argv[])
 
   gst_bin_add (GST_BIN(pipeline), streammux);
 
+#ifndef PLATFORM_TEGRA
+  g_object_set(G_OBJECT (streammux), "nvbuf-memory-type", 3, NULL);
+#endif
+
   if(!isYAML) {
     for (src_cnt=0; src_cnt<(guint)argc-5; src_cnt++) {
       g_list = g_list_append(g_list, argv[src_cnt + 4]);

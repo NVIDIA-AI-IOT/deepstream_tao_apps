@@ -22,11 +22,6 @@
 
 APP:= deepstream-gaze-app
 
-CUDA_VER?=
-ifeq ($(CUDA_VER),)
-  $(error "CUDA_VER is not set")
-endif
-
 CXX=g++
 
 TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
@@ -52,7 +47,7 @@ OBJS:= deepstream_gaze_app.o deepstream_faciallandmark_meta.o \
 
 CFLAGS+= -I /opt/nvidia/deepstream/deepstream/sources/includes \
          -I /opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
-         -I /usr/local/cuda-$(CUDA_VER)/include \
+         -I /usr/local/cuda/include \
 		 -I ../deepstream-faciallandmark-app \
 		 -I ../common
 
@@ -64,7 +59,7 @@ LIBS:= `pkg-config --libs $(PKGS)`
 
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvds_inferutils \
        -lnvds_utils -lm -lstdc++ -lnvds_yml_parser -lgstrtspserver-1.0 \
-       -L/usr/local/cuda-$(CUDA_VER)/lib64/ -lcudart -lcuda -lyaml-cpp \
+       -L/usr/local/cuda/lib64/ -lcudart -lcuda -lyaml-cpp \
        -L/opt/nvidia/deepstream/deepstream/lib/cvcore_libs \
 	   -lnvcv_faciallandmarks -lnvcv_core -lnvcv_tensorops -lnvcv_trtbackend \
        -Wl,-rpath,$(LIB_INSTALL_DIR)
