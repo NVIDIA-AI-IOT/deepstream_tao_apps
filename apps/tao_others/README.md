@@ -10,11 +10,11 @@ This sample is to show the following TAO3.0 models runing with DeepStream
 
 ## Prerequisition
 
-* [DeepStream SDK 6.0 GA and above](https://developer.nvidia.com/deepstream-sdk-6.0-members-page)
+* [DeepStream SDK 6.2 GA](https://developer.nvidia.com/deepstream-sdk-6.0-members-page)
 
   Make sure deepstream-test1 sample can run successful to verify your DeepStream installation
 
-* [TAO3.0 models](https://docs.nvidia.com/tao/tao-toolkit/text/overview.html)
+* [TAO models](https://docs.nvidia.com/tao/tao-toolkit/text/overview.html)
 
   Nvidia has provides all the trainable models in NGC.
   The models used in the sample application are pre-trained models provided by TAO3.0:
@@ -25,7 +25,7 @@ This sample is to show the following TAO3.0 models runing with DeepStream
 | Facial Landmarks Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:fpenet)|deployable_v3.0|
 | EmotionNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:emotionnet)|deployable_v1.0|
 | Gaze Estimation|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:gazenet)|deployable_v1.0|
-| GestureNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:gesturenet)|deployable_v2.0.1|
+| GestureNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:gesturenet)|deployable_v2.0.2|
 | HeartRateNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:heartratenet)|deployable_v1.0|
 | BodyPoseNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet)|deployable_v1.0.1|
 
