@@ -10,7 +10,7 @@ This sample is to show the following TAO3.0 models runing with DeepStream
 
 ## Prerequisition
 
-* [DeepStream SDK 6.2 GA](https://developer.nvidia.com/deepstream-sdk-6.0-members-page)
+* [DeepStream SDK 6.2 GA](https://docs.nvidia.com/metropolis/deepstream-nvaie30/DeepStream-NVAIE3.0_6.2_Release_Notes.pdf)
 
   Make sure deepstream-test1 sample can run successful to verify your DeepStream installation
 
