@@ -21,6 +21,8 @@
       - [11. multi_task](#11-multitask)
       - [12. EfficientDet](#12-efficientdet)
       - [13. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet](#13-facedetect-facial-landmarks-estimation-emotionnet-gaze-estimation-gesturenet-heartratenet-bodyposenet)
+      - [22. PeopleNet Transformer](#22-peoplenet-transformer)
+      - [23~24. Re-Identification / Retail Item Recognition](#2324-re-identification-retail-item-recognition)
     - [Calibration file with TensorRT version](#calibration-file-with-tensorrt-version)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
@@ -54,7 +56,15 @@ uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
 
 * [DeepStream SDK 6.2 GA](https://developer.nvidia.com/deepstream-sdk)
 
-   Make sure deepstream-test1 sample can run successful to verify your installation
+   Make sure deepstream-test1 sample can run successful to verify your installation. 
+
+   According to the
+   [document](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_docker_containers.html),
+   please run below command to install additional audio video packages.
+
+  ```
+  /opt/nvidia/deepstream/deepstream/user_additional_install.sh
+  ```
 
 ## Download
 
@@ -82,6 +92,7 @@ For yolov5, refer to [yolov5_gpu_optimization](https://github.com/NVIDIA-AI-IOT/
 ### Build Sample Application
 
 ```
+export CUDA_MODULE_LOADING=LAZY
 export CUDA_VER=xy.z                                      // xy.z is CUDA version, e.g. 10.2
 make
 ```
@@ -112,11 +123,13 @@ note:
 
 |Model Type|Tao Model|Demo|
 |-----------|----------|----|
-|detector|dssd, efficientdet, frcnn, retinanet, ssd, yolov3, yolov4-tiny, yolov4, yolov5|./apps/tao_detection/ds-tao-detection -c configs/dssd_tao/pgie_dssd_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml|
+|detector|dssd, peoplenet_transformer, efficientdet, frcnn, retinanet, retail_detector_100, retail_detector_binary, ssd, yolov3, yolov4-tiny, yolov4, yolov5|./apps/tao_detection/ds-tao-detection -c configs/dssd_tao/pgie_dssd_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml|
 |classifier|multi-task|./apps/tao_classifier/ds-tao-classifier -c configs/multi_task_tao/pgie_multi_task_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_classifier/ds-tao-classifier configs/app/multi_task_app_config.yml|
-|segmentation|peopleSemSegNet, unet|./apps/tao_segmentation/ds-tao-segmentation -c configs/peopleSemSegNet_tao/pgie_peopleSemSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_segmentation/ds-tao-segmentation configs/app/seg_app_unet.yml|
+|segmentation|peopleSemSegNet, unet, citySemSegFormer|./apps/tao_segmentation/ds-tao-segmentation -c configs/peopleSemSegNet_tao/pgie_peopleSemSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_segmentation/ds-tao-segmentation configs/app/seg_app_unet.yml|
 |instance segmentation|peopleSegNet|export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection -c configs/peopleSegNet_tao/pgie_peopleSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection configs/app/ins_seg_app_peopleSegNet.yml|
-|others|FaceDetect, Facial Landmarks Estimation, EmotionNet, Gaze Estimation, GestureNet, HeartRateNet, BodyPoseNet|refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model|
+|others|FaceDetect, Facial Landmarks Estimation, EmotionNet, Gaze Estimation, GestureNet, HeartRateNet, BodyPoseNet,Re-identification, Retail Object Recognition|refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model|
+
+Building the TensorRT engine of citySemSegFormer consumes a lot of device memory. Please `export CUDA_MODULE_LOADING=LAZY` to reduce device memory consumption. Please read [CUDA Environment Variables](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#env-vars) for details.
 
 ## Information for Customization
 
@@ -172,24 +185,50 @@ The model has the following two outputs:
 - **generate_detections**: A [batchSize, keepTopK, C*6] tensor containing the bounding box, class id, score
 - **mask_head/mask_fcn_logits/BiasAdd**:  A [batchSize, keepTopK, C+1, 28*28] tensor containing the masks
 
-#### 9~10. UNET/PeopleSemSegNet
+#### 9~11. UNET/PeopleSemSegNet/CitySemSegFormer
 
-- **softmax_1**: A [batchSize, H, W, C] tensor containing the scores for each class
+- **argmax_1/output**: A [batchSize, H, W, 1] tensor containing the class id per pixel location
 
-#### 11. multi_task
+#### 12. multi_task
 - refer detailed [README](./configs/multi_task_tao/README.md) for how to configure and run the model
 
-#### 12. EfficientDet
+#### 13~14. EfficientDet / Retail Object Detection
 
-The model has the following four outputs:
+Please note there are two `Retail Object Detection` models. These models have the following four outputs:
 
 - **num_detections**: This is a [batch_size, 1] tensor of data type int32. The last dimension is a scalar indicating the number of valid detections per batch image. It can be less than max_output_boxes. Only the top num_detections[i] entries in nms_boxes[i], nms_scores[i] and nms_classes[i] are valid.
 - **detection_boxes**: This is a [batch_size, max_output_boxes, 4] tensor of data type float32 or float16, containing the coordinates of non-max suppressed boxes. The output coordinates will always be in BoxCorner format, regardless of the input code type.
 - **detection_scores**: This is a [batch_size, max_output_boxes] tensor of data type float32 or float16, containing the scores for the boxes.
 - **detection_classes**: This is a [batch_size, max_output_boxes] tensor of data type int32, containing the classes for the boxes.
 
-#### 13. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet
+#### 15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet
 - refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model
+
+#### 22. PeopleNet Transformer
+
+The model has the following two outputs:
+
+- **pred_logits**: This is a [batch_size, num_queries, num_classes] tensor of data type float32. The
+tensor contains probability values of each class.
+- **pred_boxes**: This is a [batch_size, num_queries, 4] tensor of data type float32. The tensor
+represents the 2D bounding box coordinates in the format of [center_x, center_y, width, height].
+
+#### 23~24. Re-Identification / Retail Item Recognition
+
+These models are trained to extract the embedding vector from an image. The image is the cropped area of a
+bounding box from a primary-gie task, like people detection by `PeopleNet Transformer` or retail item detection
+by `Retail Object Detection`. These embedding extraction models are typically arranged
+as the secondary GIE module in a Deepstream pipeline.
+
+##### Re-Identification uses ResNet50 backbone.
+The output layer is:
+- **fc_pred**: This is a [batch_size, embedding_size] tensor of data type float32. The tensor
+contains the embedding vector of size `embedding_size = 256`.
+
+##### Retail Item Recognition uses ResNet101 backbone.
+The output layer is:
+- **outputs**: This is a [batch_size, 2048] tensor of data type float32. The tensor contains the embedding
+vector of size `2048`.
 
 ## FAQ
 
@@ -222,4 +261,5 @@ Some special models needs special deepstream pipeline for running. The deepstrea
 
 ## Known issues
 
-For some yolo models, some layers of the models should use FP32 precision. This is a network characteristics that the accuracy drops rapidly when maximum layers are run in INT8 precision. Please refer the [layer-device-precision](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvinfer.html) for more details.
+1. For some yolo models, some layers of the models should use FP32 precision. This is a network characteristics that the accuracy drops rapidly when maximum layers are run in INT8 precision. Please refer the [layer-device-precision](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvinfer.html) for more details.
+2. Currently the citySemSegFormer model only supports batch-size 1.

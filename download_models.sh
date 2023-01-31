@@ -130,5 +130,60 @@ unzip bodyposenet_deployable_v1.0.1.zip
 rm bodyposenet_deployable_v1.0.1.zip
 
 echo "==================================================================="
+echo "begin downloading CitySemSegFormer model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/citysemsegformer_vdeployable_v1.0
+cd ./models/citysemsegformer_vdeployable_v1.0
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/citysemsegformer/versions/deployable_v1.0/files/citysemsegformer.etlt -O citysemsegformer.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/citysemsegformer/versions/deployable_v1.0/files/labels.txt -O labels.txt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/citysemsegformer/versions/deployable_v1.0/files/nvinfer_config.txt -O nvinfer_config.txt
+
+echo "==================================================================="
+echo "begin downloading PeopleNet Transformer model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/peoplenet_transformer_vdeployable_v1.0
+cd ./models/peoplenet_transformer_vdeployable_v1.0
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet_transformer/versions/deployable_v1.0/files/resnet50_peoplenet_transformer.etlt -O resnet50_peoplenet_transformer.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet_transformer/versions/deployable_v1.0/files/labels.txt -O labels.txt
+
+echo "==================================================================="
+echo "begin downloading Re-Identification model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/reidentificationnet_vdeployable_v1.0
+cd ./models/reidentificationnet_vdeployable_v1.0
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/reidentificationnet/versions/deployable_v1.0/files/resnet50_market1501.etlt -O resnet50_market1501.etlt
+
+echo "==================================================================="
+echo "begin downloading Retail Object Detection vdeployable_100 model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/retail_object_detection_vdeployable_100_v1.0
+cd ./models/retail_object_detection_vdeployable_100_v1.0
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_100_v1.0/files/retail_detector_100.etlt  -O retail_detector_100.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_100_v1.0/files/retail_detector_100_int8.txt -O retail_detector_100_int8.txt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_100_v1.0/files/retail_detector_100_labels.txt -O retail_detector_100_labels.txt
+
+echo "==================================================================="
+echo "begin downloading Retail Object Detection vdeployable_binary model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/retail_object_detection_vdeployable_binary_v1.0
+cd ./models/retail_object_detection_vdeployable_binary_v1.0
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_binary_v1.0/files/retail_detector_binary.etlt -O retail_detector_binary.etlt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_binary_v1.0/files/retail_detector_binary_int8.txt -O retail_detector_binary_int8.txt
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_binary_v1.0/files/retail_detector_binary_labels.txt -O retail_detector_binary_labels.txt
+
+echo "==================================================================="
+echo "begin downloading Retail Object Recognition model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/retail_object_recognition_vdeployable_v1.0
+cd ./models/retail_object_recognition_vdeployable_v1.0
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_recognition/versions/deployable_v1.0/files/retail_object_recognition.etlt -O retail_object_recognition.etlt
+
+echo "==================================================================="
 echo "Download models successfully "
 echo "==================================================================="

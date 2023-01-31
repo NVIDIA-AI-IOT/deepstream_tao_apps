@@ -107,7 +107,29 @@ typedef struct
   guint network_type;
   guint num_detected_classes;
   std::string config_path;
+  guint model_width;
+  guint model_height;
 } YamlParasStruct;
+
+/* Separate a config file entry with delimiters
+ * into strings. */
+static std::vector<std::string>
+split_string (std::string input) {
+  std::vector<int> positions;
+  for (unsigned int i = 0; i < input.size(); i++) {
+    if (input[i] == ';')
+      positions.push_back(i);
+  }
+  std::vector<std::string> ret;
+  int prev = 0;
+  for (auto &j: positions) {
+    std::string temp = input.substr(prev, j - prev);
+    ret.push_back(temp);
+    prev = j + 1;
+  }
+  ret.push_back(input.substr(prev, input.size() - prev));
+  return ret;
+}
 
 static void
 parse_tests_yaml (YamlParasStruct *yaml_paras, const gchar *cfg_file_path)
@@ -144,6 +166,14 @@ parse_tests_yaml (YamlParasStruct *yaml_paras, const gchar *cfg_file_path)
     if (paramKey == "num-detected-classes") {
       yaml_paras->num_detected_classes = itr->second.as<guint>();
     }
+    if (paramKey == "infer-dims") {
+        std::string values = itr->second.as<std::string>();
+        std::vector<std::string> vec = split_string(values);
+        if (vec.size() == 3) {
+            yaml_paras->model_height = std::stoul(vec[1]);
+            yaml_paras->model_width = std::stoul(vec[2]);
+        }
+     }
   }
 }
 
@@ -653,6 +683,8 @@ main (int argc, char *argv[]) {
     fileLoop = 0;
     networkType = 2;
     numDetectedClasses = 1;
+    guint model_width = 0;
+    guint model_height = 0;
 
     if (argc==2 && (g_str_has_suffix(argv[1], ".yml") ||
         g_str_has_suffix(argv[1], ".yaml"))) {
@@ -668,6 +700,8 @@ main (int argc, char *argv[]) {
         parse_tests_yaml(&yaml_paras, yaml_paras.config_path.c_str());
         networkType = yaml_paras.network_type;
         numDetectedClasses = yaml_paras.num_detected_classes;
+        model_width = yaml_paras.model_width;
+        model_height = yaml_paras.model_height;
     } else {
         while ((c = getopt(argc, argv, optStr)) != -1) {
             switch (c) {
@@ -689,6 +723,15 @@ main (int argc, char *argv[]) {
                     has_key = g_key_file_has_key(key_file, "property", "num-detected-classes", &error);
                     if (has_key) {
                       numDetectedClasses = g_key_file_get_integer (key_file, "property", "num-detected-classes", &error);
+                    }
+                    has_key = g_key_file_has_key(key_file, "property", "infer-dims", &error);
+                    if (has_key) {
+                        gsize length;
+                        gint *int_list = g_key_file_get_integer_list (key_file, "property", "infer-dims", &length, &error);
+                        if (length == 3) {
+                            model_height = int_list[1];
+                            model_width = int_list[2];
+                        }
                     }
                     g_key_file_free(key_file);
                 }
@@ -903,8 +946,15 @@ main (int argc, char *argv[]) {
               MUXER_OUTPUT_HEIGHT, "batch-size", batchSize,
               "batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC, NULL);
 
-    g_object_set (G_OBJECT (segvisual), "width", SEG_OUTPUT_WIDTH, "height",
-              SEG_OUTPUT_HEIGHT, NULL);
+    if(model_width != 0 && model_height != 0){
+        printf("model_width:%d, model_height:%d\n", model_width, model_height);
+        g_object_set (G_OBJECT (segvisual), "width", model_width, "height",
+                  model_height, NULL);
+    } else {
+        g_object_set (G_OBJECT (segvisual), "width", SEG_OUTPUT_WIDTH, "height",
+                  SEG_OUTPUT_HEIGHT, NULL);
+    }
+
     /* Set all the necessary properties of the nvinfer element,
      * the necessary ones are : */
     if(isYAML) {
@@ -928,6 +978,7 @@ main (int argc, char *argv[]) {
     /* we set the tiler properties here */
     g_object_set (G_OBJECT (tiler), "rows", tiler_rows, "columns", tiler_cols,
       "width", TILED_OUTPUT_WIDTH, "height", TILED_OUTPUT_HEIGHT, NULL);
+    g_object_set (G_OBJECT (segvisual), "batch-size", batchSize, NULL);
 
     /* we add a message handler */
     bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
@@ -954,28 +1005,28 @@ main (int argc, char *argv[]) {
      * nvinfer -> nvvideoconvert -> segvisual -> video-renderer */
     if (useDisplay == FALSE) {
         if (isImage == FALSE && !useFakeSink) {
-            if (!gst_element_link_many (streammux, pgie, tiler,
-                                         segvisual, nvvidconv1, enc, parser1, mux, sink, NULL)) {
+            if (!gst_element_link_many (streammux, pgie,
+                                         segvisual, tiler, nvvidconv1, enc, parser1, mux, sink, NULL)) {
                 g_printerr ("Elements could not be linked: 2. Exiting.\n");
                 return -1;
             }
         } else {
-            if (!gst_element_link_many (streammux, pgie, tiler,
-                                         segvisual, nvvidconv1, enc, parser1, sink, NULL)) {
+            if (!gst_element_link_many (streammux, pgie,
+                                         segvisual, tiler, nvvidconv1, enc, parser1, sink, NULL)) {
                 g_printerr ("Elements could not be linked: 2. Exiting.\n");
                 return -1;
             }
         }
     } else {
 #ifdef PLATFORM_TEGRA
-        if (!gst_element_link_many (streammux, pgie, tiler,
-                                     segvisual, transform, sink, NULL)) {
+        if (!gst_element_link_many (streammux, pgie,
+                                     segvisual, tiler, transform, sink, NULL)) {
             g_printerr ("Elements could not be linked: 2. Exiting.\n");
             return -1;
         }
 #else
-        if (!gst_element_link_many (streammux, pgie, tiler,
-                                     segvisual, sink, NULL)) {
+        if (!gst_element_link_many (streammux, pgie,
+                                     tiler, segvisual, sink, NULL)) {
             g_printerr ("Elements could not be linked: 2. Exiting.\n");
             return -1;
         }

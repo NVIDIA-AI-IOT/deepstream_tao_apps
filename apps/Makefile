@@ -24,7 +24,9 @@ all:
 	make -C tao_detection
 	make -C tao_segmentation
 	make -C tao_classifier
+	make -C tao_others
 %:
 	make -C tao_detection $@
 	make -C tao_segmentation $@
 	make -C tao_classifier $@
+	make -C tao_others $@

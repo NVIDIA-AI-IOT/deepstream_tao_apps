@@ -8,6 +8,7 @@ all:
 	@make -C deepstream-gesture-app
 	@make -C deepstream-heartrate-app/heartrateinfer_impl
 	@make -C deepstream-heartrate-app
+	@make -C deepstream-mdx-perception-app
 clean:
 	@make clean -C deepstream-bodypose2d-app
 	@make clean -C deepstream-faciallandmark-app
@@ -18,3 +19,4 @@ clean:
 	@make clean -C deepstream-gesture-app
 	@make clean -C deepstream-heartrate-app/heartrateinfer_impl
 	@make clean -C deepstream-heartrate-app
+	@make clean -C deepstream-mdx-perception-app

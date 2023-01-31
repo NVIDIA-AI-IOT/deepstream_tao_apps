@@ -26,7 +26,7 @@ property:
   offsets: 103.939;116.779;123.68
   model-color-format: 1
   labelfile-path: ssd_labels.txt
-  model-engine-file: ../../models/ssd/ssd.etlt_b1_gpu0_fp16.engine
+  model-engine-file: ../../models/ssd/ssd.etlt_b1_gpu0_int8.engine
   tlt-encoded-model: ../../models/ssd/ssd.etlt
   int8-calib-file: ../../models/ssd/ssd_cal.bin
   tlt-model-key: nvidia_tlt

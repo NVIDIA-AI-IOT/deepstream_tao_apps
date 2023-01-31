@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,9 @@
 #include <iostream>
 #include "nvdsinfer_custom_impl.h"
 #include <cassert>
+#include <cmath>
+#include <algorithm>
+#include <map>
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -65,6 +68,12 @@ bool NvDsInferParseCustomEfficientDetTAO (
          NvDsInferNetworkInfo  const &networkInfo,
          NvDsInferParseDetectionParams const &detectionParams,
          std::vector<NvDsInferObjectDetectionInfo> &objectList);
+
+extern "C"
+bool NvDsInferParseCustomDDETRTAO (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+                                NvDsInferNetworkInfo const &networkInfo,
+                                NvDsInferParseDetectionParams const &detectionParams,
+                                std::vector<NvDsInferObjectDetectionInfo> &objectList);
 
 extern "C"
 bool NvDsInferParseCustomNMSTLT (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
@@ -124,7 +133,7 @@ bool NvDsInferParseCustomBatchedYoloV5NMSTLT (
          NvDsInferParseDetectionParams const &detectionParams,
          std::vector<NvDsInferObjectDetectionInfo> &objectList) {
 
-	 if(outputLayersInfo.size() != 4)
+     if(outputLayersInfo.size() != 4)
     {
         std::cerr << "Mismatch in the number of output buffers."
                   << "Expected 4 output buffers, detected in the network :"
@@ -187,7 +196,7 @@ bool NvDsInferParseCustomBatchedNMSTLT (
          NvDsInferParseDetectionParams const &detectionParams,
          std::vector<NvDsInferObjectDetectionInfo> &objectList) {
 
-	 if(outputLayersInfo.size() != 4)
+     if(outputLayersInfo.size() != 4)
     {
         std::cerr << "Mismatch in the number of output buffers."
                   << "Expected 4 output buffers, detected in the network :"
@@ -210,7 +219,7 @@ bool NvDsInferParseCustomBatchedNMSTLT (
     const char* log_enable = std::getenv("ENABLE_DEBUG");
 
     if(log_enable != NULL && std::stoi(log_enable)) {
-        std::cout <<"keep cout"
+        std::cout <<"keep count"
               <<p_keep_count[0] << std::endl;
     }
 
@@ -335,41 +344,18 @@ bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const 
     }
 
     int* p_keep_count = (int *) outputLayersInfo[0].buffer;
-
     float* p_bboxes = (float *) outputLayersInfo[1].buffer;
-    NvDsInferDims inferDims_p_bboxes = outputLayersInfo[1].inferDims;
-    int numElements_p_bboxes=inferDims_p_bboxes.numElements;
-
     float* p_scores = (float *) outputLayersInfo[2].buffer;
-    float* p_classes = (float *) outputLayersInfo[3].buffer;
+    int* p_classes = (int *) outputLayersInfo[3].buffer;
 
     const int out_class_size = detectionParams.numClassesConfigured;
     const float threshold = detectionParams.perClassThreshold[0];
 
-    float max_bbox=0;
-    for (int i=0; i < numElements_p_bboxes; i++)
-    {
-        // std::cout <<"p_bboxes: "
-              // <<p_bboxes[i] << std::endl;
-        if ( max_bbox < p_bboxes[i] )
-            max_bbox=p_bboxes[i];
-    }
-    int normalized = (max_bbox < 2.0);
-
-
     if (p_keep_count[0] > 0)
     {
-        assert (normalized == 0);
         for (int i = 0; i < p_keep_count[0]; i++) {
-
-
             if ( p_scores[i] < threshold) continue;
             assert((int) p_classes[i] < out_class_size);
-
-
-            // std::cout << "label/conf/ x/y x/y -- "
-                      // << (int)p_classes[i] << " " << p_scores[i] << " "
-                      // << p_bboxes[4*i] << " " << p_bboxes[4*i+1] << " " << p_bboxes[4*i+2] << " "<< p_bboxes[4*i+3] << " " << std::endl;
 
             if(p_bboxes[4*i+2] < p_bboxes[4*i] || p_bboxes[4*i+3] < p_bboxes[4*i+1])
                 continue;
@@ -377,7 +363,6 @@ bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const 
             NvDsInferObjectDetectionInfo object;
             object.classId = (int) p_classes[i];
             object.detectionConfidence = p_scores[i];
-
 
             object.left=p_bboxes[4*i+1];
             object.top=p_bboxes[4*i];
@@ -395,9 +380,85 @@ bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const 
     return true;
 }
 
+extern "C"
+bool NvDsInferParseCustomDDETRTAO (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+                                NvDsInferNetworkInfo const &networkInfo,
+                                NvDsInferParseDetectionParams const &detectionParams,
+                                std::vector<NvDsInferObjectDetectionInfo> &objectList) {
+
+    // Code from NvDsInferParseCustomTfSSD for layer finding
+    auto layerFinder = [&outputLayersInfo](const std::string &name)
+        -> const NvDsInferLayerInfo *{
+        for (auto &layer : outputLayersInfo) {
+            if (layer.dataType == FLOAT &&
+              (layer.layerName && name == layer.layerName)) {
+                return &layer;
+            }
+        }
+        return nullptr;
+    };
+
+    const NvDsInferLayerInfo *boxLayer = layerFinder("pred_boxes"); // 1 x num_queries x 4
+    const NvDsInferLayerInfo *classLayer = layerFinder("pred_logits");  // 1 x num_queries x num_classes
+
+    if (!boxLayer || !classLayer) {
+        std::cerr << "ERROR: some layers missing or unsupported data types "
+                  << "in output tensors" << std::endl;
+        return false;
+    }
+
+    const int keep_top_k = 200;
+    unsigned int numDetections = classLayer->inferDims.d[0];
+    unsigned int numClasses = classLayer->inferDims.d[1];
+    std::map<float, NvDsInferObjectDetectionInfo> ordered_objects;
+
+    for (unsigned int idx = 0; idx < numDetections*4; idx += 4) {
+        NvDsInferObjectDetectionInfo res;
+
+        res.classId = std::max_element(((float*)classLayer->buffer+idx), ((float*)classLayer->buffer+idx+numClasses)) - ((float*)classLayer->buffer+idx);
+        res.detectionConfidence = ((float*)classLayer->buffer)[idx+res.classId];
+
+        // If model does not have sigmoid layer, perform sigmoid calculation here
+        res.detectionConfidence = 1.0/(1.0 + exp(-res.detectionConfidence));
+
+        if(res.classId == 0 || res.detectionConfidence < detectionParams.perClassPreclusterThreshold[res.classId]) {
+            continue;
+        }
+        enum {cx, cy, w, h};
+        float rectX1f, rectY1f, rectX2f, rectY2f;
+
+        rectX1f = (((float*)boxLayer->buffer)[idx + cx] - (((float*)boxLayer->buffer)[idx + w]/2)) * networkInfo.width;
+        rectY1f = (((float*)boxLayer->buffer)[idx + cy] - (((float*)boxLayer->buffer)[idx + h]/2)) * networkInfo.height;
+        rectX2f = rectX1f + ((float*)boxLayer->buffer)[idx + w] * networkInfo.width;
+        rectY2f = rectY1f + ((float*)boxLayer->buffer)[idx + h] * networkInfo.height;
+
+        rectX1f = CLIP(rectX1f, 0.0f, networkInfo.width - 1);
+        rectX2f = CLIP(rectX2f, 0.0f, networkInfo.width - 1);
+        rectY1f = CLIP(rectY1f, 0.0f, networkInfo.height - 1);
+        rectY2f = CLIP(rectY2f, 0.0f, networkInfo.height - 1);
+
+        res.left = rectX1f;
+        res.top = rectY1f;
+        res.width = rectX2f - rectX1f;
+        res.height = rectY2f - rectY1f;
+
+        ordered_objects[res.detectionConfidence] = res;
+    }
+
+    // Use objects within top_k range
+    int jdx = 0;
+    for (std::map<float, NvDsInferObjectDetectionInfo>::iterator iter=ordered_objects.end();
+        iter!=ordered_objects.begin() && jdx<keep_top_k; iter--, jdx++) {
+        if (iter->second.classId != 0)
+            objectList.emplace_back(iter->second);
+    }
+    return true;
+}
+
 /* Check that the custom function has been defined correctly */
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomNMSTLT);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomBatchedYoloV5NMSTLT);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomBatchedNMSTLT);
 CHECK_CUSTOM_INSTANCE_MASK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomMrcnnTLTV2);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomEfficientDetTAO);
+CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomDDETRTAO);
