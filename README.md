@@ -56,7 +56,7 @@ uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
 
 * [DeepStream SDK 6.2 GA](https://developer.nvidia.com/deepstream-sdk)
 
-   Make sure deepstream-test1 sample can run successful to verify your installation. 
+   Make sure deepstream-test1 sample can run successfully to verify your installation. 
 
    According to the
    [document](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_docker_containers.html),
