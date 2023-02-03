@@ -72,9 +72,9 @@ uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
 
 ```
 // SSH
-git clone git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao4.0_ds6.2ga git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao4.0_ds6.2ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 ### 2. Download Models
 Run below script to download models except multi_task and YoloV5 models.
