@@ -55,9 +55,9 @@ This sample is to show the following TAO models runing with DeepStream
 ```
 2. Prepare Models and TensorRT engine
 
-There are pre-trained TAO models available in [NGC](https://ngc.nvidia.com/catalog/models) for faciallandmarks, emotion, gesture, gaze and heart rate.
+There are pre-trained TAO models available in [NGC](https://ngc.nvidia.com/catalog/models) for faciallandmarks, emotion, gesture, gaze, heart rate and embedding vector related models.
 
-Please run the following script to download pre-trained models and generate GazeNet and Gesture engines with tao-converter tool:
+Please run the following script to download pre-trained models:
 
 ```
     cd deepstream_tao_apps
