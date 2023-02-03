@@ -202,7 +202,7 @@ Please note there are two `Retail Object Detection` models. These models have th
 - **detection_classes**: This is a [batch_size, max_output_boxes] tensor of data type int32, containing the classes for the boxes.
 
 #### 15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet
-- refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model
+- refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/release/tao4.0_ds6.2ga/apps/tao_others/README.md) for how to configure and run the model
 
 #### 22. PeopleNet Transformer
 
