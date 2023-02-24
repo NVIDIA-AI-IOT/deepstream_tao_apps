@@ -27,6 +27,7 @@ wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar
 tar xvf cmake-3.19.4.tar.gz
 cd cmake-3.19.4/
 mkdir $HOME/install
+# sudo apt-get install openssl
 ./configure --prefix=$HOME/install
 make -j$(nproc)
 sudo make install
