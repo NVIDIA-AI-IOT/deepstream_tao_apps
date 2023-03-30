@@ -93,7 +93,6 @@ bool NvDsInferParseCustomNMSTLT (std::vector<NvDsInferLayerInfo> const &outputLa
     float* out_nms = (float *) outputLayersInfo[0].buffer;
     int * p_keep_count = (int *) outputLayersInfo[1].buffer;
     const int out_class_size = detectionParams.numClassesConfigured;
-    const float threshold = detectionParams.perClassThreshold[0];
 
     float* det;
 
@@ -102,16 +101,17 @@ bool NvDsInferParseCustomNMSTLT (std::vector<NvDsInferLayerInfo> const &outputLa
 
         // Output format for each detection is stored in the below order
         // [image_id, label, confidence, xmin, ymin, xmax, ymax]
-        if ( det[2] < threshold) continue;
-        assert((int) det[1] < out_class_size);
+        const int p_class_id = (int) det[1];
+        if ( det[2] < detectionParams.perClassPreclusterThreshold[p_class_id]) continue;
+        assert(p_class_id < out_class_size);
 
 #if 0
         std::cout << "id/label/conf/ x/y x/y -- "
-                  << det[0] << " " << det[1] << " " << det[2] << " "
+                  << det[0] << " " << p_class_id << " " << det[2] << " "
                   << det[3] << " " << det[4] << " " << det[5] << " " << det[6] << std::endl;
 #endif
         NvDsInferObjectDetectionInfo object;
-            object.classId = (int) det[1];
+            object.classId = p_class_id;
             object.detectionConfidence = det[2];
 
             /* Clip object box co-ordinates to network resolution */
@@ -150,8 +150,6 @@ bool NvDsInferParseCustomBatchedYoloV5NMSTLT (
     float* p_scores = (float *) outputLayersInfo[2].buffer;
     float* p_classes = (float *) outputLayersInfo[3].buffer;
 
-    const float threshold = detectionParams.perClassThreshold[0];
-
     const int keep_top_k = 200;
     const char* log_enable = std::getenv("ENABLE_DEBUG");
 
@@ -162,7 +160,7 @@ bool NvDsInferParseCustomBatchedYoloV5NMSTLT (
 
     for (int i = 0; i < p_keep_count[0] && objectList.size() <= keep_top_k; i++) {
 
-        if ( p_scores[i] < threshold) continue;
+        if ( p_scores[i] < detectionParams.perClassPreclusterThreshold[(unsigned int)p_classes[i]] ) continue;
 
         if(log_enable != NULL && std::stoi(log_enable)) {
             std::cout << "label/conf/ x/y x/y -- "
@@ -213,8 +211,6 @@ bool NvDsInferParseCustomBatchedNMSTLT (
     float* p_scores = (float *) outputLayersInfo[2].buffer;
     float* p_classes = (float *) outputLayersInfo[3].buffer;
 
-    const float threshold = detectionParams.perClassThreshold[0];
-
     const int keep_top_k = 200;
     const char* log_enable = std::getenv("ENABLE_DEBUG");
 
@@ -225,7 +221,7 @@ bool NvDsInferParseCustomBatchedNMSTLT (
 
     for (int i = 0; i < p_keep_count[0] && objectList.size() <= keep_top_k; i++) {
 
-        if ( p_scores[i] < threshold) continue;
+        if ( p_scores[i] < detectionParams.perClassPreclusterThreshold[(unsigned int)p_classes[i]] ) continue;
 
         if(log_enable != NULL && std::stoi(log_enable)) {
             std::cout << "label/conf/ x/y x/y -- "
@@ -301,7 +297,7 @@ bool NvDsInferParseCustomMrcnnTLTV2 (std::vector<NvDsInferLayerInfo> const &outp
     for(auto i = 0U; i < det_max_instances; i++) {
         MrcnnRawDetection &rawDec = out_det[i];
 
-        if(rawDec.score < detectionParams.perClassPreclusterThreshold[0])
+        if(rawDec.score < detectionParams.perClassPreclusterThreshold[static_cast<int>(rawDec.class_id)])
             continue;
 
         NvDsInferInstanceMaskInfo obj;
@@ -349,12 +345,11 @@ bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const 
     int* p_classes = (int *) outputLayersInfo[3].buffer;
 
     const int out_class_size = detectionParams.numClassesConfigured;
-    const float threshold = detectionParams.perClassThreshold[0];
 
     if (p_keep_count[0] > 0)
     {
         for (int i = 0; i < p_keep_count[0]; i++) {
-            if ( p_scores[i] < threshold) continue;
+            if ( p_scores[i] < detectionParams.perClassPreclusterThreshold[(unsigned int)p_classes[i]] ) continue;
             assert((int) p_classes[i] < out_class_size);
 
             if(p_bboxes[4*i+2] < p_bboxes[4*i] || p_bboxes[4*i+3] < p_bboxes[4*i+1])
