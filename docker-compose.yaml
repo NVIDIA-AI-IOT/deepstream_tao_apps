@@ -1,0 +1,10 @@
+services:
+  post_processor:
+    runtime: nvidia
+    container_name: post_processor
+    build:
+      context: .
+    entrypoint:
+      - /bin/sh
+    volumes:
+      - .:/workspace
