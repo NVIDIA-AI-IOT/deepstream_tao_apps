@@ -26,7 +26,7 @@ property:
   tlt-model-key: nvidia_tlt
   tlt-encoded-model: ../../models/faciallandmark/facenet.etlt
   labelfile-path: labels_facenet.txt
-  int8-calib-file: ../../models/faciallandmark/facenet_cal.txt
+  int8-calib-file: ../../models/faciallandmark/facenet_int8_calibration.txt
   model-engine-file: ../../models/faciallandmark/facenet.etlt_b1_gpu0_int8.engine
   infer-dims: 3;416;736
   uff-input-order: 0
