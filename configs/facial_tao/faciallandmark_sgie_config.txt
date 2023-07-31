@@ -51,7 +51,7 @@ gpu-id=0
 model-engine-file=../../models/faciallandmark/faciallandmarks.etlt_b32_gpu0_int8.engine
 tlt-model-key=nvidia_tlt
 tlt-encoded-model=../../models/faciallandmark/faciallandmarks.etlt
-int8-calib-file=../../models/faciallandmark/fpenet_cal.txt
+int8-calib-file=../../models/faciallandmark/faciallandmarks_int8_calibration.txt
 #dynamic batch size
 batch-size=32
 ## 0=FP32, 1=INT8, 2=FP16 mode
