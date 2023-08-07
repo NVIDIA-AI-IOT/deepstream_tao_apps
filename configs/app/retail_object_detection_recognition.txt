@@ -130,8 +130,8 @@ bbox-border-color0=1;0;0;1
 bbox-border-color1=0;1;1;1
 bbox-border-color2=0;1;1;1
 bbox-border-color3=0;1;0;1
-config-file=../retail_object_detection_tao/pgie_retail_object_detection_binary_tao_config.yml
-# config-file=../retail_object_detection_tao/pgie_retail_object_detection_100_tao_config.yml
+#config-file=../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_binary_tao_config.txt
+config-file=../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_100_tao_config.yml
 
 [tracker]
 enable=1
@@ -150,7 +150,7 @@ enable=1
 gie-unique-id=2
 # operate-on-gie-id has to be specified in the main configuration file.
 operate-on-gie-id=1
-config-file=../retail_object_recognition_tao/sgie_retail_object_recognition_tao_config.yml
+config-file=../nvinfer/retail_object_recognition_tao/sgie_retail_object_recognition_tao_config.yml
 
 [tests]
 file-loop=0

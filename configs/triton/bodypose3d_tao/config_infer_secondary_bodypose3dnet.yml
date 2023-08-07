@@ -1,0 +1,77 @@
+################################################################################
+# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+################################################################################
+
+infer_config {
+  unique_id: 1
+  gpu_ids: 0
+  max_batch_size: 8
+  backend {
+    inputs: [ 
+      {name: "input0"},
+      {name: "k_inv"},
+      {name: "t_form_inv"},
+      {name: "scale_normalized_mean_limb_lengths"},
+      {name: "mean_limb_lengths"}
+    ]
+    outputs: [
+      {name: "pose2d"},
+      {name: "pose2d_org_img"},
+      {name: "pose25d"},
+      {name: "pose3d"}
+    ]
+    triton {
+      model_name: "bodypose3dnet"
+      version: -1
+      model_repo {
+        root: "../../../models"
+        strict_model_config: true
+      }
+    }
+    output_mem_type: MEMORY_TYPE_DEFAULT
+  }
+
+  preprocess {
+    network_format: IMAGE_FORMAT_BGR
+    tensor_order: TENSOR_ORDER_LINEAR
+    maintain_aspect_ratio: 0
+    symmetric_padding: 0
+    frame_scaling_hw: FRAME_SCALING_HW_DEFAULT
+    frame_scaling_filter: 1
+    normalize {
+      scale_factor: 0.00392156
+    }
+  }
+  postprocess {
+    other {}
+  }
+
+  custom_lib {
+    path: "../../../apps/tao_others/deepstream-pose-classification/nvdsinfer_custom_impl_BodyPose3DNet/libnvdsinfer_custom_impl_BodyPose3DNet.so"
+  }
+
+  extra {
+    copy_input_to_host_buffers: false
+    output_buffer_pool_size: 64
+  }
+}
+
+input_control {
+  process_mode: PROCESS_MODE_CLIP_OBJECTS
+  operate_on_gie_id: 1
+  operate_on_class_ids: [0]
+  interval: 0
+}
+
+output_control {
+  output_tensor_meta: true
+}
+

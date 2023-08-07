@@ -1,0 +1,57 @@
+################################################################################
+# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+################################################################################
+
+# The values in the config file are overridden by values set through GObject
+# properties.
+
+[property]
+enable=1
+unique-id=3
+target-unique-ids=4
+    # 0=NCHW, 1=NHWC, 2=CUSTOM
+network-input-order=0
+    # tensor shape based on network-input-order
+network-input-shape=1;3;300;34;1
+process-on-frame=0
+processing-width=34
+processing-height=300
+scaling-buf-pool-size=6
+tensor-buf-pool-size=6
+    # 0=RGB, 1=BGR, 2=GRAY
+network-color-format=1
+    # 0=FP32, 1=UINT8, 2=INT8, 3=UINT32, 4=INT32, 5=FP16
+tensor-data-type=0
+tensor-name=input
+    # 0=NVBUF_MEM_DEFAULT 1=NVBUF_MEM_CUDA_PINNED 2=NVBUF_MEM_CUDA_DEVICE 3=NVBUF_MEM_CUDA_UNIFIED
+scaling-pool-memory-type=0
+    # 0=NvBufSurfTransformCompute_Default 1=NvBufSurfTransformCompute_GPU 2=NvBufSurfTransformCompute_VIC
+scaling-pool-compute-hw=0
+    # Scaling Interpolation method
+    # 0=NvBufSurfTransformInter_Nearest 1=NvBufSurfTransformInter_Bilinear 2=NvBufSurfTransformInter_Algo1
+    # 3=NvBufSurfTransformInter_Algo2 4=NvBufSurfTransformInter_Algo3 5=NvBufSurfTransformInter_Algo4
+    # 6=NvBufSurfTransformInter_Default
+scaling-filter=0
+custom-lib-path=../../../apps/tao_others/deepstream-pose-classification/nvdspreprocess_lib/libcustom2d_preprocess.so
+custom-tensor-preparation-function=CustomTensorPreparation
+
+[user-configs]
+#actual sequence length of frames
+frames-sequence-length=300
+
+[group-0]
+src-ids=0
+custom-input-transformation-function=CustomTransformation
+process-on-roi=1
+process-on-all-objects=1
+roi-params-src-0=0;0;100;100
+input-object-min-width=100
+input-object-min-height=100

@@ -18,16 +18,18 @@ streammux:
   batched-push-timeout: 40000
 
 primary-gie:
-  config-file-path: ../../../configs/facial_tao/config_infer_primary_facenet.yml
+  type: 0
+  config-file-path: ../../../configs/nvinfer/facial_tao/config_infer_primary_facenet.yml
   unique-id: 1
 
 secondary-gie:
-  config-file-path: ../../../configs/facial_tao/faciallandmark_sgie_config.yml
+  type: 0
+  config-file-path: ../../../configs/nvinfer/facial_tao/faciallandmark_sgie_config.yml
   unique-id: 2
 
 video-template:
   customlib-name: ./gazeinfer_impl/libnvds_gazeinfer.so
-  customlib-props: config-file:../../../configs/gaze_tao/sample_gazenet_model_config.yml
+  customlib-props: config-file:../../../configs/nvinfer/gaze_tao/sample_gazenet_model_config.yml
 
 model-config:
-  config-file-path: ../../../configs/facial_tao/sample_faciallandmarks_config.yml
+  config-file-path: ../../../configs/nvinfer/facial_tao/sample_faciallandmarks_config.yml

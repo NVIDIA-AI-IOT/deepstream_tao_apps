@@ -1,5 +1,5 @@
 ################################################################################
-## Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+## Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 ##
 ## NVIDIA Corporation and its licensors retain all intellectual property
 ## and proprietary rights in and to this software, related documentation
@@ -11,37 +11,37 @@
 dependencies:
 - extension: NvDsSourceExt
   uuid: a632d022-3425-4848-9074-e6483ef74366
-  version: 1.0.0
+  version: 1.3.0
 - extension: NvDsBaseExt
   uuid: 56d7e3ec-62c6-4652-bcc8-4f1c3b00df03
-  version: 1.0.0
+  version: 1.4.0
 - extension: NvDsMuxDemuxExt
   uuid: 89b8398c-5820-4051-835c-a91f2d49766b
-  version: 1.0.0
+  version: 1.3.0
 - extension: NvDsVisualizationExt
   uuid: 25903cd4-fc5c-4139-987b-47bb27e8b424
-  version: 1.0.1
+  version: 1.3.0
 - extension: StandardExtension
   uuid: 8ec2d5d6-b5df-48bf-8dee-0252606fdd7e
-  version: 2.0.0
+  version: 2.3.0
 - extension: NvDsHeartRateExt
   uuid: 47df7993-48ff-37cb-ab0e-48a9f67f7627
-  version: 1.0.0
+  version: 1.3.0
 - extension: NvDsOutputSinkExt
   uuid: 3fc9ad87-03e7-47a8-bbfc-8501c3f7ff2f
-  version: 1.0.0
+  version: 1.3.0
 - extension: NvDsInferenceUtilsExt
   uuid: 27856a43-5ad4-4d8e-be36-0ec2cf9bbb58
-  version: 1.0.0
+  version: 1.3.0
 - extension: NvDsInferenceExt
   uuid: 0b02963e-c24e-4c13-ace0-c4cdf36c7c71
-  version: 1.0.0
+  version: 1.3.0
 - extension: NvDsFacialLandmarks
   uuid: 78969c67-6287-44b0-83bf-afe920eb4874
-  version: 1.0.0
+  version: 1.3.0
 - extension: NvDsTemplateExt
   uuid: 845a7fd3-51e8-4076-b3d9-e2974880925e
-  version: 1.0.0
+  version: 1.3.0
 ---
 components:
 - name: nv_ds_multi_src_input144..1a58

@@ -101,12 +101,15 @@ streammux:
 
 primary-gie:
   enable: 1
+  plugin-type: 0
   gie-unique-id: 1
   bbox-border-color0: 1;0;0;1
   bbox-border-color1: 0;1;1;1
   bbox-border-color2: 0;1;1;1
   bbox-border-color3: 0;1;0;1
-  config-file: ../peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
+  config-file: ../nvinfer/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
+  #config-file: ../triton/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
+  #config-file: ../triton-grpc/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
 
 tracker:
   enable: 1
@@ -122,10 +125,13 @@ tracker:
 
 secondary-gie0:
   enable: 1
+  plugin-type: 0
   gie-unique-id: 2
   # operate-on-gie-id has to be specified in the main configuration file.
   operate-on-gie-id: 1
-  config-file: ../reidentificationnet_tao/sgie_reidentificationnet_tao_config.yml
+  config-file: ../nvinfer/reidentificationnet_tao/sgie_reidentificationnet_tao_config.yml
+  #config-file: ../triton/reidentificationnet_tao/sgie_reidentificationnet_tao_config.yml
+  #config-file: ../triton-grpc/reidentificationnet_tao/sgie_reidentificationnet_tao_config.yml
 
 tests:
   file-loop: 0

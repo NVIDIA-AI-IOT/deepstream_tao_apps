@@ -98,6 +98,27 @@ typedef struct _DsSourceBin
 
 std::unique_ptr<cvcore::faciallandmarks::FacialLandmarksPostProcessor> facemarkpost;
 
+GstElement *pipeline = NULL;
+
+static void
+signal_catch_callback(int signum)
+{
+  g_print("User Interrupted..\n");
+  if(pipeline != NULL) {
+    gst_element_send_event(pipeline, gst_event_new_eos());
+    g_print("Send EOS to pipline!\n");
+  }
+}
+
+static void
+signal_catch_setup()
+{
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_handler = signal_catch_callback;
+  sigaction(SIGINT, &action, NULL);
+}
+
 /* Calculate performance data */
 static GstPadProbeReturn
 osd_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
@@ -565,11 +586,6 @@ create_source_bin (DsSourceBinStruct *ds_source_struct, gchar * uri)
   gst_caps_set_features (caps, 0, feature);
   g_object_set (G_OBJECT (ds_source_struct->capsfilt), "caps", caps, NULL);
 
-#ifndef PLATFORM_TEGRA
-  g_object_set (G_OBJECT (ds_source_struct->nvvidconv), "nvbuf-memory-type", 3,
-      NULL);
-#endif
-
   gst_bin_add_many (GST_BIN (ds_source_struct->source_bin),
       ds_source_struct->uri_decode_bin, ds_source_struct->nvvidconv,
       ds_source_struct->capsfilt, NULL);
@@ -627,11 +643,11 @@ int
 main (int argc, char *argv[])
 {
   GMainLoop *loop = NULL;
-  GstElement *pipeline = NULL,*streammux = NULL, *sink = NULL, 
+  GstElement *streammux = NULL, *sink = NULL, 
              *primary_detector = NULL, *second_detector = NULL,
              *nvvidconv = NULL, *nvosd = NULL, *nvvidconv1 = NULL,
              *outenc = NULL, *capfilt = NULL, *nvtile = NULL,
-             *emotioninfer = NULL;
+             *emotioninfer = NULL, *mux = NULL, *encparse = NULL;
   GstElement *queue1 = NULL, *queue2 = NULL, *queue3 = NULL, *queue4 = NULL,
              *queue5 = NULL, *queue6 = NULL, *queue7 = NULL, *queue8 = NULL;
   DsSourceBinStruct source_struct[128];
@@ -678,6 +694,8 @@ main (int argc, char *argv[])
 
   /* Standard GStreamer initialization */
   gst_init (&argc, &argv);
+  /* setup singal handler */
+  signal_catch_setup();
   loop = g_main_loop_new (NULL, FALSE);
   
   perf_measure.pre_time = GST_CLOCK_TIME_NONE;
@@ -760,11 +778,29 @@ main (int argc, char *argv[])
   }
 
   /* Create three nvinfer instances for two detectors. */
-  primary_detector = gst_element_factory_make ("nvinfer",
-                       "primary-infer-engine1");
+  guint pgie_type = 0;
+  guint sgie_type = 0;
+  if (isYAML) {
+    pgie_type = ds_parse_group_type(argv[1], "primary-gie");
+    sgie_type = ds_parse_group_type(argv[1], "secondary-gie");
+  }
 
-  second_detector = gst_element_factory_make ("nvinfer",
+  if (pgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
+      primary_detector = gst_element_factory_make ("nvinferserver",
+                       "primary-inferserver-engine1");
+  } else {
+
+      primary_detector = gst_element_factory_make ("nvinfer",
+                       "primary-infer-engine1");
+  }
+
+  if (sgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
+      second_detector = gst_element_factory_make ("nvinferserver",
+                       "second-inferserver-engine1");
+  } else {
+      second_detector = gst_element_factory_make ("nvinfer",
                        "second-infer-engine1");
+  }
 
   emotioninfer = gst_element_factory_make ("nvdsvideotemplate",
                        "emotioninfer");
@@ -816,19 +852,20 @@ main (int argc, char *argv[])
             "I420", NULL);
         g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
         filepath = g_strconcat(filename->str,".jpg",NULL);
-    }
-    else {
+    } else {
+        mux = gst_element_factory_make ("qtmux", "mp4-mux");
         if(isYAML) {
           isH264 = !(ds_parse_enc_type(argv[1], "output"));
         }
 
         if(!isH264) {
+          encparse = gst_element_factory_make ("h265parse", "h265-encparser");
           outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h265enc");
-          filepath = g_strconcat(filename->str,".265",NULL);
         } else {
+          encparse = gst_element_factory_make ("h264parse", "h264-encparser");
           outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
-          filepath = g_strconcat(filename->str,".264",NULL);
         }
+        filepath = g_strconcat(filename->str,".mp4",NULL);
         if (isYAML) {
           ds_parse_enc_config (outenc, argv[1], "output");
         } else {
@@ -870,7 +907,9 @@ main (int argc, char *argv[])
   if (isStreaming)
     g_object_set (G_OBJECT (streammux), "live-source", true, NULL);
   g_object_set (G_OBJECT (streammux), "batch-size", src_cnt, NULL);
-
+#ifndef PLATFORM_TEGRA
+  g_object_set (G_OBJECT (streammux), "nvbuf-memory-type", 3, NULL);
+#endif
   tiler_rows = (guint) sqrt (src_cnt);
   tiler_columns = (guint) ceil (1.0 * src_cnt / tiler_rows);
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
@@ -886,14 +925,14 @@ main (int argc, char *argv[])
     nvds_parse_gie (primary_detector, argv[1], "primary-gie");
   else
     g_object_set (G_OBJECT (primary_detector), "config-file-path",
-      "../../../configs/facial_tao/config_infer_primary_facenet.txt",
+      "../../../configs/nvinfer/facial_tao/config_infer_primary_facenet.txt",
       "unique-id", PRIMARY_DETECTOR_UID, NULL);
 
   if(isYAML)
     nvds_parse_gie (second_detector, argv[1], "secondary-gie");
   else
     g_object_set (G_OBJECT (second_detector), "config-file-path",
-      "../../../configs/facial_tao/faciallandmark_sgie_config.txt",
+      "../../../configs/nvinfer/facial_tao/faciallandmark_sgie_config.txt",
       "unique-id", SECOND_DETECTOR_UID, NULL);
 
   if(isYAML)
@@ -901,7 +940,7 @@ main (int argc, char *argv[])
   else
     g_object_set (G_OBJECT (emotioninfer), "customlib-name",
       "./emotion_impl/libnvds_emotion_impl.so", "customlib-props",
-      "config-file:../../../configs/emotion_tao/sample_emotion_model_config.txt", NULL);
+      "config-file:../../../configs/nvinfer/emotion_tao/sample_emotion_model_config.txt", NULL);
 
   /* we add a bus message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
@@ -926,13 +965,23 @@ main (int argc, char *argv[])
   if (output_type == 1) {
     g_object_set (G_OBJECT (sink), "location", filepath, NULL);
     g_object_set (G_OBJECT (sink), "enable-last-sample", false,NULL);
-    gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt, 
-        queue7, queue8, NULL);
 
-    if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
-           outenc, sink, NULL)) {
-      g_printerr ("OSD and sink elements link failure.\n");
-      return -1;
+    if (!isImage) {
+      gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
+        queue7, queue8, encparse, mux, NULL);
+      if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
+          outenc, encparse, mux, sink, NULL)) {
+        g_printerr ("OSD and sink elements link failure.\n");
+        return -1;
+      }
+    } else {
+      gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
+        queue7, queue8, NULL);
+      if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
+          outenc, sink, NULL)) {
+        g_printerr ("OSD and sink elements link failure.\n");
+        return -1;
+      }
     }
     g_free(filepath);
   } else if (output_type == 2) {

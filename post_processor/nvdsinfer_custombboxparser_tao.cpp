@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -343,10 +343,23 @@ bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const 
         return false;
     }
 
-    int* p_keep_count = (int *) outputLayersInfo[0].buffer;
-    float* p_bboxes = (float *) outputLayersInfo[1].buffer;
-    float* p_scores = (float *) outputLayersInfo[2].buffer;
-    int* p_classes = (int *) outputLayersInfo[3].buffer;
+    int* p_keep_count = nullptr;
+    float* p_bboxes = nullptr;
+    float* p_scores = nullptr;
+    int* p_classes = nullptr;
+
+    for (int i = 0; i < 4; i++){
+        const char* layerName = outputLayersInfo[i].layerName;
+        if(!strcmp(layerName, "num_detections")) {
+            p_keep_count = (int *) outputLayersInfo[i].buffer;
+        } else if(!strcmp(layerName, "detection_boxes")) {
+           p_bboxes = (float *) outputLayersInfo[i].buffer;
+        } else if(!strcmp(layerName, "detection_scores")) {
+            p_scores = (float *) outputLayersInfo[i].buffer;
+        } else if(!strcmp(layerName, "detection_classes")) {
+            p_classes = (int *) outputLayersInfo[i].buffer;
+        }
+    }
 
     const int out_class_size = detectionParams.numClassesConfigured;
     const float threshold = detectionParams.perClassThreshold[0];
@@ -355,7 +368,9 @@ bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const 
     {
         for (int i = 0; i < p_keep_count[0]; i++) {
             if ( p_scores[i] < threshold) continue;
-            assert((int) p_classes[i] < out_class_size);
+            //assert((int) p_classes[i] < out_class_size);
+	    if(p_classes[i] >= out_class_size)
+	      break;
 
             if(p_bboxes[4*i+2] < p_bboxes[4*i] || p_bboxes[4*i+3] < p_bboxes[4*i+1])
                 continue;
@@ -412,11 +427,13 @@ bool NvDsInferParseCustomDDETRTAO (std::vector<NvDsInferLayerInfo> const &output
     unsigned int numClasses = classLayer->inferDims.d[1];
     std::map<float, NvDsInferObjectDetectionInfo> ordered_objects;
 
-    for (unsigned int idx = 0; idx < numDetections*4; idx += 4) {
+    for (unsigned int idx = 0; idx < numDetections; idx += 1) {
         NvDsInferObjectDetectionInfo res;
 
-        res.classId = std::max_element(((float*)classLayer->buffer+idx), ((float*)classLayer->buffer+idx+numClasses)) - ((float*)classLayer->buffer+idx);
-        res.detectionConfidence = ((float*)classLayer->buffer)[idx+res.classId];
+        unsigned int class_layer_idx = idx * numClasses;
+
+        res.classId = std::max_element(((float*)classLayer->buffer+class_layer_idx), ((float*)classLayer->buffer+class_layer_idx+numClasses)) - ((float*)classLayer->buffer+class_layer_idx);
+        res.detectionConfidence = ((float*)classLayer->buffer)[class_layer_idx+res.classId];
 
         // If model does not have sigmoid layer, perform sigmoid calculation here
         res.detectionConfidence = 1.0/(1.0 + exp(-res.detectionConfidence));
@@ -427,10 +444,12 @@ bool NvDsInferParseCustomDDETRTAO (std::vector<NvDsInferLayerInfo> const &output
         enum {cx, cy, w, h};
         float rectX1f, rectY1f, rectX2f, rectY2f;
 
-        rectX1f = (((float*)boxLayer->buffer)[idx + cx] - (((float*)boxLayer->buffer)[idx + w]/2)) * networkInfo.width;
-        rectY1f = (((float*)boxLayer->buffer)[idx + cy] - (((float*)boxLayer->buffer)[idx + h]/2)) * networkInfo.height;
-        rectX2f = rectX1f + ((float*)boxLayer->buffer)[idx + w] * networkInfo.width;
-        rectY2f = rectY1f + ((float*)boxLayer->buffer)[idx + h] * networkInfo.height;
+        unsigned int box_layer_idx = idx * 4;
+
+        rectX1f = (((float*)boxLayer->buffer)[box_layer_idx + cx] - (((float*)boxLayer->buffer)[box_layer_idx + w]/2)) * networkInfo.width;
+        rectY1f = (((float*)boxLayer->buffer)[box_layer_idx + cy] - (((float*)boxLayer->buffer)[box_layer_idx + h]/2)) * networkInfo.height;
+        rectX2f = rectX1f + ((float*)boxLayer->buffer)[box_layer_idx + w] * networkInfo.width;
+        rectY2f = rectY1f + ((float*)boxLayer->buffer)[box_layer_idx + h] * networkInfo.height;
 
         rectX1f = CLIP(rectX1f, 0.0f, networkInfo.width - 1);
         rectX2f = CLIP(rectX2f, 0.0f, networkInfo.width - 1);
@@ -445,12 +464,10 @@ bool NvDsInferParseCustomDDETRTAO (std::vector<NvDsInferLayerInfo> const &output
         ordered_objects[res.detectionConfidence] = res;
     }
 
-    // Use objects within top_k range
-    int jdx = 0;
-    for (std::map<float, NvDsInferObjectDetectionInfo>::iterator iter=ordered_objects.end();
-        iter!=ordered_objects.begin() && jdx<keep_top_k; iter--, jdx++) {
-        if (iter->second.classId != 0)
-            objectList.emplace_back(iter->second);
+    int jdx = 0; 
+    for (auto iter=ordered_objects.rbegin(); iter!=ordered_objects.rend() && jdx<keep_top_k; iter++, jdx++) {
+        if (iter->second.classId != 0){
+        objectList.emplace_back(iter->second);}
     }
     return true;
 }

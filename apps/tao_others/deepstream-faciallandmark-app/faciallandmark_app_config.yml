@@ -3,7 +3,7 @@ source-list:
 
 output:
   ## 1:file ouput  2:fake output 3:eglsink output
-  type: 1
+  type: 2
   ## 0: H264 encoder  1:H265 encoder
   enc: 0
   bitrate: 2000000
@@ -16,12 +16,20 @@ streammux:
   batched-push-timeout: 40000
 
 primary-gie:
-  config-file-path: ../../../configs/facial_tao/config_infer_primary_facenet.yml
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 1
+  #config-file-path: ../../../configs/nvinfer/facial_tao/config_infer_primary_facenet.yml
+  config-file-path: ../../../configs/triton/facial_tao/config_infer_primary_facenet.yml
+  #config-file-path: ../../../configs/triton-grpc/facial_tao/config_infer_primary_facenet.yml
   unique-id: 1
 
 secondary-gie:
-  config-file-path: ../../../configs/facial_tao/faciallandmark_sgie_config.yml
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 1
+  #config-file-path: ../../../configs/nvinfer/facial_tao/faciallandmark_sgie_config.yml
+  config-file-path: ../../../configs/triton/facial_tao/faciallandmark_sgie_config.yml
+  #config-file-path: ../../../configs/triton-grpc/facial_tao/faciallandmark_sgie_config.yml
   unique-id: 2
 
 model-config:
-  config-file-path: ../../../configs/facial_tao/sample_faciallandmarks_config.yml
+  config-file-path: ../../../configs/nvinfer/facial_tao/sample_faciallandmarks_config.yml

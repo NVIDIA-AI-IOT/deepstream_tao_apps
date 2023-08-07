@@ -91,6 +91,27 @@ typedef struct _DsSourceBin
   gint index;
 }DsSourceBinStruct;
 
+GstElement *pipeline = NULL;
+
+static void
+signal_catch_callback(int signum)
+{
+  g_print("User Interrupted..\n");
+  if(pipeline != NULL) {
+    gst_element_send_event(pipeline, gst_event_new_eos());
+    g_print("Send EOS to pipline!\n");
+  }
+}
+
+static void
+signal_catch_setup()
+{
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_handler = signal_catch_callback;
+  sigaction(SIGINT, &action, NULL);
+}
+
 /* Calculate performance data */
 static GstPadProbeReturn
 osd_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
@@ -291,11 +312,6 @@ create_source_bin (DsSourceBinStruct *ds_source_struct, gchar * uri)
   gst_caps_set_features (caps, 0, feature);
   g_object_set (G_OBJECT (ds_source_struct->capsfilt), "caps", caps, NULL);
 
-#ifndef PLATFORM_TEGRA
-  g_object_set (G_OBJECT (ds_source_struct->nvvidconv), "nvbuf-memory-type", 3,
-      NULL);
-#endif
-
   gst_bin_add_many (GST_BIN (ds_source_struct->source_bin),
       ds_source_struct->uri_decode_bin, ds_source_struct->nvvidconv,
       ds_source_struct->capsfilt, NULL);
@@ -331,11 +347,11 @@ create_source_bin (DsSourceBinStruct *ds_source_struct, gchar * uri)
 int main (int argc, char *argv[])
 {
   GMainLoop *loop = NULL;
-  GstElement *pipeline = NULL,*streammux = NULL, *sink = NULL, 
+  GstElement *streammux = NULL, *sink = NULL, 
              *primary_detector = NULL,
              *nvvidconv = NULL, *nvosd = NULL, *nvvidconv1 = NULL,
              *outenc = NULL, *capfilt = NULL, *nvtile = NULL,
-             *hrinfer = NULL;
+             *hrinfer = NULL, *mux = NULL, *encparse = NULL;
   GstElement *queue1 = NULL, *queue2 = NULL, *queue4 = NULL,
              *queue5 = NULL, *queue6 = NULL, *queue7 = NULL, *queue8 = NULL;
   DsSourceBinStruct source_struct[128];
@@ -363,9 +379,13 @@ int main (int argc, char *argv[])
   gchar pad_name_src[16] = "src";
 
   /* Check input arguments */
+  NvDsGieType pgie_type = NVDS_GIE_PLUGIN_INFER;
   if (argc == 2 && (g_str_has_suffix(argv[1], ".yml")
         || (g_str_has_suffix(argv[1], ".yaml")))) {
     isYAML=TRUE;
+    if(nvds_parse_gie_type(&pgie_type, argv[1], "primary-gie") == NVDS_YAML_PARSER_SUCCESS) {
+      g_print("pgie_type %d\n", pgie_type);
+    }
   } else {
     if (argc < 4 || argc > 131 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
           atoi(argv[1]) != 3)) {
@@ -379,6 +399,8 @@ int main (int argc, char *argv[])
 
   /* Standard GStreamer initialization */
   gst_init (&argc, &argv);
+  /* setup singal handler */
+  signal_catch_setup();
   loop = g_main_loop_new (NULL, FALSE);
 
   perf_measure.pre_time = GST_CLOCK_TIME_NONE;
@@ -463,8 +485,13 @@ int main (int argc, char *argv[])
   }
 
   /* Create three nvinfer instances for two detectors and one classifier*/
-  primary_detector = gst_element_factory_make ("nvinfer",
+  if (pgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
+    primary_detector = gst_element_factory_make ("nvinferserver",
+      "primary-inferserver-engine1");
+  } else {
+    primary_detector = gst_element_factory_make ("nvinfer",
       "primary-infer-engine1");
+  }
 
   /* Use convertor to convert from NV12 to RGBA as required by nvosd */
   nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvid-converter");
@@ -515,16 +542,18 @@ int main (int argc, char *argv[])
       g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
       filepath = g_strconcat(filename->str, ".jpg", NULL);
     } else {
+      mux = gst_element_factory_make ("qtmux", "mp4-mux");
       if(isYAML)
         isH264 = !(ds_parse_enc_type(argv[1], "output"));
 
       if(!isH264) {
+        encparse = gst_element_factory_make ("h265parse", "h265-encparser");
         outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h265enc");
-        filepath = g_strconcat(filename->str,".265",NULL);
       } else {
+        encparse = gst_element_factory_make ("h264parse", "h264-encparser");
         outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
-        filepath = g_strconcat(filename->str,".264",NULL);
       }
+      filepath = g_strconcat(filename->str,".mp4",NULL);
       if (isYAML) {
         ds_parse_enc_config (outenc, argv[1], "output");
       } else {
@@ -566,7 +595,9 @@ int main (int argc, char *argv[])
   if (isStreaming)
     g_object_set (G_OBJECT (streammux), "live-source", true, NULL);
   g_object_set (G_OBJECT (streammux), "batch-size", src_cnt, NULL);
-
+#ifndef PLATFORM_TEGRA
+  g_object_set (G_OBJECT (streammux), "nvbuf-memory-type", 3, NULL);
+#endif
   tiler_rows = (guint) sqrt (src_cnt);
   tiler_columns = (guint) ceil (1.0 * src_cnt / tiler_rows);
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
@@ -580,11 +611,11 @@ int main (int argc, char *argv[])
     ds_parse_videotemplate_config(hrinfer, argv[1], "video-template");
   } else {
     g_object_set (G_OBJECT (primary_detector), "config-file-path",
-        "../../../configs/facial_tao/config_infer_primary_facenet.txt",
+        "../../../configs/nvinfer/facial_tao/config_infer_primary_facenet.txt",
         "unique-id", PRIMARY_DETECTOR_UID, NULL);
     g_object_set (G_OBJECT (hrinfer), "customlib-name",
         "./heartrateinfer_impl/libnvds_heartrateinfer.so", "customlib-props",
-        "config-file:../../../../configs/heartrate_tao/"
+        "config-file:../../../../configs/nvinfer/heartrate_tao/"
         "sample_heartrate_model_config.txt", NULL);
   }
 
@@ -611,13 +642,25 @@ int main (int argc, char *argv[])
   if (output_type == 1) {
     g_object_set (G_OBJECT (sink), "location", filepath, NULL);
     g_object_set (G_OBJECT (sink), "enable-last-sample", false,NULL);
-    gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt, 
+
+    if (!isImage) {
+      gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
+        queue7, queue8, encparse, mux, NULL);
+
+      if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
+        outenc, encparse, mux, sink, NULL)) {
+        g_printerr ("OSD and sink elements link failure.\n");
+        return -1;
+      }
+    } else {
+      gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
         queue7, queue8, NULL);
 
-    if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
-          outenc, sink, NULL)) {
-      g_printerr ("OSD and sink elements link failure.\n");
-      return -1;
+      if (!gst_element_link_many (nvosd, queue7, nvvidconv1, capfilt, queue8,
+        outenc, sink, NULL)) {
+        g_printerr ("OSD and sink elements link failure.\n");
+        return -1;
+      }
     }
     g_free(filepath);
   } else if (output_type == 2) {

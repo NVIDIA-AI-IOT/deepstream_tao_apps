@@ -2,10 +2,10 @@
 These deepstream sample graphs are based on Graph Composer tools and the DeepStream set of extensions.
  
 ## Prerequisition
-* The DeepStream SDK 6.1.1 or above
-* Graph Composer 2.0.1 or above
+* The DeepStream SDK 6.3 or above
+* Graph Composer 3.0 or above
 
-Please refer to DeepStream SDK 6.1.1 document for details
+Please refer to DeepStream SDK 6.3 document for details
 
 ## Model List
 The samples use the following TAO models:

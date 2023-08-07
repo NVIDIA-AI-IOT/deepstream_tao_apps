@@ -403,11 +403,6 @@ create_source_bin (DsSourceBinStruct *ds_source_struct, gchar * uri)
   gst_caps_set_features (caps, 0, feature);
   g_object_set (G_OBJECT (ds_source_struct->capsfilt), "caps", caps, NULL);
 
-#ifndef PLATFORM_TEGRA
-  g_object_set (G_OBJECT (ds_source_struct->nvvidconv),
-      "nvbuf-memory-type", 3, NULL);
-#endif
-
   gst_bin_add_many (GST_BIN (ds_source_struct->source_bin),
       ds_source_struct->uri_decode_bin, ds_source_struct->nvvidconv,
       ds_source_struct->capsfilt, NULL);
@@ -467,6 +462,13 @@ det_bus_call (GstBus * bus, GstMessage * msg, gpointer data) {
     return TRUE;
 }
 
+/* Check for parsing error. */
+#define RETURN_ON_PARSER_ERROR(parse_expr) \
+  if (NVDS_YAML_PARSER_SUCCESS != parse_expr) { \
+    g_printerr("Error in parsing configuration file.\n"); \
+    return -1; \
+  }
+
 static void printUsage(const char* cmd) {
     g_printerr ("\tUsage: %s -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH] [-d]\n", cmd);
     g_printerr ("\tOR\n\t %s yaml_config_file\n", cmd);
@@ -514,7 +516,7 @@ main (int argc, char *argv[]) {
     static guint src_cnt = 0;
     PerfStructInt str;
     fileLoop = FALSE;
-
+    NvDsGieType pgie_type = NVDS_GIE_PLUGIN_INFER;
 
     if (argc==2 && (g_str_has_suffix(argv[1], ".yml") ||
         g_str_has_suffix(argv[1], ".yaml"))) {
@@ -523,7 +525,9 @@ main (int argc, char *argv[]) {
           g_printerr ("No source is found. Exiting.\n");
           return -1;
         }
-
+        RETURN_ON_PARSER_ERROR(nvds_parse_gie_type(&pgie_type, argv[1],
+                "primary-gie"));
+        printf("pgie_type:%d\n", pgie_type);
         parse_tests_yaml(&fileLoop, argv[1]);
     } else {
         while ((c = getopt(argc, argv, optStr)) != -1) {
@@ -644,8 +648,12 @@ main (int argc, char *argv[]) {
 
     /* Use nvinfer to run inferencing on decoder's output,
      * behaviour of inferencing is set through config file */
-    pgie = gst_element_factory_make ("nvinfer", "primary-nvinference-engine");
-
+    if (pgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
+      pgie = gst_element_factory_make ("nvinferserver", "primary-nvinference-engine");
+    } else {
+      pgie = gst_element_factory_make ("nvinfer", "primary-nvinference-engine");
+    }
+  
     /* Use convertor to convert from NV12 to RGBA as required by nvdsosd */
     nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvideo-converter");
 

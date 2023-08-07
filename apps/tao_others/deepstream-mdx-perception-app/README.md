@@ -49,3 +49,5 @@ make
 ./deepstream-mdx-perception-app  -c ../../../configs/app/peoplenet_reidentification.yml
 ./deepstream-mdx-perception-app  -c ../../../configs/app/retail_object_detection_recognition.yml
 ```
+
+NOTE: we removed int8 support for Retail Object Detection v1.0 models (int8 has too much accuracy drop).

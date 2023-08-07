@@ -1,0 +1,38 @@
+source-list:
+   list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4;file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4
+
+output:
+  ## 1:file ouput  2:fake output 3:eglsink output 4:RTSP output
+  type: 1
+  ## 0: H264 encoder  1:H265 encoder
+  enc: 0
+  bitrate: 2000000
+  udpport: 2345
+  rtspport: 8554
+  ##The file name without suffix
+  filename: test
+
+streammux:
+  width: 640
+  height: 480
+  batched-push-timeout: 40000
+
+primary-gie:
+  ## 0:nvinfer  1:nvinferserver
+  type: 1
+  config-file-path: ../../../configs/triton/facial_tao/config_infer_primary_facenet.yml
+  #config-file-path: ../../../configs/triton-grpc/facial_tao/config_infer_primary_facenet.yml
+  unique-id: 1
+
+secondary-gie:
+  type: 1
+  config-file-path: ../../../configs/triton/facial_tao/faciallandmark_sgie_config.yml
+  #config-file-path: ../../../configs/triton-grpc/facial_tao/faciallandmark_sgie_config.yml
+  unique-id: 2
+
+video-template:
+  customlib-name: ./gazeinfer_impl/libnvds_gazeinfer.so
+  customlib-props: config-file:../../../configs/nvinfer/gaze_tao/sample_gazenet_model_config.yml
+
+model-config:
+  config-file-path: ../../../configs/nvinfer/facial_tao/sample_faciallandmarks_config.yml

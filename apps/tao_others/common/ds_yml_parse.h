@@ -57,7 +57,6 @@ NvDsYamlParserStatus
 ds_parse_videotemplate_config(GstElement *vtemplate, 
   gchar *cfg_file_path, const char* group);
 
-
 #ifdef __cplusplus
 }
 #endif

@@ -169,9 +169,6 @@ public:
   guint m_frameNum = 0;
   bool outputthread_stopped = false;
 
-  /* Custom Library Bufferpool */
-  GstBufferPool *m_dsBufferPool = NULL;
-
   /* Output Thread Pointer */
   std::thread *m_outputThread = NULL;
 
@@ -366,29 +363,10 @@ bool EmotionAlgorithm::SetInitParams(DSCustom_CreateParams *params)
 {
   DSCustomLibraryBase::SetInitParams(params);
 
-  BufferPoolConfig pool_config = {0};
   GstStructure *s1 = NULL;
 
   s1 = gst_caps_get_structure(m_inCaps, 0);
 
-  // Create buffer pool
-  // Set the params properly based on this custom library requirement
-  //NVBUF_MEM_SURFACE_ARRAY=4 for Jetson; NVBUF_MEM_CUDA_UNIFIED=3 for dGPU
-  pool_config.cuda_mem_type = NVBUF_MEM_DEFAULT;
-  pool_config.gpu_id = 0;
-  pool_config.max_buffers = 4;
-  gst_structure_get_int (s1, "batch-size", &pool_config.batch_size);
-
-  if (pool_config.batch_size == 0) {
-    // If this component is placed before mux, batch-size value is not set
-    // In this case make batch_size = 1
-    pool_config.batch_size = 1;
-  }
-
-  m_dsBufferPool = CreateBufferPool (&pool_config, m_outCaps);
-  if (!m_dsBufferPool) {
-    throw std::runtime_error("Custom Buffer Pool Creation failed");
-  }
 
   cvcore::ModelInferenceParams eMotionInferenceParams =
   {
@@ -412,6 +390,8 @@ bool EmotionAlgorithm::SetInitParams(DSCustom_CreateParams *params)
 
   NvDsInferContextInitParams *InferCtxParams = new NvDsInferContextInitParams();
   memset(InferCtxParams, 0, sizeof (*InferCtxParams));
+  InferCtxParams->autoIncMem = 1;
+  InferCtxParams->maxGPUMemPer = 90;
 
   ifstream fconfig;
   std::map<string, float> model_params_list;
@@ -422,7 +402,7 @@ bool EmotionAlgorithm::SetInitParams(DSCustom_CreateParams *params)
       if ( g_str_has_suffix(m_config_file_path.c_str(), ".yml")
         || (g_str_has_suffix(m_config_file_path.c_str(), ".yaml"))) {
 
-        YAML::Node config = YAML::LoadFile(m_config_file_path.c_str());
+	YAML::Node config = YAML::LoadFile(m_config_file_path.c_str());
 
         if (config.IsNull()) {
             g_printerr ("config file is NULL.\n");
@@ -725,12 +705,6 @@ EmotionAlgorithm::~EmotionAlgorithm()
   /* Wait for OutputThread to complete */
   if (m_outputThread) {
     m_outputThread->join();
-  }
-
-  if (m_dsBufferPool) {
-      gst_buffer_pool_set_active (m_dsBufferPool, FALSE);
-      gst_object_unref(m_dsBufferPool);
-      m_dsBufferPool = NULL;
   }
 
   if (m_scratchNvBufSurface)

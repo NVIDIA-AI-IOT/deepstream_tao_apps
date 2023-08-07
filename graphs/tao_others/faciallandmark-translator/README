@@ -1,7 +1,7 @@
 ##############################################################################
 # The MIT License (MIT)
 #
-# Copyright (c) 2021-2022 NVIDIA CORPORATION
+# Copyright (c) 2021-2023 NVIDIA CORPORATION
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
 #this software and associated documentation files (the "Software"), to deal in
@@ -33,22 +33,22 @@ to the GXF message and then translator the GXF messages back to face object meta
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.1.1
-- Graph-Composer 2.0.1
+- DeepStreamSDK 6.3
+- Graph-Composer 3.0.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
 
 ================================================================================
 Download models for faciallandmarks
 ================================================================================
-1. sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/faciallandmarks/ \
-    && sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/facenet/
+1. sudo mkdir -p /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/faciallandmarks/ \
+    && sudo mkdir -p /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/facenet/
 2. sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v2.0/files/model.etlt \
-    -O /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/faciallandmarks/faciallandmarks.etlt \
+    -O /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/faciallandmarks/faciallandmarks.etlt \
     && sudo wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0.1/files/model.etlt \
-    -O /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/facenet/facenet.etlt \
+    -O /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/facenet/facenet.etlt \
     && sudo wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/facenet/versions/pruned_quantized_v2.0.1/files/int8_calibration.txt \
-    -O /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/facenet/int8_calibration.txt
+    -O /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/facenet/int8_calibration.txt
 
 Refer https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao3.0/apps/tao_others#readme
 for more info.
@@ -56,13 +56,13 @@ for more info.
 ================================================================================
 Running the graph
 ================================================================================
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream-6.1/lib/cvcore_libs/
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/faciallandmarks
-$ chmod 775 /opt/nvidia/deepstream/deepstream-6.1/samples/models/tao_pretrained_models/facenet
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cvcore_libs/
+$ chmod 775 /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/faciallandmarks
+$ chmod 775 /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/facenet
 For x86_64 platform
-$ /opt/nvidia/graph-composer/execute_graph.sh App-FacialLandmark.yaml App-FacialLandmark.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.1/reference_graphs/common/target_x86_64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-FacialLandmark.yaml App-FacialLandmark.parameters.yaml -d /opt/nvidia/deepstream/deepstream/reference_graphs/common/target_x86_64.yaml
 For Jetson
-$ /opt/nvidia/graph-composer/execute_graph.sh App-FacialLandmark.yaml App-FacialLandmark.parameters.yaml -d /opt/nvidia/deepstream/deepstream-6.1/reference_graphs/common/target_aarch64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-FacialLandmark.yaml App-FacialLandmark.parameters.yaml -d /opt/nvidia/deepstream/deepstream/reference_graphs/common/target_aarch64.yaml
 
 NOTE: App-FacialLandmarks.yaml is the main graph file describing the DeepStream
 graph(pipeline) along with the configuration parameters for the components in the
