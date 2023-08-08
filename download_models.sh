@@ -154,7 +154,7 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/reidentificationnet
 cd ./models/reidentificationnet
-wget 'https://api.ngc.nvidia.com/v2/models/nvidia/tao/reidentificationnet/versions/deployable_v1.0/files/resnet50_market1501.etlt' -O resnet50_market1501.etlt
+wget 'https://api.ngc.nvidia.com/v2/models/nvidia/tao/reidentificationnet/versions/deployable_v1.1/files/resnet50_market1501_aicity156.onnx' -O resnet50_market1501_aicity156.etlt
 
 echo "==================================================================="
 echo "begin downloading Retail Object Detection vdeployable_100 model "

@@ -23,7 +23,7 @@
 name: "reidentificationnet"
 platform: "tensorrt_plan"
 max_batch_size: 16
-default_model_filename: "resnet50_market1501.etlt_b16_gpu0_fp16.engine"
+default_model_filename: "resnet50_market1501_aicity156.etlt_b16_gpu0_fp16.engine"
 input [
   {
     name: "input"

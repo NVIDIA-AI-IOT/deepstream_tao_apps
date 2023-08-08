@@ -153,7 +153,7 @@ mkdir -p models/retail_object_detection_100/1
 #reidentificationnet
 echo "Building Model reidentificationnet"
 mkdir -p models/reidentificationnet/1
-./tao-converter -k nvidia_tao -t fp16 -p input,1x3x256x128,8x3x256x128,16x3x256x128 -e models/reidentificationnet/1/resnet50_market1501.etlt_b16_gpu0_fp16.engine models/reidentificationnet/resnet50_market1501.etlt
+./tao-converter -k nvidia_tao -t fp16 -p input,1x3x256x128,8x3x256x128,16x3x256x128 -e models/reidentificationnet/1/resnet50_market1501_aicity156.etlt_b16_gpu0_fp16.engine models/reidentificationnet/resnet50_market1501_aicity156.etlt
 
 #retail_object_detection_binary
 echo "Building Model retail_object_detection_binary"
