@@ -20,7 +20,7 @@
       - [8. PeopleSegNet](#8-peoplesegnet)
       - [9~11. UNET/PeopleSemSegNet/CitySemSegFormer](#911-unetpeoplesemsegnetcitysemsegformer)
       - [12. multi_task](#12-multi_task)
-      - [13~14. EfficientDet / Retail Object Detection](#1314-efficientdet-retail-object-detection)
+      - [13~14. EfficientDet / Retail Object Detection](#1314-efficientdet--retail-object-detection)
       - [15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet](#1521-facedetect-facial-landmarks-estimation-emotionnet-gaze-estimation-gesturenet-heartratenet-bodyposenet)
       - [22. PeopleNet Transformer](#22-peoplenet-transformer)
       - [23~24. Re-Identification / Retail Item Recognition](#2324-re-identification-retail-item-recognition)
@@ -80,9 +80,9 @@ sudo apt update
 sudo apt install git-lfs
 git lfs install --skip-repo
 // SSH
-git clone -b tao4.0_ds6.3ga git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao4.0_ds6.3ga git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone -b tao4.0_ds6.3ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao4.0_ds6.3ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 ### 2. Download Models
 Run below script to download models except multi_task and YoloV5 models.
