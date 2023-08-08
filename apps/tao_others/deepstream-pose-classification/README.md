@@ -4,7 +4,7 @@
 The project contains pose classification application built using  Deepstream SDK.
 
 ## Prerequisites:
-DeepStream SDK 6.2 installed which is available at  http://developer.nvidia.com/deepstream-sdk
+DeepStream SDK installed which is available at  http://developer.nvidia.com/deepstream-sdk
 Please follow instructions in the `/opt/nvidia/deepstream/deepstream/sources/apps/sample_apps/deepstream-app/README` on how to install the prequisites for building Deepstream SDK apps.
 
 ## Installation
