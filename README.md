@@ -21,7 +21,7 @@
       - [9~11. UNET/PeopleSemSegNet/CitySemSegFormer](#911-unetpeoplesemsegnetcitysemsegformer)
       - [12. multi_task](#12-multi_task)
       - [13~14. EfficientDet / Retail Object Detection](#1314-efficientdet--retail-object-detection)
-      - [15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet](#1521-facedetect--facial-landmarks-estimation--emotionnet--gaze-estimation--gesturenet--heartratenet--bodyposenet)
+      - [15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet / PoseClassification](#1521-facedetect--facial-landmarks-estimation--emotionnet--gaze-estimation--gesturenet--heartratenet--bodyposenet--poseclassification)
       - [22. PeopleNet Transformer](#22-peoplenet-transformer)
       - [23~24. Re-Identification / Retail Item Recognition](#2324-re-identification--retail-item-recognition)
     - [Calibration file with TensorRT version](#calibration-file-with-tensorrt-version)
@@ -239,7 +239,7 @@ Please note there are two `Retail Object Detection` models. These models have th
 - **detection_scores**: This is a [batch_size, max_output_boxes] tensor of data type float32 or float16, containing the scores for the boxes.
 - **detection_classes**: This is a [batch_size, max_output_boxes] tensor of data type int32, containing the classes for the boxes.
 
-#### 15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet
+#### 15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet / PoseClassification
 - refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model
 
 #### 22. PeopleNet Transformer
