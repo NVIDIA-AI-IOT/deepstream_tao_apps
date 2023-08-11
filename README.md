@@ -80,9 +80,9 @@ sudo apt update
 sudo apt install git-lfs
 git lfs install --skip-repo
 // SSH
-git clone -b release/tao4.0_ds6.3ga git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone -b release/tao4.0_ds6.3ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 ### 2. Download Models
 Run below script to download models except multi_task and YoloV5 models.
@@ -101,8 +101,8 @@ The sample provides three inferencing methods. For the TensorRT based gst-nvinfe
 
 The DeepStream sample application can work as Triton client with the [Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server), one of the following two methods can be used to set up the Triton Inference Server before starting a gst-nvinferserver inferncing DeepStream application.
 
- - Native Triton Inference Server, please refer to [Triton Server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao4.0_ds6.3ga/triton_server.md)
- - Stand-alone Triton Inference server, please refer to [Triton grpc server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao4.0_ds6.3ga/triton_server_grpc.md)
+ - Native Triton Inference Server, please refer to [Triton Server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/triton_server.md)
+ - Stand-alone Triton Inference server, please refer to [Triton grpc server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/triton_server_grpc.md)
 
 For the TAO sample applications, please enable Triton or Triton gRPC inferencing with the app YAML configurations.
 
