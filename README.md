@@ -24,7 +24,6 @@
       - [15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet / PoseClassification](#1521-facedetect--facial-landmarks-estimation--emotionnet--gaze-estimation--gesturenet--heartratenet--bodyposenet--poseclassification)
       - [22. PeopleNet Transformer](#22-peoplenet-transformer)
       - [23~24. Re-Identification / Retail Item Recognition](#2324-re-identification--retail-item-recognition)
-    - [Calibration file with TensorRT version](#calibration-file-with-tensorrt-version)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
     - [About misc folder](#about-misc-folder)
