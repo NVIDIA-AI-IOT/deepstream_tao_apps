@@ -6,6 +6,7 @@
   - [Download](#download)
     - [1. Download Source Code with SSH or HTTPS](#1-download-source-code-with-ssh-or-https)
     - [2. Download Models](#2-download-models)
+  - [Triton Inference Server](#triton-inference-server)
   - [Build](#build)
     - [Build Sample Application](#build-sample-application)
   - [Run](#run)
@@ -14,15 +15,15 @@
     - [Label Files](#label-files)
     - [DeepStream configuration file](#deepstream-configuration-file)
     - [Model Outputs](#model-outputs)
-      - [1~3. Yolov3 / YoloV4 / Yolov4-tiny / Yolov5](#13-yolov3-yolov4-yolov4-tiny-yolov5)
-      - [4~7. RetinaNet / DSSD / SSD/ FasterRCNN](#47-retinanet-dssd-ssd-fasterrcnn)
+      - [1~3. Yolov3 / YoloV4 / Yolov4-tiny / Yolov5](#13-yolov3--yolov4--yolov4-tiny--yolov5)
+      - [4~7. RetinaNet / DSSD / SSD/ FasterRCNN](#47-retinanet--dssd--ssd-fasterrcnn)
       - [8. PeopleSegNet](#8-peoplesegnet)
-      - [9~10. UNET/PeopleSemSegNet](#910-unetpeoplesemsegnet)
-      - [11. multi_task](#11-multitask)
-      - [12. EfficientDet](#12-efficientdet)
-      - [13. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet](#13-facedetect-facial-landmarks-estimation-emotionnet-gaze-estimation-gesturenet-heartratenet-bodyposenet)
+      - [9~11. UNET/PeopleSemSegNet/CitySemSegFormer](#911-unetpeoplesemsegnetcitysemsegformer)
+      - [12. multi_task](#12-multi_task)
+      - [13~14. EfficientDet / Retail Object Detection](#1314-efficientdet--retail-object-detection)
+      - [15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet / PoseClassification](#1521-facedetect--facial-landmarks-estimation--emotionnet--gaze-estimation--gesturenet--heartratenet--bodyposenet--poseclassification)
       - [22. PeopleNet Transformer](#22-peoplenet-transformer)
-      - [23~24. Re-Identification / Retail Item Recognition](#2324-re-identification-retail-item-recognition)
+      - [23~24. Re-Identification / Retail Item Recognition](#2324-re-identification--retail-item-recognition)
     - [Calibration file with TensorRT version](#calibration-file-with-tensorrt-version)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
@@ -54,16 +55,20 @@ uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
 
 ## Prerequisites
 
-* [DeepStream SDK 6.2 GA](https://developer.nvidia.com/deepstream-sdk)
+* [DeepStream SDK 6.3 GA](https://developer.nvidia.com/deepstream-sdk)
 
-   Make sure deepstream-test1 sample can run successfully to verify your installation. 
-
-   According to the
+   Make sure deepstream-test1 sample can run successful to verify your installation. According to the
    [document](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_docker_containers.html),
    please run below command to install additional audio video packages.
 
   ```
   /opt/nvidia/deepstream/deepstream/user_additional_install.sh
+  ```
+* Eigen development packages
+  ```
+    sudo apt install libeigen3-dev
+    cd /usr/include
+    sudo ln -sf eigen3/Eigen Eigen
   ```
 
 ## Download
@@ -71,21 +76,53 @@ uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
 ### 1. Download Source Code with SSH or HTTPS
 
 ```
+sudo apt update
+sudo apt install git-lfs
+git lfs install --skip-repo
 // SSH
-git clone git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao4.0_ds6.3ga git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao4.0_ds6.3ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 ### 2. Download Models
 Run below script to download models except multi_task and YoloV5 models.
 
 ```
-./download_models.sh
+sudo ./download_models.sh  # (sudo not required in case of docker containers)
 ```
 
 For multi_task, refer to https://docs.nvidia.com/tao/tao-toolkit/text/multitask_image_classification.html to train and generate the model.
 
 For yolov5, refer to [yolov5_gpu_optimization](https://github.com/NVIDIA-AI-IOT/yolov5_gpu_optimization) to generate the onnx model
+
+## Triton Inference Server
+
+The sample provides three inferencing methods. For the TensorRT based gst-nvinfer inferencing, please skip this part.
+
+The DeepStream sample application can work as Triton client with the [Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server), one of the following two methods can be used to set up the Triton Inference Server before starting a gst-nvinferserver inferncing DeepStream application.
+
+ - Native Triton Inference Server, please refer to [Triton Server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao4.0_ds6.3ga/triton_server.md)
+ - Stand-alone Triton Inference server, please refer to [Triton grpc server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/tree/release/tao4.0_ds6.3ga/triton_server_grpc.md)
+
+For the TAO sample applications, please enable Triton or Triton gRPC inferencing with the app YAML configurations.
+
+E.G. With apps/tao_detection/ds-tao-detection, the "primary-gie" part in configs/app/det_app_frcnn.yml can be modified as following:
+
+```
+primary-gie:
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 1
+  #dssd
+  #config-file-path: ../nvinfer/dssd_tao/pgie_dssd_tao_config.yml
+  config-file-path: ../triton/dssd_tao/pgie_dssd_tao_config.yml
+  #config-file-path: ../triton-grpc/dssd_tao/pgie_dssd_tao_config.yml
+
+```
+And then run the app with the command:
+
+```
+./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml
+```
 
 ## Build
 
@@ -115,6 +152,7 @@ make
 
 
 note: If you want use multi-source, you can input multi -i input(e.g., -i uri -i uri...) 
+      Only YAML configurations support Triton and Triton gRPC inferencing.
 ```
 For detailed model information, pleasing refer to the following table:
 
@@ -156,7 +194,7 @@ Note, for some models like FasterRCNN, DON'T forget to include "background" labl
 
 ### DeepStream configuration file
 
-The DeepStream configuration file includes some runtime parameters for DeepStream **nvinfer** plugin, such as model path, label file path, TensorRT inference precision, input and output node names, input dimensions and so on.  
+The DeepStream configuration file includes some runtime parameters for DeepStream **nvinfer** plugin or **nvinferserver** plugin, such as model path, label file path, TensorRT inference precision, input and output node names, input dimensions and so on.  
 In this sample, each model has its own DeepStream configuration file, e.g. pgie_dssd_tao_config.txt for DSSD model.
 Please refer to [DeepStream Development Guide](https://docs.nvidia.com/metropolis/deepstream/dev-guide/index.html#page/DeepStream_Development_Guide%2Fdeepstream_app_config.3.2.html) for detailed explanations of those parameters.
 
@@ -201,7 +239,7 @@ Please note there are two `Retail Object Detection` models. These models have th
 - **detection_scores**: This is a [batch_size, max_output_boxes] tensor of data type float32 or float16, containing the scores for the boxes.
 - **detection_classes**: This is a [batch_size, max_output_boxes] tensor of data type int32, containing the classes for the boxes.
 
-#### 15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet
+#### 15~21. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet / PoseClassification
 - refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model
 
 #### 22. PeopleNet Transformer

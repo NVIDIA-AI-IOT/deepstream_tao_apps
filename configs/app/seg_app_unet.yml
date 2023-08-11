@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,28 @@ streammux:
   batched-push-timeout: 40000
 
 primary-gie:
-  config-file-path: ../unet_tao/pgie_unet_tao_config.yml
+  plugin-type: 0
+  #0:nvinfer, 1:nvinfeserver
+
+  #peopleSemSegNet-vanilla
+  #config-file-path: ../nvinfer/peopleSemSegNet_tao/vanilla/pgie_peopleSemSegVanillaUnet_tao_config.yml
+  #config-file-path: ../triton/peopleSemSegNet_tao/vanilla/pgie_peopleSemSegVanillaUnet_tao_config.yml
+  #config-file-path: ../triton-grpc/peopleSemSegNet_tao/vanilla/pgie_peopleSemSegVanillaUnet_tao_config.yml
+
+  #peopleSemSegNet-shuffle
+  #config-file-path: ../triton-grpc/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
+  #config-file-path: ../triton/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
+  #config-file-path: ../nvinfer/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
+
+  #unet
+  config-file-path: ../nvinfer/unet_tao/pgie_unet_tao_config.yml
+  #config-file-path: ../triton/unet_tao/pgie_unet_tao_config.yml
+  #config-file-path: ../triton-grpc/unet_tao/pgie_unet_tao_config.yml
+
+  #citysemsegformer
+  #config-file-path: ../nvinfer/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
+  #config-file-path: ../triton/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
+  #config-file-path: ../triton-grpc/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
 
 eglsink:
   enable: 0

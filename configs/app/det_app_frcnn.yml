@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,58 @@ streammux:
   batched-push-timeout: 4000000
 
 primary-gie:
-  config-file-path: ../frcnn_tao/pgie_frcnn_tao_config.yml
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 0
+
+  #dssd
+  #config-file-path: ../nvinfer/dssd_tao/pgie_dssd_tao_config.yml
+  #config-file-path: ../triton/dssd_tao/pgie_dssd_tao_config.yml
+  #config-file-path: ../triton-grpc/dssd_tao/pgie_dssd_tao_config.yml
+
+  #efficientdet
+  #config-file-path: ../nvinfer/efficientdet_tao/pgie_d0_tao_config.yml
+  #config-file-path: ../triton/efficientdet_tao/pgie_d0_tao_config.yml
+  #config-file-path: ../triton-grpc/efficientdet_tao/pgie_d0_tao_config.yml
+
+  #frcnn
+  #config-file-path: ../nvinfer/frcnn_tao/pgie_frcnn_tao_config.yml
+  #config-file-path: ../triton/frcnn_tao/pgie_frcnn_tao_config.yml
+  #config-file-path: ../triton-grpc/frcnn_tao/pgie_frcnn_tao_config.yml
+
+  #retinanet
+  #config-file-path: ../nvinfer/retinanet_tao/pgie_retina_tao_config.yml
+  #config-file-path: ../triton/retinanet_tao/pgie_retina_tao_config.yml
+  #config-file-path: ../triton-grpc/retinanet_tao/pgie_retina_tao_config.yml
+
+  #ssd
+  #config-file-path: ../nvinfer/ssd_tao/pgie_ssd_tao_config.yml
+  #config-file-path: ../triton/ssd_tao/pgie_ssd_tao_config.yml
+  #config-file-path: ../triton-grpc/ssd_tao/pgie_ssd_tao_config.yml
+
+  #yolov3
+  #config-file-path: ../nvinfer/yolov3_tao/pgie_yolov3_tao_config.yml
+  #config-file-path: ../triton/yolov3_tao/pgie_yolov3_tao_config.yml
+  #config-file-path: ../triton-grpc/yolov3_tao/pgie_yolov3_tao_config.yml
+
+  #yolov4
+  #config-file-path: ../nvinfer/yolov4_tao/pgie_yolov4_tao_config.yml
+  #config-file-path: ../triton/yolov4_tao/pgie_yolov4_tao_config.yml
+  #config-file-path: ../triton-grpc/yolov4_tao/pgie_yolov4_tao_config.yml
+
+  #yolov4-tiny
+  #config-file-path: ../nvinfer/yolov4-tiny_tao/pgie_yolov4_tiny_tao_config.yml
+  #config-file-path: ../triton/yolov4-tiny_tao/pgie_yolov4_tiny_tao_config.yml
+  #config-file-path: ../triton-grpc/yolov4-tiny_tao/pgie_yolov4_tiny_tao_config.yml
+
+  #yolov5
+  #config-file-path: ../nvinfer/yolov5_tao/pgie_yolov5_config.yml
+  #config-file-path: ../triton/yolov5_tao/pgie_yolov5_config.yml
+  #config-file-path: ../triton-grpc/yolov5_tao/pgie_yolov5_config.yml
+
+  #peoplenet-transformer
+  config-file-path: ../nvinfer/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
+  #config-file-path: ../triton/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
+  #config-file-path: ../triton-grpc/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
 
 eglsink:
   enable: 0

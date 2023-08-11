@@ -242,7 +242,6 @@ ds_parse_videotemplate_config(GstElement *vtemplate,
   return NVDS_YAML_PARSER_SUCCESS;
 }
 
-
 guint
 ds_parse_group_type(gchar *cfg_file_path, const char* group)
 {

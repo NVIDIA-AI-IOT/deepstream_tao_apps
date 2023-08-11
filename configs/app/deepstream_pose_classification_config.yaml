@@ -1,0 +1,55 @@
+################################################################################
+# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+################################################################################
+
+source-list:
+   list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_walk.mov
+
+streammux:
+  width: 1280
+  height: 720
+  batched-push-timeout: 40000
+
+tracker:
+  enable: 1
+  ll-lib-file: /opt/nvidia/deepstream/deepstream/lib/libnvds_nvmultiobjecttracker.so
+  ll-config-file: /opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app/config_tracker_NvDCF_accuracy.yml
+
+primary-gie:
+  plugin-type: 1
+  #config-file-path: ../nvinfer/peoplenet_tao/config_infer_primary_peoplenet.txt
+  config-file-path: ../triton/peoplenet_tao/config_infer_primary_peoplenet.yml
+  #config-file-path: ../triton-grpc/peoplenet_tao/config_infer_primary_peoplenet.yml
+
+secondary-gie0:
+  plugin-type: 1
+  #config-file-path: ../nvinfer/bodypose3d_tao/config_infer_secondary_bodypose3dnet.txt
+  config-file-path: ../triton/bodypose3d_tao/config_infer_secondary_bodypose3dnet.yml
+  #config-file-path: ../triton-grpc/bodypose3d_tao/config_infer_secondary_bodypose3dnet.yml
+
+secondary-preprocess1:
+  config-file-path: ../nvinfer/bodypose_classification_tao/config_preprocess_bodypose_classification.txt
+
+secondary-gie1:
+  plugin-type: 1
+  #config-file-path: ../nvinfer/bodypose_classification_tao/config_infer_third_bodypose_classification.txt
+  config-file-path: ../triton/bodypose_classification_tao/config_infer_third_bodypose_classification.yml
+  #config-file-path: ../triton-grpc/bodypose_classification_tao/config_infer_third_bodypose_classification.yml
+
+sink:
+  #0 fakesink 
+  #1 filesinke generate the out.mp4 file in the current directory
+  #2 rtspsink publish at rtsp://localhost:8554/ds-test
+  #3 displaysink
+  sink-type: 1
+
+
+

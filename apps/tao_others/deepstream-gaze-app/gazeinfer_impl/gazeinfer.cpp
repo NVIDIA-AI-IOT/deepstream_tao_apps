@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -469,6 +469,8 @@ bool GazeAlgorithm::SetInitParams(DSCustom_CreateParams *params)
   std::string etlt_path;
   NvDsInferContextInitParams *InferCtxParams = new NvDsInferContextInitParams();
   memset(InferCtxParams, 0, sizeof (*InferCtxParams));
+  InferCtxParams->autoIncMem = 1;
+  InferCtxParams->maxGPUMemPer = 90;
 
   if (!m_config_file_path.empty()) {
       /* Parse model config file*/
@@ -766,6 +768,8 @@ BufferResult GazeAlgorithm::ProcessBuffer (GstBuffer *inbuf)
 {
   GST_DEBUG("GazeInfer: ---> Inside %s frame_num = %d\n", __func__,
       m_frameNum++);
+  g_print("GazeInfer: ---> Inside %s frame_num = %d\n", __func__,
+      m_frameNum++);
 
   // Push buffer to process thread for further processing
   PacketInfo packetInfo;
@@ -833,6 +837,7 @@ void GazeAlgorithm::OutputThread(void)
     for (l_frame = batch_meta->frame_meta_list; l_frame != NULL;
        l_frame = l_frame->next) {
       NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) (l_frame->data);
+      g_print("Outp thread %d frame %d source\n", frame_meta->frame_num, frame_meta->source_id);
       
       m_transform_params.src_rect[0] =
           {0, 0, in_surf->surfaceList[frame_meta->batch_id].width,
@@ -847,7 +852,7 @@ void GazeAlgorithm::OutputThread(void)
               (NULL));
           return;
       }
-
+      g_print("Outp thread %d frame %d source 1\n", frame_meta->frame_num, frame_meta->source_id);
       m_temp_surf.surfaceList[0] = in_surf->surfaceList[frame_meta->batch_id];
       m_temp_surf.numFilled=1;
       m_temp_surf.memType=in_surf->memType;
@@ -860,7 +865,7 @@ void GazeAlgorithm::OutputThread(void)
       } else {
           imagedataPtr = (uint8_t *)m_process_surf->surfaceList[0].dataPtr;
       }
-      
+      usleep(100000);
       err = NvBufSurfTransform (&m_temp_surf, m_process_surf,
           &m_transform_params);
       if (err != NvBufSurfTransformError_Success) {
@@ -871,6 +876,8 @@ void GazeAlgorithm::OutputThread(void)
       }
 
       m_temp_surf.numFilled = 0;
+
+      g_print("Outp thread %d frame %d source 2\n", frame_meta->frame_num, frame_meta->source_id);
 
       for (l_obj = frame_meta->obj_meta_list; l_obj != NULL;
          l_obj = l_obj->next) {
@@ -935,15 +942,18 @@ void GazeAlgorithm::OutputThread(void)
               gazeFaceBBoxes[0].ymin = obj_meta->rect_params.top;
               gazeFaceBBoxes[0].ymax = obj_meta->rect_params.top +
                   obj_meta->rect_params.height -1;
-
+              g_print("Gaze execute\n");
               m_objGaze->execute(gazeOutput, inputImageDevice, gazeFaceBBoxes,
                   gazeInputLandmarks);
+	      g_print("Gaze execute end\n");
               m_objGazeVisualizer->execute(leftEndPt, leftStartPt, rightEndPt, rightStartPt, gazeInputLandmarks,
                                        gazeOutput);
+	      g_print("Gaze start meta add\n");
               nvds_add_gaze_meta (batch_meta, obj_meta, gazeOutput[0], leftStartPt, leftEndPt,
                   rightStartPt, rightEndPt);
           }
       }
+      g_print("Outp thread %d frame %d source 3\n", frame_meta->frame_num, frame_meta->source_id);
     }
 
     // Transform IP case
@@ -956,9 +966,12 @@ void GazeAlgorithm::OutputThread(void)
         g_assert ((guint)m_outVideoInfo.width == outSurf->surfaceList->width);
         g_assert ((guint)m_outVideoInfo.height == outSurf->surfaceList->height);
     }
-
+    g_print("output push to downstream\n");
     flow_ret = gst_pad_push (GST_BASE_TRANSFORM_SRC_PAD (m_element), outBuffer);
     GST_DEBUG ("CustomLib: %s in_surf=%p, Pushing Frame %d to downstream..."
+        " flow_ret = %d TS=%" GST_TIME_FORMAT " \n",  __func__, in_surf,
+        packetInfo.frame_num, flow_ret, GST_TIME_ARGS(GST_BUFFER_PTS(outBuffer)));
+    g_print("CustomLib: %s in_surf=%p, Pushing Frame %d to downstream..."
         " flow_ret = %d TS=%" GST_TIME_FORMAT " \n",  __func__, in_surf,
         packetInfo.frame_num, flow_ret, GST_TIME_ARGS(GST_BUFFER_PTS(outBuffer)));
 

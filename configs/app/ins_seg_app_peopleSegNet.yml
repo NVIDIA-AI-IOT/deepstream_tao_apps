@@ -30,7 +30,9 @@ streammux:
   batched-push-timeout: 40000
 
 primary-gie:
-  config-file-path: ../peopleSegNet_tao/pgie_peopleSegNet_tao_config.yml
+  plugin-type: 0
+  #0:nvinfer, 1:nvinfeserver
+  config-file-path: ../nvinfer/peopleSegNet_tao/pgie_peopleSegNet_tao_config.yml
 
 eglsink:
   enable: 0

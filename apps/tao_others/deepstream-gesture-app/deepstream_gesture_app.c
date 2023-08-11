@@ -126,6 +126,27 @@ typedef struct _DsSourceBin
     bool is_imagedec;
 }DsSourceBinStruct;
 
+GstElement *pipeline = NULL;
+
+static void
+signal_catch_callback(int signum)
+{
+  g_print("User Interrupted..\n");
+  if(pipeline != NULL) {
+    gst_element_send_event(pipeline, gst_event_new_eos());
+    g_print("Send EOS to pipline!\n");
+  }
+}
+
+static void
+signal_catch_setup()
+{
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_handler = signal_catch_callback;
+  sigaction(SIGINT, &action, NULL);
+}
+
 /* Calculate performance data, draw bodypart lines to display */
 /* the bodypose2d results                                     */
 static GstPadProbeReturn
@@ -796,10 +817,10 @@ int
 main (int argc, char *argv[])
 {
   GMainLoop *loop = NULL;
-  GstElement *pipeline = NULL,*streammux = NULL, *sink = NULL, 
+  GstElement *streammux = NULL, *sink = NULL, 
              *primary_detector = NULL, *gesture = NULL, *nvtile = NULL,
              *nvvidconv = NULL, *nvosd = NULL, *nvvidconv1 = NULL,
-             *outenc = NULL, *capfilt = NULL;
+             *outenc = NULL, *capfilt = NULL, *mux = NULL, *encparse = NULL;
   GstElement *queue1 = NULL, *queue2 = NULL, *queue3 = NULL, *queue4 = NULL,
              *queue5 = NULL, *queue6 = NULL, *gesture_queue;
   DsSourceBinStruct source_struct[128];
@@ -830,10 +851,18 @@ main (int argc, char *argv[])
   GList* iterator = NULL;
   bool isH264 = true;
 
+  NvDsGieType pgie_type = NVDS_GIE_PLUGIN_INFER, sgie_type = NVDS_GIE_PLUGIN_INFER;
+
   /* Check input arguments */
   if (argc == 2 && (g_str_has_suffix(argv[1], ".yml")
       || (g_str_has_suffix(argv[1], ".yaml")))) {
     isYAML=TRUE;
+    if(nvds_parse_gie_type(&pgie_type, argv[1], "primary-gie") == NVDS_YAML_PARSER_SUCCESS) {
+      g_print("pgie_type %d\n", pgie_type);
+    }
+    if(nvds_parse_gie_type(&sgie_type, argv[1], "secondary-gie") == NVDS_YAML_PARSER_SUCCESS) {
+      g_print("sgie_type %d\n", sgie_type);
+    }
   } else {
     if (argc < 6 || argc > 133 || (atoi(argv[1]) != 1 && atoi(argv[1]) != 2 &&
       atoi(argv[1]) != 3) || (atoi(argv[2]) != 1 && atoi(argv[2]) != 2 &&
@@ -853,6 +882,8 @@ main (int argc, char *argv[])
 
   /* Standard GStreamer initialization */
   gst_init (&argc, &argv);
+  /* setup singal handler */
+  signal_catch_setup();
   loop = g_main_loop_new (NULL, FALSE);
   
   perf_measure.pre_time = GST_CLOCK_TIME_NONE;
@@ -872,10 +903,6 @@ main (int argc, char *argv[])
   }
 
   gst_bin_add (GST_BIN(pipeline), streammux);
-
-#ifndef PLATFORM_TEGRA
-  g_object_set(G_OBJECT (streammux), "nvbuf-memory-type", 3, NULL);
-#endif
 
   if(!isYAML) {
     for (src_cnt=0; src_cnt<(guint)argc-5; src_cnt++) {
@@ -936,10 +963,20 @@ main (int argc, char *argv[])
   }
 
   /* Create three nvinfer instances for bodypose2d*/
-  primary_detector = gst_element_factory_make ("nvinfer",
-                       "primary-infer-engine1");
-  gesture = gst_element_factory_make ("nvinfer",
-                       "second-infer-engine");
+  if (pgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
+    primary_detector = gst_element_factory_make ("nvinferserver",
+                         "primary-infer-engine1");
+  } else {
+    primary_detector = gst_element_factory_make ("nvinfer",
+                         "primary-infer-engine1");
+  }
+  if (sgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
+    gesture = gst_element_factory_make ("nvinferserver",
+                         "second-infer-engine");
+  } else {
+    gesture = gst_element_factory_make ("nvinfer",
+                         "second-infer-engine");
+  }
 
   /* Use convertor to convert from NV12 to RGBA as required by nvosd */
   nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvid-converter");
@@ -988,20 +1025,20 @@ main (int argc, char *argv[])
           "I420", NULL);
       g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
       filepath = g_strconcat(filename->str,".jpg",NULL);
-    }
-    else {
+    } else {
+      mux = gst_element_factory_make ("qtmux", "mp4-mux");
       if(isYAML) {
         isH264 = !(ds_parse_enc_type(argv[1], "output"));
       }
 
       if(!isH264) {
+          encparse = gst_element_factory_make ("h265parse", "h265-encparser");
           outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h265enc");
-          filepath = g_strconcat(filename->str,".265",NULL);
-      }
-      else {
+      } else {
+          encparse = gst_element_factory_make ("h264parse", "h264-encparser");
           outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
-          filepath = g_strconcat(filename->str,".264",NULL);
       }
+      filepath = g_strconcat(filename->str,".mp4",NULL);
       if (isYAML) {
         ds_parse_enc_config (outenc, argv[1], "output");
       } else {
@@ -1046,24 +1083,28 @@ main (int argc, char *argv[])
   if (isStreaming)
     g_object_set (G_OBJECT (streammux), "live-source", true, NULL);
   g_object_set (G_OBJECT (streammux), "batch-size", src_cnt, NULL);
-
+#ifndef PLATFORM_TEGRA
+  g_object_set (G_OBJECT (streammux), "nvbuf-memory-type", 3, NULL);
+#endif
   tiler_rows = (guint) sqrt (src_cnt);
   tiler_columns = (guint) ceil (1.0 * src_cnt / tiler_rows);
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
       tiler_columns, "width", 1280, "height", 720, NULL);
 
-  if(isYAML)
+  if(isYAML) {
     nvds_parse_gie (primary_detector, argv[1], "primary-gie");
-  else
+  } else {
     g_object_set (G_OBJECT (primary_detector), "config-file-path",
-      "../../../configs/bodypose2d_tao/bodypose2d_pgie_config.txt",
+      "../../../configs/nvinfer/bodypose2d_tao/bodypose2d_pgie_config.txt",
       "unique-id", PRIMARY_DETECTOR_UID, NULL);
+  }
 
-  if(isYAML)
+  if(isYAML) {
     nvds_parse_gie (gesture, argv[1], "secondary-gie");
-  else
+  } else {
     g_object_set (G_OBJECT (gesture), "config-file-path",
-      "../../../configs/gesture_tao/gesture_sgie_config.txt", NULL);
+      "../../../configs/nvinfer/gesture_tao/gesture_sgie_config.txt", NULL);
+  }
 
   /* we add a bus message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
@@ -1086,13 +1127,23 @@ main (int argc, char *argv[])
   if (output_type == 1) {
     g_object_set (G_OBJECT (sink), "location", filepath,NULL);
     g_object_set (G_OBJECT (sink), "enable-last-sample", false,NULL);
-    gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
-        queue5, queue6, NULL);
 
-    if (!gst_element_link_many (nvosd, queue5, nvvidconv1, capfilt, queue6,
-           outenc, sink, NULL)) {
-      g_printerr ("OSD and sink elements link failure.\n");
-      return -1;
+    if (!isImage) {
+      gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
+        queue5, queue6, encparse, mux, NULL);
+      if (!gst_element_link_many (nvosd, queue5, nvvidconv1, capfilt, queue6,
+        outenc, encparse, mux, sink, NULL)) {
+        g_printerr ("OSD and sink elements link failure.\n");
+        return -1;
+      }
+    } else {
+      gst_bin_add_many (GST_BIN (pipeline), nvvidconv1, outenc, capfilt,
+        queue5, queue6, NULL);
+      if (!gst_element_link_many (nvosd, queue5, nvvidconv1, capfilt, queue6,
+        outenc, sink, NULL)) {
+        g_printerr ("OSD and sink elements link failure.\n");
+        return -1;
+      }
     }
     g_free(filepath);
   } else if (output_type == 2) {

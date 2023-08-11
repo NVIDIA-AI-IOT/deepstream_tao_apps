@@ -48,8 +48,11 @@
 
 #define TILED_OUTPUT_WIDTH 1280
 #define TILED_OUTPUT_HEIGHT 720
-#define SEG_OUTPUT_WIDTH 1280
-#define SEG_OUTPUT_HEIGHT 720
+
+/*segvisual's dimention must be greater than or equal to model's.
+ read model's dimention from cfg, or use this default value*/
+#define SEG_OUTPUT_WIDTH 1920
+#define SEG_OUTPUT_HEIGHT 1080
 
 /* NVIDIA Decoder source pad memory feature. This feature signifies that source
  * pads having this capability will push GstBuffers containing cuda buffers. */
@@ -568,11 +571,6 @@ create_source_bin (DsSourceBinStruct *ds_source_struct, gchar * uri)
   gst_caps_set_features (caps, 0, feature);
   g_object_set (G_OBJECT (ds_source_struct->capsfilt), "caps", caps, NULL);
 
-#ifndef PLATFORM_TEGRA
-  g_object_set (G_OBJECT (ds_source_struct->nvvidconv),
-      "nvbuf-memory-type", 3, NULL);
-#endif
-
   gst_bin_add_many (GST_BIN (ds_source_struct->source_bin),
       ds_source_struct->uri_decode_bin, ds_source_struct->nvvidconv,
       ds_source_struct->capsfilt, NULL);
@@ -632,6 +630,13 @@ bus_call (GstBus * bus, GstMessage * msg, gpointer data) {
     return TRUE;
 }
 
+/* Check for parsing error. */
+#define RETURN_ON_PARSER_ERROR(parse_expr) \
+  if (NVDS_YAML_PARSER_SUCCESS != parse_expr) { \
+    g_printerr("Error in parsing configuration file.\n"); \
+    return -1; \
+  }
+
 static void printUsage(const char* cmd) {
     g_printerr ("\tUsage: %s -c pgie_config_file -i <H264 or JPEG filename> [-b BATCH]"
       " [-d]\n\tOR\n\t %s yml_config_file\n", cmd, cmd);
@@ -685,6 +690,7 @@ main (int argc, char *argv[]) {
     numDetectedClasses = 1;
     guint model_width = 0;
     guint model_height = 0;
+    NvDsGieType pgie_type = NVDS_GIE_PLUGIN_INFER;
 
     if (argc==2 && (g_str_has_suffix(argv[1], ".yml") ||
         g_str_has_suffix(argv[1], ".yaml"))) {
@@ -693,11 +699,27 @@ main (int argc, char *argv[]) {
           g_printerr ("No source is found. Exiting.\n");
           return -1;
         }
+
+        RETURN_ON_PARSER_ERROR(nvds_parse_gie_type(&pgie_type, argv[1],
+                "primary-gie"));
+        if(pgie_type == NVDS_GIE_PLUGIN_INFER){
+          parse_tests_yaml(&yaml_paras, argv[1]);
+          fileLoop = yaml_paras.file_loop;
+          yaml_paras.config_path.erase(0,2);
+          yaml_paras.config_path = "configs" + yaml_paras.config_path;
+          parse_tests_yaml(&yaml_paras, yaml_paras.config_path.c_str());
+          networkType = yaml_paras.network_type;
+          numDetectedClasses = yaml_paras.num_detected_classes;
+          model_width = yaml_paras.model_width;
+          model_height = yaml_paras.model_height;
+        } else {
+          model_width = 1920;
+          model_height = 1080;
+        }
         parse_tests_yaml(&yaml_paras, argv[1]);
         fileLoop = yaml_paras.file_loop;
         yaml_paras.config_path.erase(0,2);
         yaml_paras.config_path = "configs" + yaml_paras.config_path;
-        parse_tests_yaml(&yaml_paras, yaml_paras.config_path.c_str());
         networkType = yaml_paras.network_type;
         numDetectedClasses = yaml_paras.num_detected_classes;
         model_width = yaml_paras.model_width;
@@ -840,7 +862,11 @@ main (int argc, char *argv[]) {
 
     /* Use nvinfer to run inferencing on decoder's output,
      * behaviour of inferencing is set through config file */
-    pgie = gst_element_factory_make ("nvinfer", "primary-nvinference-engine");
+    if (pgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
+      pgie = gst_element_factory_make ("nvinferserver", "primary-nvinference-engine");
+    } else {
+      pgie = gst_element_factory_make ("nvinfer", "primary-nvinference-engine");
+    }
 
     /* Use convertor to convert from NV12 to RGBA as required by segvisual */
     //nvvidconv = gst_element_factory_make ("nvvideoconvert", "nvvideo-converter");
@@ -1042,8 +1068,9 @@ main (int argc, char *argv[]) {
           buf_probe, &str, NULL);
     gst_object_unref (streammux_src_pad);
 
-    /*post-process for network-type = 100*/
-    if (networkType == 100) {
+    /*post-process for network-type = 100,
+     *nvinferser native postprocess can't process int output datatype.*/
+    if (networkType == 100 || pgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
         GstPad *pgie_src_pad = gst_element_get_static_pad (pgie, "src");
         if (!pgie_src_pad)
           g_print ("Unable to get streammux src pad\n");
