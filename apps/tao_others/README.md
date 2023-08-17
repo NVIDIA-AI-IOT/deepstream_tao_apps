@@ -68,6 +68,28 @@ Please run the following script to download pre-trained models and generate Gaze
     ./download_models.sh
 ```
 
+## Triton Server Settings
+ 
+ The DeepStream sample applications can work as Triton client with the [Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server), one of the following two methods can be used to set up the Triton Inference Server before starting a gst-nvinferserver inferncing DeepStream application.
+
+ - Native Triton Inference Server, please refer to [Triton Server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/release/tao4.0_ds6.3ga/triton_server.md)
+ - Stand-alone Triton Inference server, please refer to [Triton grpc server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/release/tao4.0_ds6.3ga/triton_server_grpc.md).
+ 
+Please enable Triton or Triton gRPC inferencing with the app YAML configurations.
+
+E.G. To set deepstream-bodypose2d-app running with native Triton Inference Server, the "primary-gie" part in deepstream-bodypose2d-app/bodypose2d_app_config.yml can be modified as following:
+
+```
+primary-gie:
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 1
+  #config-file-path: ../../../configs/nvinfer/bodypose2d_tao/bodypose2d_pgie_config.yml
+  config-file-path: ../../../configs/triton/bodypose2d_tao/bodypose2d_pgie_config.yml
+  #config-file-path: ../../../configs/triton-grpc/bodypose2d_tao/bodypose2d_pgie_config.yml
+  unique-id: 1
+
+```
+
 ## Build and Run
 Build the application
 ```
