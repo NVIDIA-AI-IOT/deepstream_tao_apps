@@ -164,7 +164,7 @@ Start to run the mdx perception application
     cd deepstream-mdx-perception-app
     ./deepstream-mdx-perception-app -c <txt config file>
 OR
-    ./deepstream-heartrate-app <app YAML config file>
+    ./deepstream-mdx-perception-app <app YAML config file>
 ```
 
 
