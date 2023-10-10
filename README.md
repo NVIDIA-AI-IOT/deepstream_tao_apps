@@ -227,7 +227,7 @@ The model has the following two outputs:
 - **argmax_1/output**: A [batchSize, H, W, 1] tensor containing the class id per pixel location
 
 #### 12. multi_task
-- refer detailed [README](./configs/multi_task_tao/README.md) for how to configure and run the model
+- refer detailed [README](./configs/nvinfer/multi_task_tao/README.md) for how to configure and run the model
 
 #### 13~14. EfficientDet / Retail Object Detection
 
