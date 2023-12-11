@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "ds_yml_parse.h"
-
 #include <yaml-cpp/yaml.h>
 #include <string>
 #include <cstring>
 #include <iostream>
 #include <unordered_map>
+#include "ds_yml_parse.h"
 
 NvDsYamlParserStatus
 ds_parse_rtsp_output(GstElement * sink,
@@ -35,7 +34,7 @@ ds_parse_rtsp_output(GstElement * sink,
 {
   std::string paramKey = "";
 
-  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
 
   std::vector<int> docs_indx_vec;
   std::unordered_map<std::string, int> docs_indx_umap;
@@ -44,7 +43,7 @@ ds_parse_rtsp_output(GstElement * sink,
 
   for (int i =0; i < total_docs;i++)
   {
-    if (docs[i][group] != NULL) {
+    if (!docs[i][group].IsNull()) {
 
       YAML::const_iterator itr = docs[i].begin();
       std::string group_name = itr->first.as<std::string>();
@@ -111,7 +110,7 @@ ds_parse_enc_config(GstElement *encoder,
 {
   std::string paramKey = "";
 
-  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
 
   std::vector<int> docs_indx_vec;
   std::unordered_map<std::string, int> docs_indx_umap;
@@ -120,7 +119,7 @@ ds_parse_enc_config(GstElement *encoder,
 
   for (int i =0; i < total_docs;i++)
   {
-    if (docs[i][group] != NULL) {
+    if (!docs[i][group].IsNull()) {
 
       YAML::const_iterator itr = docs[i].begin();
       std::string group_name = itr->first.as<std::string>();
@@ -180,7 +179,7 @@ ds_parse_videotemplate_config(GstElement *vtemplate,
 {
   std::string paramKey = "";
 
-  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
 
   std::vector<int> docs_indx_vec;
   std::unordered_map<std::string, int> docs_indx_umap;
@@ -189,7 +188,7 @@ ds_parse_videotemplate_config(GstElement *vtemplate,
 
   for (int i =0; i < total_docs;i++)
   {
-    if (docs[i][group] != NULL) {
+    if (!docs[i][group].IsNull()) {
 
       YAML::const_iterator itr = docs[i].begin();
       std::string group_name = itr->first.as<std::string>();
@@ -242,12 +241,49 @@ ds_parse_videotemplate_config(GstElement *vtemplate,
   return NVDS_YAML_PARSER_SUCCESS;
 }
 
+NvDsYamlParserStatus
+ds_parse_ocdr_videotemplate_config(GstElement *vtemplate, 
+  gchar *cfg_file_path, const char* group)
+{
+  if (!vtemplate)
+    return NVDS_YAML_PARSER_ERROR;
+  else {
+    GstElementFactory *factory = GST_ELEMENT_GET_CLASS(vtemplate)->elementfactory;
+    if (g_strcmp0(GST_OBJECT_NAME(factory), "nvdsvideotemplate")) {
+      std::cerr << "[ERROR] Passed element is not nvdsvideotemplate" << std::endl;
+      return NVDS_YAML_PARSER_ERROR;
+    }
+  }
+
+  YAML::Node node = YAML::LoadFile(cfg_file_path);
+
+  YAML::Node docs = node[group];
+
+  if(docs["customlib-name"]) {
+    std::string libPath = docs["customlib-name"].as<std::string>();
+    g_object_set(G_OBJECT(vtemplate), "customlib-name",
+                 libPath.c_str(), NULL);
+  }
+
+  if(docs["customlib-props"]) {
+    auto listNode = docs["customlib-props"];
+    for(int i = 0; i < listNode.size(); i++) {
+      std::string tmpProb = listNode[i].as<std::string>();
+      g_object_set(G_OBJECT(vtemplate), "customlib-props",
+                   tmpProb.c_str(), NULL);
+    }
+  }
+
+  return NVDS_YAML_PARSER_SUCCESS;
+}
+
+
 guint
 ds_parse_group_type(gchar *cfg_file_path, const char* group)
 {
   std::string paramKey = "";
 
-  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
 
   std::vector<int> docs_indx_vec;
   std::unordered_map<std::string, int> docs_indx_umap;
@@ -257,7 +293,7 @@ ds_parse_group_type(gchar *cfg_file_path, const char* group)
 
   for (int i =0; i < total_docs;i++)
   {
-    if (docs[i][group] != NULL) {
+    if (!docs[i][group].IsNull()) {
 
       if (docs[i][group]["type"]) {
           val= docs[i][group]["type"].as<guint>();
@@ -273,7 +309,7 @@ ds_parse_enc_type(gchar *cfg_file_path, const char* group)
 {
   std::string paramKey = "";
 
-  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
 
   std::vector<int> docs_indx_vec;
   std::unordered_map<std::string, int> docs_indx_umap;
@@ -283,7 +319,7 @@ ds_parse_enc_type(gchar *cfg_file_path, const char* group)
 
   for (int i =0; i < total_docs;i++)
   {
-    if (docs[i][group] != NULL) {
+    if (!docs[i][group].IsNull()) {
 
       if (docs[i][group]["enc"]) {
           val= docs[i][group]["enc"].as<guint>();
@@ -299,7 +335,7 @@ ds_parse_file_name(gchar *cfg_file_path, const char* group)
 {
   std::string paramKey = "";
 
-  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
 
   std::vector<int> docs_indx_vec;
   std::unordered_map<std::string, int> docs_indx_umap;
@@ -308,7 +344,7 @@ ds_parse_file_name(gchar *cfg_file_path, const char* group)
   GString *str = NULL;
   for (int i =0; i < total_docs;i++)
   {
-    if (docs[i][group] != NULL) {
+    if (!docs[i][group].IsNull()) {
       if (docs[i][group]["filename"]) {
           std::string temp = docs[i][group]["filename"].as<std::string>();
           str = g_string_new(temp.c_str());
@@ -324,7 +360,7 @@ ds_parse_config_yml_filepath(gchar *cfg_file_path, const char* group)
 {
   std::string paramKey = "";
 
-  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
 
   int total_docs = docs.size();
   GString *str = NULL;
@@ -332,7 +368,7 @@ ds_parse_config_yml_filepath(gchar *cfg_file_path, const char* group)
   g_print("total %d item\n",total_docs);
   for (int i =0; i < total_docs;i++)
   {
-    if (docs[i][group] != NULL) {
+    if (!docs[i][group].IsNull()) {
       g_print("group %s found %d\n", group, !(docs[i][group]["config-file-path"]));
       if (docs[i][group]["config-file-path"]) {
           std::string temp = docs[i][group]["config-file-path"].as<std::string>();

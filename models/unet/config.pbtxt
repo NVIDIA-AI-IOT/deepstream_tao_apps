@@ -23,7 +23,7 @@
 name: "unet"
 platform: "tensorrt_plan"
 max_batch_size: 4
-default_model_filename: "unet_resnet18.etlt_b4_gpu0_fp16.engine"
+default_model_filename: "unet_resnet18.onnx_b4_gpu0_int8.engine"
 input [
   {
     name: "input_1:0"

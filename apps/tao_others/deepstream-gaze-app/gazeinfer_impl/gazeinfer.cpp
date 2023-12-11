@@ -457,7 +457,7 @@ bool GazeAlgorithm::SetInitParams(DSCustom_CreateParams *params)
     "gazenet_facegrid_fp16_b8.engine",                /**< Path to the engine*/
     {"input_left_images:0", "input_right_images:0",
     "input_face_images:0", "input_facegrid:0"},       /**< Input layer names */
-    {"fc_joint/concat:0"},                            /**< Output layer name */
+    {"fc_joint/concat:0"},              /**< Output layer name */
   };
 
   cvcore::ModelInputParams GazeModelInputParams = {8, 224, 224, cvcore::Y_U8};

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -934,9 +934,9 @@ main (int argc, char *argv[])
     }
     sink = gst_element_factory_make ("filesink", "nvvideo-renderer");
   }
-  else if (atoi(argv[1]) == 2)
+  else if (output_type == 2)
     sink = gst_element_factory_make ("fakesink", "fake-renderer");
-  else if (atoi(argv[1]) == 3) {
+  else if (output_type == 3) {
 #ifdef PLATFORM_TEGRA
     transform = gst_element_factory_make ("nvegltransform", "nvegltransform");
     if(!transform) {
@@ -961,9 +961,7 @@ main (int argc, char *argv[])
   if (isStreaming)
     g_object_set (G_OBJECT (streammux), "live-source", true, NULL);
   g_object_set (G_OBJECT (streammux), "batch-size", src_cnt, NULL);
-#ifndef PLATFORM_TEGRA
-  g_object_set (G_OBJECT (streammux), "nvbuf-memory-type", 3, NULL);
-#endif
+
   tiler_rows = (guint) sqrt (src_cnt);
   tiler_columns = (guint) ceil (1.0 * src_cnt / tiler_rows);
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",

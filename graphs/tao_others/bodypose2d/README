@@ -29,8 +29,8 @@ it will generate a NvDs2DposeMetaData user meta and attach it to person object.
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.3
-- Graph-Composer 3.0.0
+- DeepStreamSDK 6.4
+- Graph-Composer 3.1.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
 

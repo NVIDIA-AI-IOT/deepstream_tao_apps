@@ -9,6 +9,7 @@ all:
 	@make -C deepstream-heartrate-app/heartrateinfer_impl
 	@make -C deepstream-heartrate-app
 	@make -C deepstream-mdx-perception-app
+	@make -C deepstream-nvocdr-app
 	@make -C deepstream-pose-classification
 clean:
 	@make clean -C deepstream-bodypose2d-app
@@ -21,4 +22,5 @@ clean:
 	@make clean -C deepstream-heartrate-app/heartrateinfer_impl
 	@make clean -C deepstream-heartrate-app
 	@make clean -C deepstream-mdx-perception-app
+	@make clean -C deepstream-nvocdr-app
 	@make clean -C deepstream-pose-classification

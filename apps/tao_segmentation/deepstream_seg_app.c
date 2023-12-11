@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -646,7 +646,9 @@ static void printUsage(const char* cmd) {
     g_printerr ("-b: \n\tbatch size, this will override the value of \"batch-size\" in pgie config file  \n");
     g_printerr ("-d: \n\tenable display, otherwise dump to output H264 or JPEG file  \n");
     g_printerr ("-f: \n\tuse fake_sink to test the performace\n");
-    g_printerr ("-l: \n\tloop mode for the pipeline");
+    g_printerr ("-l: \n\tloop mode for the pipeline\n");
+    g_printerr ("-o: \n\tOriginal background On\n");
+    g_printerr ("-a: \n\tAlpha value with original background setting\n");
     g_printerr ("yml_config_file: \n\tYAML config file, e.g. seg_app_unet.yml \n");
 }
 int
@@ -673,11 +675,13 @@ main (int argc, char *argv[]) {
     gboolean isImage = FALSE;
     gboolean useDisplay = FALSE;
     gboolean useFakeSink = FALSE;
+    gboolean original_background = FALSE;
+    float alpha=1.0f;
     guint tiler_rows, tiler_cols;
     guint batchSize = 0;
     guint pgie_batch_size;
     guint c;
-    const char* optStr = "b:c:dhfli:";
+    const char* optStr = "a:b:c:dohfli:";
     std::string pgie_config;
     gboolean isYAML = FALSE;
     GList* g_list = NULL;
@@ -727,6 +731,9 @@ main (int argc, char *argv[]) {
     } else {
         while ((c = getopt(argc, argv, optStr)) != -1) {
             switch (c) {
+                case 'a':
+                    alpha = std::atof(optarg);
+                    break;
                 case 'b':
                     batchSize = std::atoi(optarg);
                     batchSize = batchSize == 0 ? 1:batchSize;
@@ -769,6 +776,9 @@ main (int argc, char *argv[]) {
                     break;
                 case 'l':
                     fileLoop = 1;
+                    break;
+                case 'o':
+                    original_background = TRUE;
                     break;
                 case 'h':
                 default:
@@ -873,6 +883,8 @@ main (int argc, char *argv[]) {
 
     /* Create OSD to draw on the converted RGBA buffer */
     segvisual = gst_element_factory_make ("nvsegvisual", "nv-segvisual");
+    g_object_set (G_OBJECT (segvisual), "original-background", original_background, NULL);
+    g_object_set (G_OBJECT (segvisual), "alpha", alpha, NULL);
 
     tiler = gst_element_factory_make ("nvmultistreamtiler", "nvtiler");
 

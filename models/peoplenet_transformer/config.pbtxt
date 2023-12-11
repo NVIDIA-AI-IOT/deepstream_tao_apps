@@ -23,7 +23,7 @@
 name: "peoplenet_transformer"
 platform: "tensorrt_plan"
 max_batch_size: 1
-default_model_filename: "resnet50_peoplenet_transformer.etlt_b1_gpu0_fp16.engine"
+default_model_filename: "resnet50_peoplenet_transformer_op17.onnx_b1_gpu0_fp16.engine"
 input [
   {
     name: "inputs"

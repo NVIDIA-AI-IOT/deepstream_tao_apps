@@ -13,7 +13,7 @@
 name: "poseclassificationnet"
 platform: "tensorrt_plan"
 max_batch_size: 1
-default_model_filename: "st-gcn_3dbp_nvidia.etlt_b1_gpu0_fp32.engine"
+default_model_filename: "st-gcn_3dbp_nvidia.etlt_b1_gpu0_fp16.engine"
 input [
   {
     name: "input"

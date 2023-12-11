@@ -23,19 +23,24 @@
 name: "retail_object_recognition"
 platform: "tensorrt_plan"
 max_batch_size: 16
-default_model_filename: "retail_object_recognition.etlt_b16_gpu0_fp16.engine"
+default_model_filename: "retail_object_recognition.onnx_b16_gpu0_fp16.engine"
 input [
   {
-    name: "inputs"
+    name: "input"
     data_type: TYPE_FP32
     dims: [ 3, 224, 224 ]
   }
 ]
 output [
   {
-    name: "outputs"
+    name: "probs"
     data_type: TYPE_FP32
-    dims: [ 2048 ]
+    dims: [ 315 ]
+  },
+  {
+    name: "embeddings"
+    data_type: TYPE_FP32
+    dims: [ 448 ]
   }
 ]
 

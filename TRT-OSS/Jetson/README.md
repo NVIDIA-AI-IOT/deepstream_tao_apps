@@ -1,39 +1,25 @@
 # Build Jetson TensorRT OSS Plugin
 
-For DeepStream 6.1.1 GA, the TensorRT OSS plugin is not needed.
+For DeepStream 6.1.1 GA and 6.2 GA, the TensorRT OSS plugin is not needed.
 
 Below are the steps to build [TensorRT OSS](https://github.com/NVIDIA/TensorRT) on Jetson device for Jetson libnvinfer_plugin.so. For cross-compiling, refer to TensorRT OSS README.
 
-## libnvinfer_plugin.so.8.4.0.11 Provided Here
+## libnvinfer_plugin.so.8.6.2 Provided Here
 
- **libnvinfer_plugin.so.8.4.0.11** provided in this folder was built with:
+ **libnvinfer_plugin.so.8.6.2** provided in this folder was built with:
 
 > Jetson Xavier
-> Jetpack5.0.1 (CUDA-11.6, cuDNN v8.2, TensorRT8.4.0.11 )
+> Jetpack GA (CUDA-12.2, cuDNN v8.6, TensorRT8.6.1.2 )
 
 **Note**
 
-You can get the prebuild lib by using "wget https://nvidia.box.com/shared/static/gcp6ylk1ku0zfobhj0sv8vpraz6yzaf9 -O libnvinfer_plugin.so.8.4.0.11" if you met some LFS issue.
+You can get the prebuild lib by using "wget https://nvidia.box.com/shared/static/1ih810ui4z52nvwznfk1xaxvdej3mauw -O libnvinfer_plugin.so.8.6.2" if you met some LFS issue.
 
 
 ## Build TensorRT OSS Plugin - libnvinfer_plugin.so
 
-### 1. Upgrade Cmake
-
-TensorRT OSS requires cmake \>= v3.13, while the default cmake on Jetson/UBuntu 20.04 is cmake 3.10.2, so upgrade it by
-
-```
-wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
-tar xvf cmake-3.19.4.tar.gz
-cd cmake-3.19.4/
-mkdir $HOME/install
-# sudo apt-get install libssl-dev
-./configure --prefix=$HOME/install
-make -j$(nproc)
-sudo make install
-```
-
-### 2. Build TensorRT OSS Plugin
+The TensorRT OSS source code does not contains the patch for 8.6 branch
+### Get TensorRT OSS Plugin Library
 
 | DeepStream Release  | Jetpack Version  | TRT Version     | TRT_OSS_CHECKOUT_TAG  |
 | ------------------- | ---------------  | --------------- | --------------------- |
@@ -45,24 +31,16 @@ sudo make install
 | 6.0.1               | 4.6.1 / 4.6.2    | TRT 8.2.1       | release/8.2           |
 | 6.1                 | 5.0.1            | TRT 8.4.0.11    | release/8.4           |
 | 6.1.1               | 5.0.2            | TRT 8.4.1       | OSS not needed        |
-``` 
-git clone -b $TRT_OSS_CHECKOUT_TAG https://github.com/nvidia/TensorRT        // replace with release/8.x for  TensorRT 8.X
-cd TensorRT/
-git submodule update --init --recursive
-export TRT_SOURCE=`pwd`
-cd $TRT_SOURCE
-mkdir -p build && cd build
-$HOME/install/bin/cmake .. -DGPU_ARCHS="53 62 72"  -DTRT_LIB_DIR=/usr/lib/aarch64-linux-gnu/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DTRT_BIN_DIR=`pwd`/out
-make nvinfer_plugin -j$(nproc)
+| 6.2                 | 5.1              | TRT 8.5.1       | OSS not needed        |
+| 6.3                 | 5.1.2            | TRT 8.5.3       | OSS not needed           |
+| 6.4                 | 6.0              | TRT 8.6.1.2     | binary only   |
 ```
 
-After building ends successfully, libnvinfer_plugin.so* will be generated under `pwd`/out/.
-
-### 3. Replace "libnvinfer_plugin.so*"
+### Replace "libnvinfer_plugin.so*"
 
 ```
 sudo mv /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.x.y ${HOME}/libnvinfer_plugin.so.8.x.y.bak   // backup original libnvinfer_plugin.so.x.y
-sudo cp $TRT_SOURCE/build/libnvinfer_plugin.so.8.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.x.y
+sudo cp $DOWNLOAD_PATH/libnvinfer_plugin.so.8.m.n  /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.x.y
 sudo ldconfig
 ```
 
@@ -83,4 +61,5 @@ sudo make
 | TX1 / NANO      | 53        |
 | TX2             | 62        |
 | Xavier / NX     | 72        |
+| Orin            | 87        |
 

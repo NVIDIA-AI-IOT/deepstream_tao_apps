@@ -284,9 +284,9 @@ std::vector<NvAR_Point3f> liftKeypoints25DTo3D(const float* p2d,
     std::vector<NvAR_Point3f> p3d(numKeypoints, { 0.f, 0.f, 0.f });
 
     for (int i = 0; i < numKeypoints; i++) {
-        p3d[i].x = XY1(i, 0) * (zRel[i] + zRootsMedian);
-        p3d[i].y = XY1(i, 1) * (zRel[i] + zRootsMedian);
-        p3d[i].z = XY1(i, 2) * (zRel[i] + zRootsMedian);
+        p3d[i].x = XY1(i, 0) * zRel[i];
+        p3d[i].y = XY1(i, 1) * zRel[i];
+        p3d[i].z = XY1(i, 2) * zRel[i];
     }
 
     return p3d;
@@ -661,11 +661,6 @@ void parse_25dpose_from_tensor_meta(NvDsInferTensorMeta *tensor_meta,
       p3dLifted = liftKeypoints25DTo3D(keypoints, keypointsZRel, numKeyPoints, m_K_inv_transpose, m_scale_ll);
       float scale = recoverScale(p3dLifted, keypoints_confidence, m_mean_ll);
       // printf("scale = %f\n", scale);
-      for (auto i = 0; i < p3dLifted.size(); i++) {
-        p3dLifted[i].x /= scale;
-        p3dLifted[i].y /= scale;
-        p3dLifted[i].z /= scale;
-      }
 
       NvDsUserMeta *user_meta = nvds_acquire_user_meta_from_pool (bmeta);
       NvDsJoints *ds_joints = (NvDsJoints *)g_malloc(numKeyPoints * sizeof(NvDsJoints));
@@ -1264,7 +1259,7 @@ int main(int argc, char *argv[])
   // Padding the image and removing the padding
   GstElement *nvvideoconvert_enlarge = NULL, *nvvideoconvert_reduce = NULL,
     *capsFilter_enlarge = NULL, *capsFilter_reduce = NULL;
-  GstElement *nvvidconv = NULL, *nvosd = NULL, *tracker = NULL, *nvdslogger = NULL;
+  GstElement *nvvidconv = NULL, *nvtile = NULL, *nvosd = NULL, *tracker = NULL, *nvdslogger = NULL;
   GstElement *sink = NULL;
   DsSourceBinStruct source_struct[128];
   GstBus *bus = NULL;
@@ -1383,11 +1378,6 @@ int main(int argc, char *argv[])
     }
     gst_object_unref (sinkpad);
     gst_object_unref (srcpad);
-  }
-
-  if(num_sources > 1) {
-    g_printerr ("We only support 1 source now. Exiting.\n");
-    return -1;
   }
 
   nvds_parse_streammux(streammux, argv[1], "streammux");
@@ -1572,6 +1562,11 @@ int main(int argc, char *argv[])
     g_printerr ("Nvdsosd could not be created. Exiting.\n");
     return -1;
   }
+  nvtile = gst_element_factory_make ("nvmultistreamtiler", "nvtiler");
+  tiler_rows = (guint) sqrt (num_sources);
+  tiler_columns = (guint) ceil (1.0 * num_sources / tiler_rows);
+  g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
+      tiler_columns, "width", 1280, "height", 720, NULL);
 
   /* Lets add probe to get informed of the meta data generated, we add probe to
    * the sink pad of the osd element, since by that time, the buffer would have
@@ -1619,14 +1614,14 @@ int main(int argc, char *argv[])
   // streammux has been added into pipeline already.
   gst_bin_add_many(GST_BIN(pipeline),
     nvvideoconvert_enlarge, capsFilter_enlarge,
-    pgie, tracker, sgie, preprocess1, sgie1,
+    pgie, tracker, sgie, preprocess1, sgie1, nvtile,
     nvvidconv, nvosd, sink, nvdslogger,
     nvvideoconvert_reduce, capsFilter_reduce, NULL);
 
   // Link elements
   if (!gst_element_link_many(streammux,
       nvvideoconvert_enlarge, capsFilter_enlarge, pgie, tracker, sgie, preprocess1, sgie1,
-      nvdslogger, nvvidconv, nvosd, nvvideoconvert_reduce, capsFilter_reduce, sink, NULL)) {
+      nvdslogger, nvvideoconvert_reduce, capsFilter_reduce, nvtile, nvvidconv, nvosd,  sink, NULL)) {
     g_printerr ("Elements could not be linked. Exiting.\n");
     return -1;
   }

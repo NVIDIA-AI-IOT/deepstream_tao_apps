@@ -13,10 +13,12 @@ This sample is to show the following TAO models runing with DeepStream
 * PeopleNet Transformer
 * ReIdentificationNet
 * PoseClassificationNet
+* OCDNet
+* OCRNet
 
 ## Prerequisition
 
-* [DeepStream SDK 6.2 GA or above](https://developer.nvidia.com/deepstream-sdk)
+* [DeepStream SDK 6.4 GA or above](https://developer.nvidia.com/deepstream-sdk)
 
   Make sure deepstream-test1 sample can run successful to verify your DeepStream installation
 
@@ -38,8 +40,10 @@ This sample is to show the following TAO models runing with DeepStream
 | Retail Object Detection Binary | [link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection)|deployable_binary_v1.0|
 |PeopleNet Transformer | [link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/peoplenet_transformer)|deployable_v1.0|
 |Retail Object Recognition|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_recognition)|deployable_v1.0|
-|ReIdentificationNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/reidentificationnet)|deployable_v1.1|
+|ReIdentificationNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/reidentificationnet)|deployable_v1.2|
 |PoseClassificationNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/poseclassificationnet)|deployable_v1.0|
+|OCDNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocdnet)|deployable_v1.0|
+|OCRNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocrnet)|deployable_v1.0|
 
   The [Bodypose2D backbone](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet) can be trained and deployed with TAO tools.
 
@@ -153,6 +157,13 @@ OR
     ./deepstream-heartrate-app <app YAML config file>
 ```
 
+Start to run the nvocdr application
+Please prepare the nvocdr libs first, you can refer to [NVOCDR_README](./deepstream-nvocdr-app/README.md)
+```
+    cd deepstream-nvocdr-app
+    ./deepstream-nvocdr-app <app YAML config file>
+```
+
 Start to run the pose classification application
 ```
     cd deepstream-pose-classification
@@ -215,12 +226,19 @@ A sample of mdx perception:
 
 `./deepstream-mdx-perception-app  -c ../../../configs/app/peoplenet_reidentification.yml`
 
+A sample of nvocdr:
+Please prepare the nvocdr libs first, you can refer to [NVOCDR_README](./deepstream-nvocdr-app/README.md)
+
+`./deepstream-nvocdr-app nvocdr_app_config.yml`
+
 A sample of pose classification:
 
 `./deepstream-pose-classification-app ../../../configs/app/deepstream_pose_classification_config.yaml`
 
 ## Known Issue
 
-1.The GazeNet and HeartRateNet models are all multiple input layers models. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the GazeNet and HeartRateNet sample applications without engine, they will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, they will work.
+1.The GazeNet, EmotionNet and HeartRateNet models are all multiple input layers models. DeepStream can generate engine from such models but the implementation of buffer allocation has some problems. So if running the GazeNet, EmotionNet and HeartRateNet sample applications without engine, they will fail with core dump for the first time running. The engine will be generated after the first time running. When running the applications again, they will work.
 
 Another workaround is to generate the engines outside the applications. The 'download_models.sh' script will download the GazeNet and HeartRateNet models. Please refer to the TAO tao-converter tool document: https://docs.nvidia.com/tao/tao-user-guide/text/tensorrt.html
+
+2.For the deepstream-nvocdr-app, if the DeepStream version is lower than 6.4, the TensorRT OSS plugin is needed. Please refer to [NVOCDR_README](./deepstream-nvocdr-app/README.md). To avoid affecting the results of other apps, please replace the TensorRT plugin with the original one after running this app.

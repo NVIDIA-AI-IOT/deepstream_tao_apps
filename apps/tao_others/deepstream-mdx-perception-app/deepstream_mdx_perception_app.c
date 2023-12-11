@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,8 +82,17 @@
 typedef enum
 {
   APP_CONFIG_ANALYTICS_MODELS_UNKNOWN = 0,
-  APP_CONFIG_ANALYTICS_RESNET_PGIE_3SGIE_TYPE_COLOR_MAKE = 1,
+  APP_CONFIG_ANALYTICS_RETAIL = 1,
+  APP_CONFIG_ANALYTICS_PEOPLE_REID = 2,
+  APP_CONFIG_ANALYTICS_RETAIL_DUAL_HEAD_SGIE = 3,
 } AppConfigAnalyticsModel;
+
+#define MAX_LINES_IN_LABEL_FILE 320
+#define MAX_CHAR_LENGTH_PER_LINE 100
+
+// Variable to store labels for FSL dual head model
+char labels[MAX_LINES_IN_LABEL_FILE][MAX_CHAR_LENGTH_PER_LINE];
+guint dual_head_classes = 315;
 
 /**
  * IMPORTANT Note 2:
@@ -97,7 +106,7 @@ typedef enum
  * see in-code documentation and usage of
  * schema_fill_sample_sgie_vehicle_metadata()
  */
-//#define GENERATE_DUMMY_META_EXT
+#define GENERATE_DUMMY_META_EXT
 
 /** Following class-ID's
  * used for demonstration code
@@ -111,6 +120,7 @@ typedef enum
 #define SECONDARY_GIE_VEHICLE_TYPE_UNIQUE_ID  (4)
 #define SECONDARY_GIE_VEHICLE_COLOR_UNIQUE_ID (5)
 #define SECONDARY_GIE_VEHICLE_MAKE_UNIQUE_ID  (6)
+#define SECONDARY_GIE_MTMC_PERSON (0)
 
 #define RESNET10_PGIE_3SGIE_TYPE_COLOR_MAKECLASS_ID_CAR    (0)
 #ifdef GENERATE_DUMMY_META_EXT
@@ -200,7 +210,7 @@ GOptionEntry entries[] = {
       NULL}
   ,
   {"pgie-model-used", 'm', 0, G_OPTION_ARG_INT, &model_used,
-        "PGIE Model used; {0 - Unknown [DEFAULT]}, {1: Resnet 4-class [Car, Bicycle, Person, Roadsign]}",
+        "PGIE Model used; {0 - Unknown [DEFAULT]}, {1: FSL}, {2: MTMC}, {3: FSL Dual Head SGIE}}",
       NULL}
   ,
   {"no-force-tcp", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &force_tcp,
@@ -250,41 +260,420 @@ void apply_ota (AppCtx * ota_appCtx);
  */
 gpointer ota_handler_thread (gpointer data);
 
-void *set_metadata_ptr(int numElements, void* data)
-{
-  NvDsEmbedding *metadata = (NvDsEmbedding *)g_malloc0(sizeof (NvDsEmbedding));
-  float *embedding_data = (float *)malloc(sizeof(float) * numElements);
-  cudaMemcpy(embedding_data, data, numElements * 4, cudaMemcpyDeviceToHost);
-  metadata->embedding_length = numElements;
-  metadata->embedding_vector = embedding_data;
-  return (void *) metadata;
+static void generate_ts_rfc3339(char *buf, int buf_size) {
+  time_t tloc;
+  struct tm tm_log;
+  struct timespec ts;
+  char strmsec[6];  //.nnnZ\0
+
+  clock_gettime(CLOCK_REALTIME, &ts);
+  memcpy(&tloc, (void *)(&ts.tv_sec), sizeof(time_t));
+  gmtime_r(&tloc, &tm_log);
+  strftime(buf, buf_size, "%Y-%m-%dT%H:%M:%S", &tm_log);
+  int ms = ts.tv_nsec / 1000000;
+  g_snprintf(strmsec, sizeof(strmsec), ".%.3dZ", ms);
+  strncat(buf, strmsec, buf_size);
 }
 
-/* copy function set by user. "data" holds a pointer to NvDsUserMeta*/
-static gpointer copy_user_meta(gpointer data, gpointer user_data)
-{
+static GstClockTime generate_ts_rfc3339_from_ts(char *buf, int buf_size,
+                                                GstClockTime ts, gchar *src_uri,
+                                                gint stream_id) {
+  time_t tloc;
+  struct tm tm_log;
+  char strmsec[6];  //.nnnZ\0
+  int ms;
+
+  GstClockTime ts_generated;
+
+  if (playback_utc || (appCtx[0]->config.multi_source_config[stream_id].type !=
+                       NV_DS_SOURCE_RTSP)) {
+    if (testAppCtx->streams[stream_id].meta_number == 0) {
+      testAppCtx->streams[stream_id].timespec_first_frame =
+          extract_utc_from_uri(src_uri);
+      memcpy(
+          &tloc,
+          (void *)(&testAppCtx->streams[stream_id].timespec_first_frame.tv_sec),
+          sizeof(time_t));
+      ms =
+          testAppCtx->streams[stream_id].timespec_first_frame.tv_nsec / 1000000;
+      testAppCtx->streams[stream_id].gst_ts_first_frame = ts;
+      ts_generated = GST_TIMESPEC_TO_TIME(
+          testAppCtx->streams[stream_id].timespec_first_frame);
+      if (ts_generated == 0) {
+        // Expected warning for default stream
+        // g_print(
+        //     "WARNING; playback mode used with URI [%s] not conforming to "
+        //     "timestamp format;"
+        //     " check README; using system-time\n",
+        //     src_uri);
+
+        clock_gettime(CLOCK_REALTIME,
+                      &testAppCtx->streams[stream_id].timespec_first_frame);
+        ts_generated = GST_TIMESPEC_TO_TIME(
+            testAppCtx->streams[stream_id].timespec_first_frame);
+      }
+    } else {
+      GstClockTime ts_current =
+          GST_TIMESPEC_TO_TIME(
+              testAppCtx->streams[stream_id].timespec_first_frame) +
+          (ts - testAppCtx->streams[stream_id].gst_ts_first_frame);
+      struct timespec timespec_current;
+      GST_TIME_TO_TIMESPEC(ts_current, timespec_current);
+      memcpy(&tloc, (void *)(&timespec_current.tv_sec), sizeof(time_t));
+      ms = timespec_current.tv_nsec / 1000000;
+      ts_generated = ts_current;
+    }
+  } else {
+    /** ts itself is UTC Time in ns */
+    struct timespec timespec_current;
+    GST_TIME_TO_TIMESPEC(ts, timespec_current);
+    memcpy(&tloc, (void *)(&timespec_current.tv_sec), sizeof(time_t));
+    ms = timespec_current.tv_nsec / 1000000;
+    ts_generated = ts;
+  }
+  gmtime_r(&tloc, &tm_log);
+  strftime(buf, buf_size, "%Y-%m-%dT%H:%M:%S", &tm_log);
+  g_snprintf(strmsec, sizeof(strmsec), ".%.3dZ", ms);
+  strncat(buf, strmsec, buf_size);
+
+  return ts_generated;
+}
+
+static gpointer meta_copy_func(gpointer data, gpointer user_data) {
   NvDsUserMeta *user_meta = (NvDsUserMeta *)data;
-  NvDsEmbedding *src_user_metadata = (NvDsEmbedding *)user_meta->user_meta_data;
-  NvDsEmbedding *dst_user_metadata = (NvDsEmbedding *)g_malloc0(sizeof(NvDsEmbedding));
-  int floatSize = sizeof(float);
-  dst_user_metadata->embedding_vector =
-        g_memdup(src_user_metadata->embedding_vector, src_user_metadata->embedding_length * sizeof(float));
-  dst_user_metadata->embedding_length = src_user_metadata->embedding_length;
+  NvDsEventMsgMeta *srcMeta = (NvDsEventMsgMeta *)user_meta->user_meta_data;
+  NvDsEventMsgMeta *dstMeta = NULL;
 
-  return (gpointer)dst_user_metadata;
+  dstMeta = (NvDsEventMsgMeta *)g_memdup(srcMeta, sizeof(NvDsEventMsgMeta));
+
+  if (srcMeta->ts) dstMeta->ts = g_strdup(srcMeta->ts);
+
+  if (srcMeta->objSignature.size > 0) {
+    dstMeta->objSignature.signature = (gdouble *)g_memdup(
+        srcMeta->objSignature.signature, srcMeta->objSignature.size);
+    dstMeta->objSignature.size = srcMeta->objSignature.size;
+  }
+
+  if (srcMeta->objectId) {
+    dstMeta->objectId = g_strdup(srcMeta->objectId);
+  }
+
+  if (srcMeta->sensorStr) {
+    dstMeta->sensorStr = g_strdup(srcMeta->sensorStr);
+  }
+
+  if (srcMeta->extMsgSize > 0) {
+    if (srcMeta->objType == NVDS_OBJECT_TYPE_PERSON) {
+      NvDsPersonObject *srcObj = (NvDsPersonObject *)srcMeta->extMsg;
+      NvDsPersonObject *obj =
+          (NvDsPersonObject *)g_malloc0(sizeof(NvDsPersonObject));
+
+      obj->age = srcObj->age;
+
+      if (srcObj->gender) obj->gender = g_strdup(srcObj->gender);
+      if (srcObj->cap) obj->cap = g_strdup(srcObj->cap);
+      if (srcObj->hair) obj->hair = g_strdup(srcObj->hair);
+      if (srcObj->apparel) obj->apparel = g_strdup(srcObj->apparel);
+
+      dstMeta->extMsg = obj;
+      dstMeta->extMsgSize = sizeof(NvDsPersonObject);
+    } else if (srcMeta->objType == NVDS_OBJECT_TYPE_PRODUCT) {
+      NvDsProductObject *srcObj = (NvDsProductObject *)srcMeta->extMsg;
+      NvDsProductObject *obj =
+          (NvDsProductObject *)g_malloc0(sizeof(NvDsProductObject));
+      if (srcObj->brand) obj->brand = g_strdup(srcObj->brand);
+      if (srcObj->type) obj->type = g_strdup(srcObj->type);
+      if (srcObj->shape) obj->shape = g_strdup(srcObj->shape);
+
+      dstMeta->extMsg = obj;
+      dstMeta->extMsgSize = sizeof(NvDsProductObject);
+    }
+  }
+
+  if (srcMeta->embedding.embedding_length > 0) {
+    dstMeta->embedding.embedding_length = srcMeta->embedding.embedding_length;
+    dstMeta->embedding.embedding_vector =
+        g_memdup(srcMeta->embedding.embedding_vector,
+                 srcMeta->embedding.embedding_length * sizeof(float));
+  }
+
+  return dstMeta;
 }
 
-/* release function set by user. "data" holds a pointer to NvDsUserMeta*/
-static void release_user_meta(gpointer data, gpointer user_data)
-{
-    NvDsUserMeta *user_meta = (NvDsUserMeta *)data;
-    NvDsEmbedding *user_metadata = (NvDsEmbedding *)user_meta->user_meta_data;
-    user_metadata->embedding_length = 0;
-    g_free (user_metadata->embedding_vector);
-    user_metadata->embedding_vector = NULL;
-    g_free (user_meta->user_meta_data);
-    user_meta->user_meta_data = NULL;
-    return;
+static void meta_free_func(gpointer data, gpointer user_data) {
+  NvDsUserMeta *user_meta = (NvDsUserMeta *)data;
+  NvDsEventMsgMeta *srcMeta = (NvDsEventMsgMeta *)user_meta->user_meta_data;
+  user_meta->user_meta_data = NULL;
+
+  if (srcMeta->ts) {
+    g_free(srcMeta->ts);
+  }
+
+  if (srcMeta->objSignature.size > 0) {
+    g_free(srcMeta->objSignature.signature);
+    srcMeta->objSignature.size = 0;
+  }
+
+  if (srcMeta->objectId) {
+    g_free(srcMeta->objectId);
+  }
+
+  if (srcMeta->sensorStr) {
+    g_free(srcMeta->sensorStr);
+  }
+
+  if (srcMeta->extMsgSize > 0) {
+    if (srcMeta->objType == NVDS_OBJECT_TYPE_PERSON) {
+      NvDsPersonObject *obj = (NvDsPersonObject *)srcMeta->extMsg;
+
+      if (obj->gender) g_free(obj->gender);
+      if (obj->cap) g_free(obj->cap);
+      if (obj->hair) g_free(obj->hair);
+      if (obj->apparel) g_free(obj->apparel);
+    }
+    //! Extensions for Fewshot Learning
+    else if (srcMeta->objType == NVDS_OBJECT_TYPE_PRODUCT) {
+      NvDsProductObject *obj = (NvDsProductObject *)srcMeta->extMsg;
+
+      if (obj->brand) g_free(obj->brand);
+      if (obj->type) g_free(obj->type);
+      if (obj->shape) g_free(obj->shape);
+    }
+
+    g_free(srcMeta->extMsg);
+    srcMeta->extMsg = NULL;
+    srcMeta->extMsgSize = 0;
+  }
+
+  if (srcMeta->embedding.embedding_vector) {
+    g_free(srcMeta->embedding.embedding_vector);
+  }
+  srcMeta->embedding.embedding_length = 0;
+
+  g_free(srcMeta);
+}
+
+#ifdef GENERATE_DUMMY_META_EXT
+static void generate_person_meta(gpointer data) {
+  NvDsPersonObject *obj = (NvDsPersonObject *)data;
+  obj->age = 45;
+  obj->cap = g_strdup("none-dummy-person-info");
+  obj->hair = g_strdup("black");
+  obj->gender = g_strdup("male");
+  obj->apparel = g_strdup("formal");
+}
+//! Extensions for Fewshot Learning
+// Create product meta object
+static void generate_product_meta(gpointer data) {
+  NvDsProductObject *obj = (NvDsProductObject *)data;
+  obj->brand = g_strdup("");
+  obj->type = g_strdup("");
+  obj->shape = g_strdup("");
+}
+#endif
+
+static void generate_event_msg_meta(AppCtx *appCtx, gpointer data,
+                                    gint class_id, gboolean useTs,
+                                    GstClockTime ts, gchar *src_uri,
+                                    gint stream_id, guint sensor_id,
+                                    NvDsObjectMeta *obj_params, float scaleW,
+                                    float scaleH, NvDsFrameMeta *frame_meta,
+                                    NvDsInferTensorMeta *tensor_meta,
+                                    NvDsBatchMeta *batch_meta) {
+  NvDsEventMsgMeta *meta = (NvDsEventMsgMeta *)data;
+  GstClockTime ts_generated = 0;
+
+  meta->objType = NVDS_OBJECT_TYPE_UNKNOWN; /**< object unknown */
+  /* The sensor_id is parsed from the source group name which has the format
+   * [source<sensor-id>]. */
+  meta->sensorId = sensor_id;
+  meta->placeId = sensor_id;
+  meta->moduleId = sensor_id;
+  meta->frameId = frame_meta->frame_num;
+  meta->ts = (gchar *)g_malloc0(MAX_TIME_STAMP_LEN + 1);
+  meta->objectId = (gchar *)g_malloc0(MAX_LABEL_SIZE);
+  meta->bbox.left = obj_params->rect_params.left * scaleW;
+  meta->bbox.top = obj_params->rect_params.top * scaleH;
+  meta->bbox.width = obj_params->rect_params.width * scaleW;
+  meta->bbox.height = obj_params->rect_params.height * scaleH;
+  meta->confidence = obj_params->confidence;
+  /** tracking ID */
+  meta->trackingId = obj_params->object_id;
+
+  strncpy(meta->objectId, obj_params->obj_label, MAX_LABEL_SIZE);
+
+  /** INFO: This API is called once for every 30 frames (now) */
+  if (useTs && src_uri) {
+    ts_generated = generate_ts_rfc3339_from_ts(meta->ts, MAX_TIME_STAMP_LEN, ts,
+                                               src_uri, stream_id);
+  } else {
+    generate_ts_rfc3339(meta->ts, MAX_TIME_STAMP_LEN);
+  }
+  /** sensor ID when streams are added using nvmultiurisrcbin REST API */
+  NvDsSensorInfo *sensorInfo = get_sensor_info(appCtx, stream_id);
+  if (sensorInfo) {
+    /** this stream was added using REST API; we have Sensor Info! */
+    // g_print(
+    //     "this stream [%d:%s] was added using REST API; we have Sensor
+    //     Info\n", sensorInfo->source_id, sensorInfo->sensor_id);
+    meta->sensorStr = g_strdup(sensorInfo->sensor_id);
+  }
+
+  (void)ts_generated;
+  /*
+   * This demonstrates how to attach custom objects.
+   * Any custom object as per requirement can be generated and attached
+   * like NvDsVehicleObject / NvDsPersonObject / NvDsProductObject. Then that
+   * object should be handled in gst-nvmsgconv component accordingly.
+   */
+  if (model_used == APP_CONFIG_ANALYTICS_RETAIL) {
+    
+  } else if (model_used == APP_CONFIG_ANALYTICS_PEOPLE_REID) {
+    if (class_id == SECONDARY_GIE_MTMC_PERSON) {
+      meta->type = NVDS_EVENT_MOVING;
+      meta->objType = NVDS_OBJECT_TYPE_PERSON;
+#ifdef GENERATE_DUMMY_META_EXT
+      // MTMC does not require to send dummy sgie attributes
+      // NvDsPersonObject *obj =
+      //     (NvDsPersonObject *)g_malloc0(sizeof(NvDsPersonObject));
+      // generate_person_meta(obj);
+
+      // meta->extMsg = obj;
+      // meta->extMsgSize = sizeof(NvDsPersonObject);
+#endif
+    }
+  }
+  //
+  bool embedding_on_device = TRUE;
+  gchar dual_head_label[MAX_CHAR_LENGTH_PER_LINE];
+  if (tensor_meta) {
+    // Postprocess - embedding vector
+    if (model_used == APP_CONFIG_ANALYTICS_RETAIL) {
+      meta->type = NVDS_EVENT_MOVING;
+      meta->objType = NVDS_OBJECT_TYPE_PRODUCT;
+#ifdef GENERATE_DUMMY_META_EXT
+      NvDsProductObject *obj =
+          (NvDsProductObject *)g_malloc0(sizeof(NvDsProductObject));
+      generate_product_meta(obj);
+
+      meta->extMsg = obj;
+      meta->extMsgSize = sizeof(NvDsProductObject);
+#endif
+      NvDsInferDims embedding_dims =
+          tensor_meta->output_layers_info[0].inferDims;
+      int numElements = embedding_dims.d[0];
+      meta->embedding.embedding_vector =
+          (float *)g_malloc0(numElements * sizeof(float));
+      cudaMemcpy(meta->embedding.embedding_vector,
+                 (float *)(tensor_meta->out_buf_ptrs_dev[0]),
+                 numElements * sizeof(float), cudaMemcpyDeviceToHost);
+      meta->embedding.embedding_length = numElements;
+    }
+    else if (model_used == APP_CONFIG_ANALYTICS_PEOPLE_REID) 
+    {
+      meta->type = NVDS_EVENT_MOVING;
+      meta->objType = NVDS_OBJECT_TYPE_PERSON;
+#ifdef GENERATE_DUMMY_META_EXT
+      // MTMC does not require to send dummy sgie attributes
+      // NvDsPersonObject *obj =
+      //     (NvDsPersonObject *)g_malloc0(sizeof(NvDsPersonObject));
+      // generate_person_meta(obj);
+
+      // meta->extMsg = obj;
+      // meta->extMsgSize = sizeof(NvDsPersonObject);
+#endif
+      NvDsInferDims embedding_dims =
+          tensor_meta->output_layers_info[0].inferDims;
+      int numElements = embedding_dims.d[0];
+      meta->embedding.embedding_vector =
+          (float *)g_malloc0(numElements * sizeof(float));
+      cudaMemcpy(meta->embedding.embedding_vector,
+                 (float *)(tensor_meta->out_buf_ptrs_dev[0]),
+                 numElements * sizeof(float), cudaMemcpyDeviceToHost);
+      meta->embedding.embedding_length = numElements;
+    } 
+    else if (model_used == APP_CONFIG_ANALYTICS_RETAIL_DUAL_HEAD_SGIE) 
+    {
+      meta->type = NVDS_EVENT_MOVING;
+      meta->objType = NVDS_OBJECT_TYPE_PRODUCT;
+
+      NvDsInferDims embedding_dims =
+          tensor_meta->output_layers_info[0].inferDims;
+      int numElements = embedding_dims.d[0];
+      meta->embedding.embedding_vector =
+          (float *)g_malloc0(numElements * sizeof(float));
+      cudaMemcpy(meta->embedding.embedding_vector,
+                 (float *)(tensor_meta->out_buf_ptrs_dev[0]),
+                 numElements * sizeof(float), cudaMemcpyDeviceToHost);
+      meta->embedding.embedding_length = numElements;
+      
+      NvDsInferDimsCHW dims;
+
+      /* Access the 1-indexed output layer to get probs */
+      getDimsCHWFromDims(dims, tensor_meta->output_layers_info[1].inferDims);
+      dual_head_classes = dims.c;
+
+      float *outputCoverageBuffer =
+          (float *)tensor_meta->out_buf_ptrs_host[1];
+      float maxProbability = 0;
+      bool attrFound = false;
+      NvDsInferAttribute attr;
+
+      /* Get the output with max probability */
+      for (unsigned int c = 0; c < dual_head_classes; c++) {
+        float probability = outputCoverageBuffer[c];
+        if (probability > 0 && probability > maxProbability) {
+          maxProbability = probability;
+          attrFound = true;
+          attr.attributeIndex = 0;
+          attr.attributeValue = c;
+          attr.attributeConfidence = probability;
+        }
+      }
+#ifdef GENERATE_DUMMY_META_EXT
+      NvDsProductObject *obj =
+          (NvDsProductObject *)g_malloc0(sizeof(NvDsProductObject));
+      generate_product_meta(obj);
+
+#endif
+      /* Generate classifer metadata and attach to obj_meta */
+      if (attrFound) {
+        NvDsClassifierMeta *classifier_meta =
+            nvds_acquire_classifier_meta_from_pool(batch_meta);
+
+        classifier_meta->unique_component_id = tensor_meta->unique_id;
+
+        /* Create NvDsLabel Info*/
+        NvDsLabelInfo *label_info =
+            nvds_acquire_label_info_meta_from_pool(batch_meta);
+        label_info->result_class_id = attr.attributeValue;
+        label_info->result_prob = attr.attributeConfidence;
+
+        strcpy(label_info->result_label, labels[label_info->result_class_id]);
+
+        gchar *temp = obj_params->text_params.display_text;
+        obj_params->text_params.display_text =
+            g_strconcat(temp, " ", label_info->result_label, NULL);
+        g_free(temp);
+
+        nvds_add_label_info_meta_to_classifier(classifier_meta, label_info);
+        nvds_add_classifier_meta_to_object(obj_params, classifier_meta);
+        strcpy(dual_head_label, label_info->result_label);
+#ifdef GENERATE_DUMMY_META_EXT
+        obj->brand = g_strdup(dual_head_label);
+        meta->extMsg = obj;
+        meta->extMsgSize = sizeof(NvDsProductObject);
+#endif
+
+      }
+
+#ifdef GENERATE_DUMMY_META_EXT
+      meta->extMsg = obj;
+      meta->extMsgSize = sizeof(NvDsProductObject);
+#endif
+
+    }
+  }
 }
 
 /**
@@ -322,42 +711,67 @@ bbox_generated_probe_after_analytics (AppCtx * appCtx, GstBuffer * buf,
       src_stream->last_ntp_time = buf_ntp_time;
     }
 
+    float scaleW = 0;
+    float scaleH = 0;
+    if (!appCtx->config.streammux_config.pipeline_width ||
+        !appCtx->config.streammux_config.pipeline_height) {
+      g_print("[ERROR] invalid pipeline params\n");
+
+      return;
+    }
+
+    scaleW = (float)frame_meta->source_frame_width /
+             appCtx->config.streammux_config.pipeline_width;
+    scaleH = (float)frame_meta->source_frame_height /
+             appCtx->config.streammux_config.pipeline_height;
+    
+    buffer_pts = frame_meta->buf_pts;
+    if (playback_utc == FALSE) {
+      /** Use the buffer-NTP-time derived from this stream's RTCP Sender
+       * Report here:
+       */
+      buffer_pts = buf_ntp_time;
+    }
+
     GList *l;
     for (l = frame_meta->obj_meta_list; l != NULL; l = l->next) {
       /* Now using above information we need to form a text that should
        * be displayed on top of the bounding box, so lets form it here. */
 
       obj_meta = (NvDsObjectMeta *)(l->data);
-
+      NvDsInferTensorMeta *tensor_meta = NULL;
       //! Attaching Embedding tensor metadata
       for (NvDsMetaList *l_user = obj_meta->obj_user_meta_list;
             l_user != NULL; l_user = l_user->next) {
         NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
         if (user_meta->base_meta.meta_type == NVDSINFER_TENSOR_OUTPUT_META) {
           /* convert to tensor metadata */
-          NvDsInferTensorMeta *tensor_meta =
-              (NvDsInferTensorMeta *)user_meta->user_meta_data;
+          tensor_meta = (NvDsInferTensorMeta *)user_meta->user_meta_data;
           //==Retrieve output tensor from model==
           // = (float *)tensor_meta->out_buf_ptrs_host[0];
-
-          NvDsInferDims embedding_dims =
-              tensor_meta->output_layers_info[0].inferDims;
-
-          int width = embedding_dims.d[2];
-          int height = embedding_dims.d[1];
-          int numElements = embedding_dims.d[0];
-
-          /* Acquire NvDsUserMeta user meta from pool */
-          NvDsUserMeta *new_user_meta = nvds_acquire_user_meta_from_pool(batch_meta);
-          /* Set NvDsUserMeta below */
-          new_user_meta->user_meta_data = (void *)set_metadata_ptr(numElements, tensor_meta->out_buf_ptrs_dev[0]);
-          new_user_meta->base_meta.meta_type = NVDS_OBJECT_USER_EMBEDDING;
-          new_user_meta->base_meta.copy_func = (NvDsMetaCopyFunc)copy_user_meta;
-          new_user_meta->base_meta.release_func = (NvDsMetaReleaseFunc)release_user_meta;
-          /* We want to add NvDsUserMeta to frame level */
-          nvds_add_user_meta_to_obj(obj_meta, new_user_meta);
         }
       }
+      /** Generate NvDsEventMsgMeta for every object */
+      NvDsEventMsgMeta *msg_meta =
+          (NvDsEventMsgMeta *)g_malloc0(sizeof(NvDsEventMsgMeta));
+
+      generate_event_msg_meta(appCtx, msg_meta, obj_meta->class_id, TRUE,
+                              buffer_pts,
+                              appCtx->config.multi_source_config[stream_id].uri,
+                              stream_id, stream_id, obj_meta, scaleW, scaleH,
+                              frame_meta, tensor_meta, batch_meta);
+      /* Acquire NvDsUserMeta user meta from pool */
+      NvDsUserMeta *new_user_meta =
+          nvds_acquire_user_meta_from_pool(batch_meta);
+      /* Set NvDsUserMeta below */
+      new_user_meta->user_meta_data = (void *)msg_meta;
+      new_user_meta->base_meta.batch_meta = batch_meta;
+      new_user_meta->base_meta.meta_type = NVDS_EVENT_MSG_META;
+      new_user_meta->base_meta.copy_func = (NvDsMetaCopyFunc)meta_copy_func;
+      new_user_meta->base_meta.release_func =
+          (NvDsMetaReleaseFunc)meta_free_func;
+      /* We want to add NvDsUserMeta to frame level */
+      nvds_add_user_meta_to_frame(frame_meta, new_user_meta);
     }
     testAppCtx->streams[stream_id].frameCount++;
   }
@@ -1021,6 +1435,47 @@ done:
   return NULL;
 }
 
+/**
+ * Parse labels from label file and fill them in the global variable: `labels`
+ */
+void get_labels_from_file(gchar *classifier_label_file) {
+  // Use file pointer
+  FILE *file = fopen(classifier_label_file, "r");
+
+  // Return if file is not found
+  if (file == NULL) {
+    perror("Error opening file.");
+    return;
+  }
+
+  guint line_count = 0;
+  while (fgets(labels[line_count], MAX_CHAR_LENGTH_PER_LINE, file) != NULL) {
+    // Remove newline character from the end of the line
+    labels[line_count][strcspn(labels[line_count], "\n")] = '\0';
+    line_count++;
+
+    if (line_count == dual_head_classes)
+      break;
+    else if (line_count > dual_head_classes) {
+      g_print(
+          "[WARNING] You have more labels than classes. Labels after line %d "
+          "will not be "
+          "used.\n",
+          dual_head_classes);
+      break;
+    }
+  }
+
+  if (line_count < dual_head_classes)
+    g_print(
+        "[WARNING] You have more classes than labels. Empty strings will be "
+        "used in "
+        "metadata field when a class without label is predicted.\n");
+
+  // Close the file
+  fclose(file);
+}
+
 /** @} imported from deepstream-app as is */
 
 int
@@ -1147,6 +1602,20 @@ main (int argc, char *argv[])
      * buffer-pool-size to 16 */
     g_object_set (appCtx[i]->pipeline.multi_src_bin.streammux,
         "buffer-pool-size", STREAMMUX_BUFFER_POOL_SIZE, NULL);
+  }
+
+  if (model_used == APP_CONFIG_ANALYTICS_RETAIL_DUAL_HEAD_SGIE) {
+    NvDsGieConfig *classifier_config =
+        &appCtx[0]->config.secondary_gie_sub_bin_config[0];
+    gboolean classifier_enabled = classifier_config->enable;
+
+    if (!classifier_enabled) {
+      perror("Dual Head Classifier is disabled.");
+      return 1;
+    }
+
+    gchar *classifier_label_file = classifier_config->label_file_path;
+    get_labels_from_file(classifier_label_file);
   }
 
   main_loop = g_main_loop_new (NULL, FALSE);
