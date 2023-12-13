@@ -284,9 +284,9 @@ std::vector<NvAR_Point3f> liftKeypoints25DTo3D(const float* p2d,
     std::vector<NvAR_Point3f> p3d(numKeypoints, { 0.f, 0.f, 0.f });
 
     for (int i = 0; i < numKeypoints; i++) {
-        p3d[i].x = XY1(i, 0) * (zRel[i] + zRootsMedian);
-        p3d[i].y = XY1(i, 1) * (zRel[i] + zRootsMedian);
-        p3d[i].z = XY1(i, 2) * (zRel[i] + zRootsMedian);
+        p3d[i].x = XY1(i, 0) * zRel[i];
+        p3d[i].y = XY1(i, 1) * zRel[i];
+        p3d[i].z = XY1(i, 2) * zRel[i];
     }
 
     return p3d;
@@ -661,11 +661,6 @@ void parse_25dpose_from_tensor_meta(NvDsInferTensorMeta *tensor_meta,
       p3dLifted = liftKeypoints25DTo3D(keypoints, keypointsZRel, numKeyPoints, m_K_inv_transpose, m_scale_ll);
       float scale = recoverScale(p3dLifted, keypoints_confidence, m_mean_ll);
       // printf("scale = %f\n", scale);
-      for (auto i = 0; i < p3dLifted.size(); i++) {
-        p3dLifted[i].x /= scale;
-        p3dLifted[i].y /= scale;
-        p3dLifted[i].z /= scale;
-      }
 
       NvDsUserMeta *user_meta = nvds_acquire_user_meta_from_pool (bmeta);
       NvDsJoints *ds_joints = (NvDsJoints *)g_malloc(numKeyPoints * sizeof(NvDsJoints));
