@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,6 +56,11 @@ ds_parse_config_yml_filepath(gchar *cfg_file_path, const char* group);
 NvDsYamlParserStatus
 ds_parse_videotemplate_config(GstElement *vtemplate, 
   gchar *cfg_file_path, const char* group);
+
+NvDsYamlParserStatus
+ds_parse_ocdr_videotemplate_config(GstElement *vtemplate, 
+  gchar *cfg_file_path, const char* group);
+
 
 #ifdef __cplusplus
 }

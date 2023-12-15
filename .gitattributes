@@ -13,3 +13,9 @@ TRT-OSS/Jetson/TRT8.2/libnvinfer_plugin.so.8.2.1 filter=lfs diff=lfs merge=lfs -
 TRT-OSS/Jetson/TRT8.4/libnvinfer_plugin.so.8.4.0.11 filter=lfs diff=lfs merge=lfs -text
 TRT-OSS/x86/TRT8.2/libnvinfer_plugin.so.8.2.5.1 filter=lfs diff=lfs merge=lfs -text
 sample/streams/retail_object_h264.mp4 filter=lfs diff=lfs merge=lfs -text
+apps/tao_others/deepstream-nvocdr-app/nvocdr_libs/aarch64/libnvocdr.so filter=lfs diff=lfs merge=lfs -text
+apps/tao_others/deepstream-nvocdr-app/nvocdr_libs/x86/libnvocdr_impl.so filter=lfs diff=lfs merge=lfs -text
+apps/tao_others/deepstream-nvocdr-app/nvocdr_libs/x86/libnvocdr.so filter=lfs diff=lfs merge=lfs -text
+TRT-OSS/x86/TRT8.6/libnvinfer_plugin.so.8.6.2 filter=lfs diff=lfs merge=lfs -text
+TRT-OSS/Jetson/TRT8.6/libnvinfer_plugin.so.8.6.2 filter=lfs diff=lfs merge=lfs -text
+apps/tao_others/deepstream-nvocdr-app/nvocdr_libs/aarch64/libnvocdr_impl.so filter=lfs diff=lfs merge=lfs -text

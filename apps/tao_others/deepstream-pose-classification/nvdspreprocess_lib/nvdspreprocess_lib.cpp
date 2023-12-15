@@ -191,71 +191,76 @@ CustomTensorPreparation(CustomCtx *ctx, NvDsPreProcessBatch *batch, NvDsPreProce
 {
   NvDsPreProcessStatus status = NVDSPREPROCESS_TENSOR_NOT_READY;
 
-  guint64 object_id = batch->units[0].roi_meta.object_meta->object_id;
-  GstBuffer *inbuf = (GstBuffer *)batch->inbuf;
-  NvDsMetaList *l_frame = NULL;
-  NvDsMetaList *l_obj = NULL;
-  NvDsMetaList *l_user = NULL;
-  SObjectContex* pSObjectCtx = NULL;
-  NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta(inbuf);
-  for (l_frame = batch_meta->frame_meta_list; l_frame != NULL;
-    l_frame = l_frame->next)
+  /** acquire a buffer from tensor pool */
+  buf = acquirer->acquire();
+  float * pDst = (float*)buf->memory_ptr;
+  int units = batch->units.size();
+  for(int i = 0; i < units; i++)
   {
-    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *)(l_frame->data);
-    for (l_obj = frame_meta->obj_meta_list; l_obj != NULL;
-      l_obj = l_obj->next)
-    {
-      NvDsObjectMeta *obj_meta = (NvDsObjectMeta *)l_obj->data;
-      if(obj_meta->object_id != object_id)
-        continue;
+    guint64 object_id = batch->units[i].roi_meta.object_meta->object_id;
+    GstBuffer *inbuf = (GstBuffer *)batch->inbuf;
+    NvDsMetaList *l_frame = NULL;
+    NvDsMetaList *l_obj = NULL;
+    NvDsMetaList *l_user = NULL;
+    SObjectContex* pSObjectCtx = NULL;
+    NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta(inbuf);
 
-      for (l_user = obj_meta->obj_user_meta_list; l_user != NULL;
-            l_user = l_user->next)
+    for (l_frame = batch_meta->frame_meta_list; l_frame != NULL;
+      l_frame = l_frame->next)
+    {
+      NvDsFrameMeta *frame_meta = (NvDsFrameMeta *)(l_frame->data);
+      for (l_obj = frame_meta->obj_meta_list; l_obj != NULL;
+        l_obj = l_obj->next)
       {
-        NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
-        if (user_meta->base_meta.meta_type == NVDS_OBJ_META)
+        NvDsObjectMeta *obj_meta = (NvDsObjectMeta *)l_obj->data;
+        if(obj_meta->object_id != object_id)
+          continue;
+
+        for (l_user = obj_meta->obj_user_meta_list; l_user != NULL;
+              l_user = l_user->next)
         {
-          /* find by objectid */
-          pSObjectCtx = findObjectCtx(ctx, obj_meta->object_id);
-          if(!pSObjectCtx)
+          NvDsUserMeta *user_meta = (NvDsUserMeta *)l_user->data;
+          if (user_meta->base_meta.meta_type == NVDS_OBJ_META)
           {
-            /* can't find objectid, find one whose objectid is -1 */
-            pSObjectCtx = findUnusedObjectCtx(ctx, obj_meta->object_id);
-            if(pSObjectCtx)
+            /* find by objectid */
+            pSObjectCtx = findObjectCtx(ctx, obj_meta->object_id);
+            if(!pSObjectCtx)
             {
-              /*can find one whose objectid is not -1, copy keypoints*/
-              pSObjectCtx->object_id = obj_meta->object_id;
-              sveKeypoints(ctx, user_meta->user_meta_data, pSObjectCtx);
-            } else {
-              /* if no, extent Skeypoints, then copy keypoints*/
-              pSObjectCtx = CreateObjectCtx(ctx);
-              printf("extendObjectCtx pSObjectCtx:%p\n", pSObjectCtx);
+              /* can't find objectid, find one whose objectid is -1 */
+              pSObjectCtx = findUnusedObjectCtx(ctx, obj_meta->object_id);
               if(pSObjectCtx)
               {
+                /*can find one whose objectid is not -1, copy keypoints*/
                 pSObjectCtx->object_id = obj_meta->object_id;
                 sveKeypoints(ctx, user_meta->user_meta_data, pSObjectCtx);
+              } else {
+                /* if no, extent Skeypoints, then copy keypoints*/
+                pSObjectCtx = CreateObjectCtx(ctx);
+                printf("extendObjectCtx pSObjectCtx:%p\n", pSObjectCtx);
+                if(pSObjectCtx)
+                {
+                  pSObjectCtx->object_id = obj_meta->object_id;
+                  sveKeypoints(ctx, user_meta->user_meta_data, pSObjectCtx);
+                }
               }
+            } else {
+              /* can find, copy keypoints */
+              sveKeypoints(ctx, user_meta->user_meta_data, pSObjectCtx);
             }
-          } else {
-            /* can find, copy keypoints */
-            sveKeypoints(ctx, user_meta->user_meta_data, pSObjectCtx);
           }
         }
       }
     }
-  }
 
-  /** acquire a buffer from tensor pool */
-  buf = acquirer->acquire();
-
-  /* copy to buffer, 3 X 300 X 34 X 1 (C T V M) */
-  if(pSObjectCtx)
-  {
-    float * pDst = (float*)buf->memory_ptr;
-    int bufLen = ctx->one_channel_element_num*sizeof(float);
-    cudaMemcpy(pDst, pSObjectCtx->x, bufLen, cudaMemcpyHostToDevice);
-    cudaMemcpy(pDst + ctx->one_channel_element_num, pSObjectCtx->y, bufLen, cudaMemcpyHostToDevice);
-    cudaMemcpy(pDst + ctx->two_channel_element_num, pSObjectCtx->z, bufLen, cudaMemcpyHostToDevice);
+    /* copy to buffer, 3 X 300 X 34 X 1 (C T V M) */
+    if(pSObjectCtx)
+    {
+      int bufLen = ctx->one_channel_element_num*sizeof(float);
+      cudaMemcpy(pDst, pSObjectCtx->x, bufLen, cudaMemcpyHostToDevice);
+      cudaMemcpy(pDst + ctx->one_channel_element_num, pSObjectCtx->y, bufLen, cudaMemcpyHostToDevice);
+      cudaMemcpy(pDst + ctx->two_channel_element_num, pSObjectCtx->z, bufLen, cudaMemcpyHostToDevice);
+      pDst = pDst + 3*bufLen;
+    }
   }
 
   //reset object context if timeout

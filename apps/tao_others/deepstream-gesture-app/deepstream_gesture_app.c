@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1083,9 +1083,7 @@ main (int argc, char *argv[])
   if (isStreaming)
     g_object_set (G_OBJECT (streammux), "live-source", true, NULL);
   g_object_set (G_OBJECT (streammux), "batch-size", src_cnt, NULL);
-#ifndef PLATFORM_TEGRA
-  g_object_set (G_OBJECT (streammux), "nvbuf-memory-type", 3, NULL);
-#endif
+
   tiler_rows = (guint) sqrt (src_cnt);
   tiler_columns = (guint) ceil (1.0 * src_cnt / tiler_rows);
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",

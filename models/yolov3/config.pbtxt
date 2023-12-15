@@ -23,7 +23,7 @@
 name: "yolov3"
 platform: "tensorrt_plan"
 max_batch_size: 4
-default_model_filename: "yolov3_resnet18_398.etlt_b4_gpu0_int8.engine"
+default_model_filename: "yolov3_resnet18_398.onnx_b4_gpu0_int8.engine"
 input [
   {
     name: "Input"
