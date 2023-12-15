@@ -33,6 +33,8 @@ primary-gie:
   plugin-type: 0
   #0:nvinfer, 1:nvinfeserver
   config-file-path: ../nvinfer/peopleSegNet_tao/pgie_peopleSegNet_tao_config.yml
+  #config-file-path: ../triton/peopleSegNet_tao/pgie_peopleSegNet_tao_config.yml
+  #config-file-path: ../triton-grpc/peopleSegNet_tao/pgie_peopleSegNet_tao_config.yml
 
 eglsink:
   enable: 0

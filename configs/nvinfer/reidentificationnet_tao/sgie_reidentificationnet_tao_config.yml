@@ -25,10 +25,9 @@ property:
   net-scale-factor: 0.01735207357279195
   offsets: 123.675;116.28;103.53
   model-color-format: 0
-  tlt-model-key: nvidia_tao
-  tlt-encoded-model: ../../../models/reidentificationnet/resnet50_market1501_aicity156.etlt
-  model-engine-file: ../../../models/reidentificationnet/resnet50_market1501_aicity156.etlt_b16_gpu0_fp16.engine
-  #infer-dims: 3;256;128
+  onnx-file: ../../../models/reidentificationnet/resnet50_market1501_aicity156.onnx
+  model-engine-file: ../../../models/reidentificationnet/resnet50_market1501_aicity156.onnx_b16_gpu0_fp16.engine
+  infer-dims: 3;256;128
   batch-size: 16
   ## 0=FP32, 1=INT8, 2=FP16 mode
   network-mode: 2

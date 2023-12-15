@@ -54,12 +54,12 @@
 [property]
 gpu-id=0
 net-scale-factor=0.0039215697906911373
-model-engine-file=../../../models/poseclassificationnet/st-gcn_3dbp_nvidia.etlt_b1_gpu0_fp32.engine
+model-engine-file=../../../models/poseclassificationnet/st-gcn_3dbp_nvidia.etlt_b2_gpu0_fp16.engine
 tlt-encoded-model=../../../models/poseclassificationnet/st-gcn_3dbp_nvidia.etlt
 tlt-model-key=nvidia_tao
-batch-size=1
+batch-size=2
 #infer-dims=3;224;224
-network-mode=0
+network-mode=2
 process-mode=2
 gie-unique-id=4
 operate-on-gie-id=1

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,26 +20,53 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-property:
-  gpu-id: 0
-  net-scale-factor: 0.01460167693791089023079776340069
-  offsets: 122.7709383;116.7460125;104.09373615
-  model-color-format: 0
-  onnx-file: ../../../models/retail_object_recognition/retail_object_recognition.onnx
-  model-engine-file: ../../../models/retail_object_recognition/retail_object_recognition.onnx_b16_gpu0_fp16.engine
-  labelfile-path: ../../../models/retail_object_recognition/retail_object_recognition_labels.txt
-  infer-dims: 3;224;224
-  batch-size: 16
-  ## 0=FP32, 1=INT8, 2=FP16 mode
-  network-mode: 2
-  network-type: 100
+infer_config {
+  unique_id: 1
+  gpu_ids: 0
+  max_batch_size: 1
+  backend {
+    triton {
+      model_name: "retail_object_detection_binary_dino"
+      version: -1
+      grpc {
+        url: "localhost:10001"
+        enable_cuda_buffer_sharing: false
+      }
+    }
+  }
+
+  preprocess {
+    network_format: IMAGE_FORMAT_RGB
+    tensor_order: TENSOR_ORDER_LINEAR
+    maintain_aspect_ratio: 1
+    symmetric_padding: 0
+    frame_scaling_hw: FRAME_SCALING_HW_DEFAULT
+    frame_scaling_filter: 1
+    normalize {
+      scale_factor: 0.01735207357279195
+      channel_offsets: [123.675, 116.28, 103.53]
+    }
+  }
+  postprocess {
+    labelfile_path: "../../../models/retail_object_detection_binary_dino/class_map.txt"
+    detection {
+      num_detected_classes: 2
+      custom_parse_bbox_func: "NvDsInferParseCustomDDETRTAO"
+      nms {
+        confidence_threshold: 0.5 
+        iou_threshold: 0.5
+        topk: 20
+      }
+    }
+  }
+  custom_lib {
+    path: "../../../post_processor/libnvds_infercustomparser_tao.so"
+  }
+}
+
+input_control {
+  process_mode: PROCESS_MODE_FULL_FRAME
+  operate_on_gie_id: -1
   interval: 0
-  ## Infer Processing Mode 1=Primary Mode 2=Secondary Mode
-  process-mode: 2
-  # ## Clustering algorithm: 0=GroupRectangle 1=DBSCAN 2=NMS 3=Hybrid 4=NoClustering
-  # cluster-mode: 3
-  classifier-threshold: 0
-  output-tensor-meta: 1
-  maintain-aspect-ratio: 0
-  # operate-on-class-ids: 0;1;2;3
-  output-blob-names: probs;embeddings
+}
+
