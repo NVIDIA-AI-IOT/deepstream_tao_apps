@@ -42,4 +42,4 @@ Then the Triton Server service can be started with the following command:
 
 ```
 
-The DeepStream sample application should run in another terminal with the Triton Inference client libraries installed. It is recommend to run the application in the DeepStream Triton container, please refer to [triton_server.md](9) for how to start a DeepStream Triton container.
+The DeepStream sample application should run in another terminal with the Triton Inference client libraries installed. It is recommend to run the application in the DeepStream Triton container, please refer to [triton_server.md](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/release/tao5.1_ds6.4ga/triton_server.md) for how to start a DeepStream Triton container.
