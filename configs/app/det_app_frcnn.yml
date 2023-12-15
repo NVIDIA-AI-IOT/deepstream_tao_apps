@@ -44,7 +44,7 @@ primary-gie:
   #config-file-path: ../triton-grpc/efficientdet_tao/pgie_d0_tao_config.yml
 
   #frcnn
-  #config-file-path: ../nvinfer/frcnn_tao/pgie_frcnn_tao_config.yml
+  config-file-path: ../nvinfer/frcnn_tao/pgie_frcnn_tao_config.yml
   #config-file-path: ../triton/frcnn_tao/pgie_frcnn_tao_config.yml
   #config-file-path: ../triton-grpc/frcnn_tao/pgie_frcnn_tao_config.yml
 
@@ -79,7 +79,7 @@ primary-gie:
   #config-file-path: ../triton-grpc/yolov5_tao/pgie_yolov5_config.yml
 
   #peoplenet-transformer
-  config-file-path: ../nvinfer/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
+  #config-file-path: ../nvinfer/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
   #config-file-path: ../triton/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
   #config-file-path: ../triton-grpc/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
 

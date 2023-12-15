@@ -38,17 +38,18 @@ infer_config {
   preprocess {
     network_format: IMAGE_FORMAT_RGB
     tensor_order: TENSOR_ORDER_LINEAR
-    tensor_name: "inputs"
+    tensor_name: "input"
     maintain_aspect_ratio: 0
     frame_scaling_hw: FRAME_SCALING_HW_DEFAULT
     frame_scaling_filter: 1
     normalize {
-      scale_factor: 0.003921568627451
-      channel_offsets: [0.0,0.0,0.0]
+      scale_factor: 0.01460167693791089023079776340069
+      channel_offsets: [122.7709383,116.7460125,104.09373615]
     }
   }
 
   postprocess {
+    labelfile_path: "../../../models/retail_object_recognition/retail_object_recognition_labels.txt"
     other {}
   }
   

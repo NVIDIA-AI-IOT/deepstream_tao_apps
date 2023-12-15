@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -64,6 +64,27 @@ sink1:
   output-file: out.mp4
   source-id: 0
 
+sink2:
+  enable: 0 # set to 1 to enable sending metadata to kafka
+  #Type - 1=FakeSink 2=EglSink 3=File 4=UDPSink 5=nvoverlaysink 6=MsgConvBroker
+  type: 6
+  msg-conv-config: /opt/nvidia/deepstream/deepstream/sources/apps/sample_apps/deepstream-test5/configs/dstest5_msgconv_sample_config.txt
+  #(0): PAYLOAD_DEEPSTREAM - Deepstream schema payload
+  #(1): PAYLOAD_DEEPSTREAM_MINIMAL - Deepstream schema payload minimal
+  #(2): PAYLOAD_DEEPSTREAM_PROTOBUF - Deepstream schema payload protobuf
+  #(256): PAYLOAD_RESERVED - Reserved type
+  #(257): PAYLOAD_CUSTOM   - Custom schema payload
+  msg-conv-payload-type: 1
+  #(0): Create payload using NvdsEventMsgMeta
+  #(1): New Api to create payload using NvDsFrameMeta
+  msg-conv-msg2p-new-api: 0
+  #Frame interval at which payload is generated
+  msg-conv-frame-interval: 1
+  msg-broker-proto-lib: /opt/nvidia/deepstream/deepstream/lib/libnvds_kafka_proto.so
+  #Provide your msg-broker-conn-str here
+  msg-broker-conn-str: 127.0.0.1;9092;test
+  topic: test
+
 osd:
   enable: 1
   gpu-id: 0
@@ -108,12 +129,18 @@ primary-gie:
   bbox-border-color1: 0;1;1;1
   bbox-border-color2: 0;1;1;1
   bbox-border-color3: 0;1;0;1
-  config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_binary_tao_config.yml
-  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_binary_tao_config.yml
-  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_binary_tao_config.yml
-  #config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_100_tao_config.yml
-  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_100_tao_config.yml
-  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_100_tao_config.yml
+  config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_binary_effdet_tao_config.yml
+  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_binary_effdet_tao_config.yml
+  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_binary_effdet_tao_config.yml
+  #config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_binary_dino_tao_config.yml
+  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_binary_dino_tao_config.yml
+  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_binary_dino_tao_config.yml
+  #config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_meta_dino_tao_config.yml
+  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_meta_dino_tao_config.yml
+  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_meta_dino_tao_config.yml
+  #config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_100_effdet_tao_config.yml
+  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_100_effdet_tao_config.yml
+  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_100_effdet_tao_config.yml
 
 tracker:
   enable: 1
@@ -137,6 +164,7 @@ secondary-gie0:
   config-file: ../nvinfer/retail_object_recognition_tao/sgie_retail_object_recognition_tao_config.yml
   #config-file: ../triton/retail_object_recognition_tao/sgie_retail_object_recognition_tao_config.yml
   #config-file: ../triton-grpc/retail_object_recognition_tao/sgie_retail_object_recognition_tao_config.yml
-
+  labelfile-path: ../../models/retail_object_recognition/retail_object_recognition_labels.txt
+  
 tests:
   file-loop: 0

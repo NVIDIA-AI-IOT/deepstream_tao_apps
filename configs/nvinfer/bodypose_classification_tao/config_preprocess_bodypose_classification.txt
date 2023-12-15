@@ -20,7 +20,7 @@ target-unique-ids=4
     # 0=NCHW, 1=NHWC, 2=CUSTOM
 network-input-order=0
     # tensor shape based on network-input-order
-network-input-shape=1;3;300;34;1
+network-input-shape=2;3;300;34;1
 process-on-frame=0
 processing-width=34
 processing-height=300
@@ -48,7 +48,7 @@ custom-tensor-preparation-function=CustomTensorPreparation
 frames-sequence-length=300
 
 [group-0]
-src-ids=0
+src-ids=0;1
 custom-input-transformation-function=CustomTransformation
 process-on-roi=1
 process-on-all-objects=1

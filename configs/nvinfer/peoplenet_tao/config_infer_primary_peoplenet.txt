@@ -13,14 +13,12 @@
 [property]
 gpu-id=0
 net-scale-factor=0.0039215697906911373
-tlt-model-key=tlt_encode
-tlt-encoded-model=../../../models/peoplenet/resnet34_peoplenet_int8.etlt
+onnx-file=../../../models/peoplenet/resnet34_peoplenet_int8.onnx
 int8-calib-file=../../../models/peoplenet/resnet34_peoplenet_int8.txt
 labelfile-path=../../../models/peoplenet/labels.txt
-model-engine-file=../../../models/peoplenet/resnet34_peoplenet_int8.etlt_b1_gpu0_int8.engine
+model-engine-file=../../../models/peoplenet/resnet34_peoplenet_int8.onnx_b2_gpu0_int8.engine
 input-dims=3;544;960;0
-uff-input-blob-name=input_1
-batch-size=1
+batch-size=2
 process-mode=1
 model-color-format=0
 ## 0=FP32, 1=INT8, 2=FP16 mode
@@ -29,7 +27,7 @@ num-detected-classes=1
 cluster-mode=2
 interval=0
 gie-unique-id=1
-output-blob-names=output_bbox/BiasAdd;output_cov/Sigmoid
+output-blob-names=output_bbox/BiasAdd:0;output_cov/Sigmoid:0
 
 #Use the config params below for dbscan clustering mode
 #[class-attrs-all]

@@ -22,12 +22,12 @@
 
 [property]
 gpu-id=0
-net-scale-factor=0.003921568627451
-offsets=0;0;0
+net-scale-factor=0.01460167693791089023079776340069
+offsets=122.7709383;116.7460125;104.09373615
 model-color-format=0
-tlt-model-key=nvidia_tlt
-tlt-encoded-model=../../../models/retail_object_recognition/retail_object_recognition.etlt
-model-engine-file=../../../models/retail_object_recognition/retail_object_recognition.etlt_b16_gpu0_fp16.engine
+onnx-file=../../../models/retail_object_recognition/retail_object_recognition.onnx
+model-engine-file=../../../models/retail_object_recognition/retail_object_recognition.onnx_b16_gpu0_fp16.engine
+labelfile-path=../../../models/retail_object_recognition/retail_object_recognition_labels.txt
 infer-dims=3;224;224
 batch-size=16
 ## 0=FP32, 1=INT8, 2=FP16 mode
@@ -42,3 +42,4 @@ classifier-threshold=0
 output-tensor-meta=1
 maintain-aspect-ratio=0
 # operate-on-class-ids=0;1;2;3
+output-blob-names=probs;embeddings
