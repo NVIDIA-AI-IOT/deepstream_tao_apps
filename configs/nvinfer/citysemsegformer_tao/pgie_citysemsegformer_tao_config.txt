@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,9 +24,9 @@
 gpu-id=0
 net-scale-factor=0.01735207357279195
 offsets=123.675;116.28;103.53
-labelfile-path=     ../../../models/citysemsegformer_vdeployable_v1.0/labels.txt
-model-engine-file=  ../../../models/citysemsegformer_vdeployable_v1.0/citysemsegformer.etlt_b1_gpu0_fp16.engine
-tlt-encoded-model=  ../../../models/citysemsegformer_vdeployable_v1.0/citysemsegformer.etlt
+labelfile-path=     ../../../models/citysemsegformer/labels.txt
+model-engine-file=  ../../../models/citysemsegformer/citysemsegformer.etlt_b1_gpu0_fp16.engine
+tlt-encoded-model=  ../../../models/citysemsegformer/citysemsegformer.etlt
 tlt-model-key=tlt_encode
 infer-dims=3;1024;1820
 model-color-format=0
