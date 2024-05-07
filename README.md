@@ -111,8 +111,8 @@ The sample provides three inferencing methods. For the TensorRT based gst-nvinfe
 
 The DeepStream sample application can work as Triton client with the [Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server), one of the following two methods can be used to set up the Triton Inference Server before starting a gst-nvinferserver inferncing DeepStream application.
 
- - Native Triton Inference Server, please refer to [Triton Server](https://gitlab-master.nvidia.com/CTSE-AI_Computing/deepstream/deepstream_tao_apps/-/blob/master/triton_server.md)
- - Stand-alone Triton Inference server, please refer to [Triton grpc server](https://gitlab-master.nvidia.com/CTSE-AI_Computing/deepstream/deepstream_tao_apps/-/blob/master/triton_server_grpc.md)
+ - Native Triton Inference Server, please refer to [Triton Server](triton_server.md)
+ - Stand-alone Triton Inference server, please refer to [Triton grpc server](triton_server_grpc.md)
 
 For the TAO sample applications, please enable Triton or Triton gRPC inferencing with the app YAML configurations.
 
