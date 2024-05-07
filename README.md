@@ -19,7 +19,7 @@
       - [5~8. RetinaNet / DSSD / SSD/ FasterRCNN](#58-retinanet--dssd--ssd-fasterrcnn)
       - [9. PeopleSegNet](#9-peoplesegnet)
       - [10~12. UNET/PeopleSemSegNet/CitySemSegFormer](#1012-unetpeoplesemsegnetcitysemsegformer)
-      - [13. multi_task](#13-multitask)
+      - [13. multi_task](#13-multi_task)
       - [14~15. EfficientDet / Retail Object Detection](#1415-efficientdet--retail-object-detection)
       - [16~23. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet/ PoseClassification](#1623-facedetect--facial-landmarks-estimation--emotionnet--gaze-estimation--gesturenet--heartratenet--bodyposenet-poseclassification)
       - [24. PeopleNet Transformer](#24-peoplenet-transformer)
