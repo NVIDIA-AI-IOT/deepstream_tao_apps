@@ -80,9 +80,9 @@ sudo apt update
 sudo apt install git-lfs
 git lfs install --skip-repo
 // SSH
-git clone git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao5.3_ds7.0ga git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone -b release/tao5.3_ds7.0ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
 ### 2. Download Models
 Run below script to download models except multi_task and YoloV5 models.
