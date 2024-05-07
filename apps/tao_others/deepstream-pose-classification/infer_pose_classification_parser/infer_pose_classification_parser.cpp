@@ -69,7 +69,7 @@ bool NvDsParseCustomPoseClassification(std::vector<NvDsInferLayerInfo> const &ou
     for (unsigned int c = 0; c < numClasses; c++) {
         float probability = probabilities[c];
         if (probability > classifierThreshold && probability > maxProbability) {
-            printf("c:%d, probability:%f\n", c, probability);
+            //printf("c:%d, probability:%f\n", c, probability);
             maxProbability = probability;
             attrFound = true;
             attr.attributeIndex = 0;

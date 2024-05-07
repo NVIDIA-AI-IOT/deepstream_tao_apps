@@ -23,7 +23,7 @@
 name: "retail_object_detection_binary_dino"
 platform: "tensorrt_plan"
 max_batch_size: 1
-default_model_filename: "retail_object_detection_dino_binary.onnx_b1_gpu0_fp16.engine"
+default_model_filename: "retail_object_detection_dino_binary.onnx_b1_gpu0_fp32.engine"
 input [
   {
     name: "inputs"

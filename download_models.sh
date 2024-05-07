@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -58,20 +58,23 @@ echo "==================================================================="
 echo "begin download models for peopleSemSegNet "
 echo "==================================================================="
 mkdir -p models/peopleSemSegNet_vanilla
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_quantized_vanilla_unet_v2.0/zip \
--O peoplesemsegnet_deployable_quantized_vanilla_unet_v2.0.zip
-unzip -o peoplesemsegnet_deployable_quantized_vanilla_unet_v2.0.zip -d models/peopleSemSegNet_vanilla
-rm peoplesemsegnet_deployable_quantized_vanilla_unet_v2.0.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_quantized_vanilla_unet_onnx_v2.0/zip \
+-O deployable_quantized_vanilla_unet_onnx_v2.0.zip
+unzip -o deployable_quantized_vanilla_unet_onnx_v2.0.zip -d models/peopleSemSegNet_vanilla
+rm deployable_quantized_vanilla_unet_onnx_v2.0.zip
+
 
 mkdir -p models/peopleSemSegNet_shuffle
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_shuffleseg_unet_v1.0/zip \
--O deployable_shuffleseg_unet_v1.0.zip
-unzip -o deployable_shuffleseg_unet_v1.0.zip -d models/peopleSemSegNet_shuffle
-rm deployable_shuffleseg_unet_v1.0.zip
+cd ./models/peopleSemSegNet_shuffle
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplesemsegnet/deployable_shuffleseg_unet_onnx_v1.0/files?redirect=true&path=labels.txt' -O labels.txt && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplesemsegnet/deployable_shuffleseg_unet_onnx_v1.0/files?redirect=true&path=peoplesemsegnet_shuffleseg.onnx' -O peoplesemsegnet_shuffleseg.onnx && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplesemsegnet/deployable_shuffleseg_unet_onnx_v1.0/files?redirect=true&path=peoplesemsegnet_shuffleseg_cache.txt' -O peoplesemsegnet_shuffleseg_cache.txt
+
 
 echo "==================================================================="
 echo "begin downloading facial landmarks model "
 echo "==================================================================="
+cd -
 mkdir -p ./models/faciallandmark
 cd ./models/faciallandmark
 wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/fpenet/versions/deployable_v3.0/files/model.etlt -O faciallandmark.etlt
@@ -135,9 +138,8 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/citysemsegformer
 cd ./models/citysemsegformer
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/citysemsegformer/versions/deployable_v1.0/files/citysemsegformer.etlt -O citysemsegformer.etlt
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/citysemsegformer/versions/deployable_v1.0/files/labels.txt -O labels.txt
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/citysemsegformer/versions/deployable_v1.0/files/nvinfer_config.txt -O nvinfer_config.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/citysemsegformer/deployable_onnx_v1.0/files?redirect=true&path=citysemsegformer.onnx' -O citysemsegformer.onnx && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/citysemsegformer/deployable_onnx_v1.0/files?redirect=true&path=labels.txt' -O labels.txt
 
 echo "==================================================================="
 echo "begin downloading PeopleNet Transformer model "
@@ -163,17 +165,18 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/retail_object_detection_100
 cd ./models/retail_object_detection_100
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_100_v1.0/files/retail_detector_100.etlt  -O retail_detector_100.etlt
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_100_v1.0/files/class_map.txt -O class_map.txt
-
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_detection/deployable_100_onnx_v1.0/files?redirect=true&path=retail_detector_100.onnx' -O retail_detector_100.onnx && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_detection/deployable_100_onnx_v1.0/files?redirect=true&path=retail_detector_100_int8.txt' -O retail_detector_100_int8.txt && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_detection/deployable_100_onnx_v1.0/files?redirect=true&path=retail_detector_100_labels.txt' -O class_map.txt
 echo "==================================================================================="
 echo "begin downloading Retail Object Detection EfficientdetDet vdeployable_binary model "
 echo "==================================================================================="
 cd -
 mkdir -p ./models/retail_object_detection_binary_effdet
-cd ./models/retail_object_detection_binary_effdet
-wget 'https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_binary_v1.1/files/class_map.txt' -O class_map.txt
-wget 'https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_binary_v1.1/files/efficientdet-d5_090.onnx' -O efficientdet-d5_090.onnx
+cd ./models/retail_object_detection_binary_effdet && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_detection/deployable_binary_onnx_v1.0/files?redirect=true&path=retail_detector_binary.onnx' -O retail_detector_binary.onnx  && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_detection/deployable_binary_onnx_v1.0/files?redirect=true&path=retail_detector_binary_int8.txt' -O retail_detector_binary_int8.txt  && \
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_detection/deployable_binary_onnx_v1.0/files?redirect=true&path=retail_detector_binary_labels.txt' -O class_map.txt
 
 echo "========================================================================"
 echo "begin downloading Retail Object Detection DINO vdeployable_binary model "
@@ -182,7 +185,7 @@ cd -
 mkdir -p ./models/retail_object_detection_binary_dino
 cd ./models/retail_object_detection_binary_dino
 wget 'https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_binary_v2.0/files/class_map.txt' -O class_map.txt
-wget 'https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_detection/versions/deployable_binary_v2.0/files/retail_object_detection_dino_binary.onnx' -O retail_object_detection_dino_binary.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_detection/deployable_binary_v2.1.2/files?redirect=true&path=retail_object_detection_binary_v2.1.2.opset17.onnx' -O retail_object_detection_dino_binary.onnx
 
 echo "========================================================================"
 echo "begin downloading Retail Object Detection DINO vdeployable_meta model "
@@ -199,7 +202,7 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/retail_object_recognition
 cd ./models/retail_object_recognition
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_recognition/versions/deployable_v2.0/files/FANDualHead_Base_NVIN_op16.onnx -O retail_object_recognition.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_recognition/deployable_onnx_v1.0/files?redirect=true&path=retail_object_recognition.onnx' -O retail_object_recognition.onnx
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_recognition/versions/deployable_v2.0/files/recognitionv2_name_list.txt -O retail_object_recognition_labels.txt
 
 echo "==================================================================="
@@ -226,7 +229,17 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/poseclassificationnet
 cd ./models/poseclassificationnet
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/poseclassificationnet/versions/deployable_v1.0/files/st-gcn_3dbp_nvidia.etlt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/poseclassificationnet/deployable_onnx_v1.0/files?redirect=true&path=st-gcn_3dbp_nvidia.onnx' -O st-gcn_3dbp_nvidia.onnx
+
+echo "==================================================================="
+echo "begin downloading nvocdr model "
+echo "==================================================================="
+cd -
+mkdir -p ./models/nvocdr
+cd ./models/nvocdr
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/ocdnet/deployable_v2.3/files?redirect=true&path=ocdnet_fan_tiny_2x_icdar_pruned.onnx' -O ocdnet.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/ocrnet/deployable_v2.0/files?redirect=true&path=ocrnet-vit.onnx' -O ocrnet.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/ocrnet/deployable_v2.0/files?redirect=true&path=character_list' -O character_list
 
 echo "==================================================================="
 echo "begin downloading tracker model "
@@ -235,15 +248,6 @@ cd -
 mkdir -p /opt/nvidia/deepstream/deepstream/samples/models/Tracker
 cd /opt/nvidia/deepstream/deepstream/samples/models/Tracker
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/reidentificationnet/versions/deployable_v1.0/files/resnet50_market1501.etlt
-
-echo "==================================================================="
-echo "begin downloading nvocdr model "
-echo "==================================================================="
-cd -
-mkdir -p ./models/nvocdr
-cd ./models/nvocdr
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/ocdnet/versions/deployable_v1.0/files/dcn_resnet18.onnx -O ocdnet.onnx
-wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/ocrnet/versions/deployable_v1.0/files/ocrnet_resnet50.onnx -O ocrnet.onnx
 
 echo "==================================================================="
 echo "Download models successfully "

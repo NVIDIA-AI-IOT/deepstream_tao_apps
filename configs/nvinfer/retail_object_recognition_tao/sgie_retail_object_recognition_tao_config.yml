@@ -42,4 +42,4 @@ property:
   output-tensor-meta: 1
   maintain-aspect-ratio: 0
   # operate-on-class-ids: 0;1;2;3
-  output-blob-names: probs;embeddings
+  output-blob-names: outputs

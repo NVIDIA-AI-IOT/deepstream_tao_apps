@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -321,8 +321,34 @@ ds_parse_enc_type(gchar *cfg_file_path, const char* group)
   {
     if (!docs[i][group].IsNull()) {
 
-      if (docs[i][group]["enc"]) {
-          val= docs[i][group]["enc"].as<guint>();
+      if (docs[i][group]["enc-type"]) {
+          val= docs[i][group]["enc-type"].as<guint>();
+          return val;
+      }
+    }
+  }
+  return 0;
+}
+
+guint
+ds_parse_enc_codec(gchar *cfg_file_path, const char* group)
+{
+  std::string paramKey = "";
+
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
+
+  std::vector<int> docs_indx_vec;
+  std::unordered_map<std::string, int> docs_indx_umap;
+
+  int total_docs = docs.size();
+  guint val = 0;
+
+  for (int i =0; i < total_docs;i++)
+  {
+    if (!docs[i][group].IsNull()) {
+
+      if (docs[i][group]["codec"]) {
+          val= docs[i][group]["codec"].as<guint>();
           return val;
       }
     }
@@ -380,3 +406,40 @@ ds_parse_config_yml_filepath(gchar *cfg_file_path, const char* group)
   return NULL;
 }
 
+/* this is only for video encoding. */
+void
+create_video_encoder(bool isH264, int enc_type, GstElement** conv_capfilter,
+  GstElement** outenc, GstElement** encparse, GstElement** rtppay)
+{
+  GstCaps *caps = NULL;
+  GstCapsFeatures *feature = NULL;
+
+  g_print("in create_video_encoder, isH264:%d, enc_type:%d\n", isH264, enc_type);
+  caps =  gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
+          "I420", NULL);
+  if(enc_type == ENCODER_TYPE_HW) {
+    feature = gst_caps_features_new ("memory:NVMM", NULL);
+    gst_caps_set_features (caps, 0, feature);
+  }
+  g_object_set (G_OBJECT (*conv_capfilter), "caps", caps, NULL);
+
+  if(isH264) {
+    if(enc_type == ENCODER_TYPE_HW) {
+      *outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
+    } else {
+      *outenc = gst_element_factory_make ("x264enc" ,"x264enc");
+    }
+    *encparse = gst_element_factory_make ("h264parse", "encparse");
+    if(rtppay)
+      *rtppay = gst_element_factory_make ("rtph264pay", "rtppay");
+  } else {
+    if(enc_type == ENCODER_TYPE_HW) {
+      *outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h264enc");
+    } else {
+      *outenc = gst_element_factory_make ("x265enc" ,"x265enc");
+    }
+    *encparse = gst_element_factory_make ("h265parse", "encparse");
+    if(rtppay)
+      *rtppay = gst_element_factory_make ("rtph265pay", "rtppay");
+  }
+}

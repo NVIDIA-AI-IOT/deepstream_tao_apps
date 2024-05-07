@@ -56,6 +56,7 @@ sudo make install
 | 6.2 GA              | TRT 8.5.1       | no OSS plugin is needed |
 | 6.3                 | TRT 8.5.3       | no OSS plugin is needed |
 | 6.4                 | TRT 8.6.2       | binary plugin only    |
+| 7.0                 | TRT 8.6.2       | binary plugin only    |
 
 
 ### 3. Replace "libnvinfer_plugin.so*"

@@ -88,6 +88,8 @@ eglsink:
 
 filesink:
   enable: 1
+  #encoder type 0=Hardware 1=Software
+  enc-type: 0
 
 fakesink:
   enable: 0

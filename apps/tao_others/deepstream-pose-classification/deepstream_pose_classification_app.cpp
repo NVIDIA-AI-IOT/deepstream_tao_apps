@@ -809,6 +809,23 @@ parse_sink_type_yaml (gint *type, gchar *cfg_file_path)
   }
 }
 
+static void
+parse_sink_enc_type_yaml (gint *enc_type, gchar *cfg_file_path)
+{
+  YAML::Node configyml = YAML::LoadFile(cfg_file_path);
+
+  for(YAML::const_iterator itr = configyml["sink"].begin();
+     itr != configyml["sink"].end(); ++itr) {
+    std::string paramKey = itr->first.as<std::string>();
+    if (paramKey == "enc-type") {
+       int value = itr->second.as<gint>();
+       if(value == 0 || value == 1){
+        *enc_type = value;
+       }
+    }
+  }
+}
+
 /* pgie_src_pad_buffer_probe will extract metadata received from pgie
  * and update params for drawing rectangle, object information etc. */
 static GstPadProbeReturn
@@ -1582,6 +1599,9 @@ int main(int argc, char *argv[])
   /* Set output file location */
   int sink_type = 0;
   parse_sink_type_yaml(&sink_type, argv[1]);
+  int enc_type = 0;
+  parse_sink_enc_type_yaml(&enc_type, argv[1]);
+  g_print("sink_type:%d, enc_type:%d\n", sink_type, enc_type);
 
   if(sink_type == 1) {
     sink = gst_element_factory_make("nvvideoencfilesinkbin", "nv-filesink");
@@ -1594,17 +1614,23 @@ int main(int argc, char *argv[])
     //g_object_set(G_OBJECT(sink), "profile", 3, NULL);
     g_object_set(G_OBJECT(sink), "codec", 1, NULL);//hevc
     // g_object_set(G_OBJECT(sink), "control-rate", 0, NULL);//hevc
+    g_object_set(G_OBJECT(sink), "enc-type", enc_type, NULL);
   } else if(sink_type == 2) {
     sink = gst_element_factory_make("nvrtspoutsinkbin", "nv-rtspsink");
     if (!sink) {
       g_printerr ("Filesink could not be created. Exiting.\n");
       return -1;
     }
+    g_object_set(G_OBJECT(sink), "enc-type", enc_type, NULL);
   } else if(sink_type == 3) {
     if (prop.integrated) {
       sink = gst_element_factory_make("nv3dsink", "nv-sink");
     } else {
+#ifdef __aarch64__
+      sink = gst_element_factory_make("nv3dsink", "nv-sink");
+#else
       sink = gst_element_factory_make("nveglglessink", "nv-sink");
+#endif
     }
   } else {
     sink = gst_element_factory_make("fakesink", "nv-fakesink");

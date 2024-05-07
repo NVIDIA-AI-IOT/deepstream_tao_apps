@@ -54,9 +54,8 @@
 [property]
 gpu-id=0
 net-scale-factor=0.0039215697906911373
-model-engine-file=../../../models/poseclassificationnet/st-gcn_3dbp_nvidia.etlt_b2_gpu0_fp16.engine
-tlt-encoded-model=../../../models/poseclassificationnet/st-gcn_3dbp_nvidia.etlt
-tlt-model-key=nvidia_tao
+model-engine-file=../../../models/poseclassificationnet/st-gcn_3dbp_nvidia.onnx_b2_gpu0_fp16.engine
+onnx-file=../../../models/poseclassificationnet/st-gcn_3dbp_nvidia.onnx
 batch-size=2
 #infer-dims=3;224;224
 network-mode=2
@@ -65,7 +64,6 @@ gie-unique-id=4
 operate-on-gie-id=1
 operate-on-class-ids=0
 input-tensor-from-meta=1
-is-classifier=1
 #output-blob-names=fc_pred
 #0=Detection 1=Classifier 2=Segmentation
 network-type=1

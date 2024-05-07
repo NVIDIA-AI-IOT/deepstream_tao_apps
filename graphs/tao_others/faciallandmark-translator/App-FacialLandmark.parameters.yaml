@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # NVIDIA Corporation and its licensors retain all intellectual property
 # and proprietary rights in and to this software, related documentation
@@ -12,7 +12,7 @@
 components:
 - name: nv_ds_multi_src_input144..1a58
   parameters:
-    uri-list: file:////opt/nvidia/deepstream/deepstream-6.4/samples/streams/sample_1080p_h265.mp4
+    uri-list: file:////opt/nvidia/deepstream/deepstream-7.0/samples/streams/sample_1080p_h265.mp4
 name: NvDsMultiSrcInput..3198
 ---
 components:

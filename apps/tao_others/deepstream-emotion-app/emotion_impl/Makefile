@@ -28,8 +28,7 @@ SRCS:= emotion_impl.cpp ../../common/ds_yml_parse.cpp
 INCS:= $(wildcard *.h)
 LIB:=libnvds_emotion_impl.so
 
-CFLAGS+= -fPIC \
-	 -I /usr/local/cuda/include \
+CFLAGS+= -I /usr/local/cuda/include \
 	 -I /opt/nvidia/deepstream/deepstream/sources/includes -I../includes \
 	 -I /opt/nvidia/deepstream/deepstream/sources/includes/cvcore_headers \
 	 -I /opt/nvidia/deepstream/deepstream/sources/gst-plugins/gst-nvdsvideotemplate/includes \
@@ -57,7 +56,7 @@ PKGS:= gstreamer-1.0 gstreamer-base-1.0 gstreamer-video-1.0
 
 CFLAGS+=$(shell pkg-config --cflags $(PKGS))
 LIBS+=$(shell pkg-config --libs $(PKGS))
-CFLAGS += -Wno-deprecated-declarations
+CFLAGS += -Wno-deprecated-declarations -fPIC
 
 all: $(LIB)
 

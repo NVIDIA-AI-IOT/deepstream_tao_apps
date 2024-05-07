@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -824,9 +824,6 @@ main (int argc, char *argv[])
   GstElement *queue1 = NULL, *queue2 = NULL, *queue3 = NULL, *queue4 = NULL,
              *queue5 = NULL, *queue6 = NULL, *gesture_queue;
   DsSourceBinStruct source_struct[128];
-#ifdef PLATFORM_TEGRA
-  GstElement *transform = NULL;
-#endif
   GstBus *bus = NULL;
   guint bus_watch_id;
   GstPad *osd_sink_pad = NULL;
@@ -850,8 +847,13 @@ main (int argc, char *argv[])
   GList* g_list = NULL;
   GList* iterator = NULL;
   bool isH264 = true;
+  int enc_type = ENCODER_TYPE_HW;
 
   NvDsGieType pgie_type = NVDS_GIE_PLUGIN_INFER, sgie_type = NVDS_GIE_PLUGIN_INFER;
+  int current_device = -1;
+  cudaGetDevice(&current_device);
+  struct cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, current_device);
 
   /* Check input arguments */
   if (argc == 2 && (g_str_has_suffix(argv[1], ".yml")
@@ -1028,29 +1030,18 @@ main (int argc, char *argv[])
     } else {
       mux = gst_element_factory_make ("qtmux", "mp4-mux");
       if(isYAML) {
-        isH264 = !(ds_parse_enc_type(argv[1], "output"));
+        isH264 = !(ds_parse_enc_codec(argv[1], "output"));
+        enc_type = ds_parse_enc_type(argv[1], "output");
       }
 
-      if(!isH264) {
-          encparse = gst_element_factory_make ("h265parse", "h265-encparser");
-          outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h265enc");
-      } else {
-          encparse = gst_element_factory_make ("h264parse", "h264-encparser");
-          outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
-      }
+      create_video_encoder(isH264, enc_type, &capfilt, &outenc, &encparse, NULL);
       filepath = g_strconcat(filename->str,".mp4",NULL);
       if (isYAML) {
-        ds_parse_enc_config (outenc, argv[1], "output");
+        if(enc_type == ENCODER_TYPE_HW)
+          ds_parse_enc_config (outenc, argv[1], "output");
       } else {
         g_object_set (G_OBJECT (outenc), "bitrate", 4000000, NULL);
       }
-
-      caps =
-          gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
-          "I420", NULL);
-      feature = gst_caps_features_new ("memory:NVMM", NULL);
-      gst_caps_set_features (caps, 0, feature);
-      g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
     }
     g_string_free(filename, TRUE);
     sink = gst_element_factory_make ("filesink", "nvvideo-renderer");
@@ -1058,14 +1049,14 @@ main (int argc, char *argv[])
   else if (output_type == 2)
     sink = gst_element_factory_make ("fakesink", "fake-renderer");
   else if (output_type == 3) {
-#ifdef PLATFORM_TEGRA
-    transform = gst_element_factory_make ("nvegltransform", "nvegltransform");
-    if(!transform) {
-      g_printerr ("nvegltransform element could not be created. Exiting.\n");
-      return -1;
-    }
+    if(prop.integrated)
+      sink = gst_element_factory_make("nv3dsink", "nv3d-sink");
+    else
+#ifdef __aarch64__
+      sink = gst_element_factory_make("nv3dsink", "nv3d-sink");
+#else
+      sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
 #endif
-    sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
   }
 
   if (!primary_detector || !gesture || !nvvidconv
@@ -1150,19 +1141,11 @@ main (int argc, char *argv[])
       return -1;
     }
   } else if (output_type == 3) {
-#ifdef PLATFORM_TEGRA
-    gst_bin_add_many (GST_BIN (pipeline), transform, queue5, NULL);
-    if (!gst_element_link_many (nvosd, queue5, transform, sink, NULL)) {
-      g_printerr ("OSD and sink elements link failure.\n");
-      return -1;
-    }
-#else
     gst_bin_add (GST_BIN (pipeline), queue5);
     if (!gst_element_link_many (nvosd, queue5, sink, NULL)) {
       g_printerr ("OSD and sink elements link failure.\n");
       return -1;
     }
-#endif
   }
 
   /* Read cvcore parameters from config file.*/

@@ -5,7 +5,9 @@ output:
   ## 1:file ouput  2:fake output 3:eglsink output 4:RTSP output
   type: 1
   ## 0: H264 encoder  1:H265 encoder
-  enc: 0
+  codec: 0
+  #encoder type 0=Hardware 1=Software
+  enc-type: 0
   bitrate: 2000000
   udpport: 2345
   rtspport: 8554

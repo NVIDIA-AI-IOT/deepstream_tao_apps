@@ -23,7 +23,7 @@
 name: "peopleSemSegNet_shuffle"
 platform: "tensorrt_plan"
 max_batch_size: 4
-default_model_filename: "peoplesemsegnet_shuffleseg_etlt.etlt_b4_gpu0_int8.engine"
+default_model_filename: "peoplesemsegnet_shuffleseg.onnx_b4_gpu0_int8.engine"
 input [
   {
     name: "input_2:0"

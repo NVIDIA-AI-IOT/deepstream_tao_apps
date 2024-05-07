@@ -18,7 +18,7 @@ This sample is to show the following TAO models runing with DeepStream
 
 ## Prerequisition
 
-* [DeepStream SDK 6.4 GA or above](https://developer.nvidia.com/deepstream-sdk)
+* [DeepStream SDK 7.0 GA or above](https://developer.nvidia.com/deepstream-sdk)
 
   Make sure deepstream-test1 sample can run successful to verify your DeepStream installation
 
@@ -36,14 +36,14 @@ This sample is to show the following TAO models runing with DeepStream
 | GestureNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:gesturenet)|deployable_v2.0.2|
 | HeartRateNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:heartratenet)|deployable_v1.0|
 | BodyPoseNet|[link](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet)|deployable_v1.0.1|
-| Retail Object Detection 100 Classes|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection)|deployable_100_v1.0|
+| Retail Object Detection 100 Classes|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection)|deployable_100_unencrypted_v1.0|
 | Retail Object Detection Binary | [link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection)|deployable_binary_v1.0|
 |PeopleNet Transformer | [link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/peoplenet_transformer)|deployable_v1.0|
 |Retail Object Recognition|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_recognition)|deployable_v1.0|
 |ReIdentificationNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/reidentificationnet)|deployable_v1.2|
 |PoseClassificationNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/poseclassificationnet)|deployable_v1.0|
-|OCDNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocdnet)|deployable_v1.0|
-|OCRNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocrnet)|deployable_v1.0|
+|OCDNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocdnet)|deployable_v2.3|
+|OCRNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocrnet)|deployable_v2.0|
 
   The [Bodypose2D backbone](https://ngc.nvidia.com/catalog/models/nvidia:tao:bodyposenet) can be trained and deployed with TAO tools.
 

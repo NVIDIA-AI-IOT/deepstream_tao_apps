@@ -32,8 +32,9 @@ The TensorRT OSS source code does not contains the patch for 8.6 branch
 | 6.1                 | 5.0.1            | TRT 8.4.0.11    | release/8.4           |
 | 6.1.1               | 5.0.2            | TRT 8.4.1       | OSS not needed        |
 | 6.2                 | 5.1              | TRT 8.5.1       | OSS not needed        |
-| 6.3                 | 5.1.2            | TRT 8.5.3       | OSS not needed           |
+| 6.3                 | 5.1.2            | TRT 8.5.3       | OSS not needed        |
 | 6.4                 | 6.0              | TRT 8.6.1.2     | binary only   |
+| 7.0                 | 6.0              | TRT 8.6.1.2     | binary only   |
 ```
 
 ### Replace "libnvinfer_plugin.so*"

@@ -1,7 +1,7 @@
 ##############################################################################
 # The MIT License (MIT)
 #
-# Copyright (c) 2022-2023 NVIDIA CORPORATION
+# Copyright (c) 2022-2024 NVIDIA CORPORATION
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
 #this software and associated documentation files (the "Software"), to deal in
@@ -29,8 +29,8 @@ components required to identify human emotions.
 ================================================================================
 Pre-requisites
 ================================================================================
-- DeepStreamSDK 6.4
-- Graph-Composer 3.1.0
+- DeepStreamSDK 7.0
+- Graph-Composer 4.0.0
 - Sync extensions from NGC public repo if not already done:
     $ registry repo sync -n ngc-public
 
@@ -53,9 +53,9 @@ $ chmod 775 /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_mode
 $ chmod 775 /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/facenet
 $ chmod 775 /opt/nvidia/deepstream/deepstream/samples/models/tao_pretrained_models/emotion
 For x86_64 platform
-$ /opt/nvidia/graph-composer/execute_graph.sh App-Emotion.yaml App-Emotion.parameters.yaml -d /opt/nvidia/deepstream/deepstream/target_reference_graphs/common/target_x86_64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Emotion.yaml App-Emotion.parameters.yaml -d /opt/nvidia/deepstream/deepstream/reference_graphs/common/target_x86_64.yaml
 For Jetson
-$ /opt/nvidia/graph-composer/execute_graph.sh App-Emotion.yaml App-Emotion.parameters.yaml -d /opt/nvidia/deepstream/deepstream/target_reference_graphs/common/target_aarch64.yaml
+$ /opt/nvidia/graph-composer/execute_graph.sh App-Emotion.yaml App-Emotion.parameters.yaml -d /opt/nvidia/deepstream/deepstream/reference_graphs/common/target_aarch64.yaml
 
 NOTE: App-Emotion.yaml is the main graph file describing the DeepStream
 graph(pipeline) along with the configuration parameters for the components in the
