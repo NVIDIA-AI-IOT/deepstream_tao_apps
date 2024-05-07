@@ -152,7 +152,7 @@ void LoopObjectCtx(CustomCtx *ctx)
     pSObjectCtx = (*itor);
     gettimeofday (&tv, NULL);
     if(pSObjectCtx->object_id != UNTRACKED_OBJECT_ID &&
-      (pSObjectCtx->tv_sec - tv.tv_sec) > _TIME_OUT_){
+      (tv.tv_sec - pSObjectCtx->tv_sec) > _TIME_OUT_){
       ResetObjectCtx(ctx, pSObjectCtx);
     }
   }

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2023 NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2023-2024 NVIDIA Corporation.  All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 name: "citysemsegformer"
 platform: "tensorrt_plan"
 max_batch_size: 1
-default_model_filename: "citysemsegformer.etlt_b1_gpu0_fp16.engine"
+default_model_filename: "citysemsegformer.onnx_b1_gpu0_fp16.engine"
 input [
   {
     name: "input"

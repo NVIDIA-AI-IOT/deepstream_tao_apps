@@ -9,7 +9,7 @@ every detection bounding box. The pipelines have a primary GIE module detecting
 the objects of interest from a video frame. The secondary GIE module extracts an
 embedding vector from the primary GIE result.
 
-The TAO 5.1 pretrained models used in this sample application:
+The TAO 4.0 pretrained models used in this sample application:
 
 * [Retail Object Detection 100 classes](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection).
 * [Retail Object Detection Binary](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection)
@@ -19,7 +19,7 @@ The TAO 5.1 pretrained models used in this sample application:
 
 ## Prerequisition
 
-* DeepStream SDK 6.4 GA and above
+* DeepStream SDK 6.2 GA and above
 
 * NvDsInferParseCustomDDETRTAO
 The custom post-processing plugin for Deformable DETR. The source code of tis plugin 
@@ -50,7 +50,7 @@ make
 ./deepstream-mdx-perception-app  -c ../../../configs/app/retail_object_detection_recognition.yml -m 3 --tiledtext
 ```
 
-Users can optionally modify `configs/app/retail_object_detection_recognition.yml` to enable sink2 which allows us to send metadata over Kafka, it can be modified to send metadata to any other broker such as Redis/Azure etc.., that DeepStream supports. By making use of a simple consumer script such as the one below 
+Uses can optionally modify `configs/app/retail_object_detection_recognition.yml` to enable sink2 which allows us to send metadata over Kafka, it can be modified to send metadata to any other broker such as Redis/Azure etc.., that DeepStream supports. By making use of a simple consumer script such as the one below 
 
 ```
 # Contents of consumer.py

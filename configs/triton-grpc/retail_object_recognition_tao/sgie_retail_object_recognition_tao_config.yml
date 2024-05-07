@@ -38,7 +38,7 @@ infer_config {
   preprocess {
     network_format: IMAGE_FORMAT_RGB
     tensor_order: TENSOR_ORDER_LINEAR
-    tensor_name: "input"
+    tensor_name: "inputs"
     maintain_aspect_ratio: 0
     frame_scaling_hw: FRAME_SCALING_HW_DEFAULT
     frame_scaling_filter: 1

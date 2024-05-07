@@ -39,9 +39,9 @@ primary-gie:
   #config-file-path: ../triton-grpc/peopleSemSegNet_tao/vanilla/pgie_peopleSemSegVanillaUnet_tao_config.yml
 
   #peopleSemSegNet-shuffle
-  #config-file-path: ../triton-grpc/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
-  #config-file-path: ../triton/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
   #config-file-path: ../nvinfer/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
+  #config-file-path: ../triton/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
+  #config-file-path: ../triton-grpc/peopleSemSegNet_tao/shuffle/pgie_peopleSemSegShuffleUnet_tao_config.yml
 
   #unet
   config-file-path: ../nvinfer/unet_tao/pgie_unet_tao_config.yml
@@ -53,11 +53,21 @@ primary-gie:
   #config-file-path: ../triton/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
   #config-file-path: ../triton-grpc/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
 
+segvisual:
+  gpu-id: 0
+  #The segvisual width and height should be set as the same as the segmentation modle output resolution
+  width: 960
+  height: 544
+  orig_background: 1
+  alpha: 0.5
+
 eglsink:
   enable: 0
 
 filesink:
   enable: 1
+  #encoder type 0=Hardware 1=Software
+  enc-type: 0
 
 fakesink:
   enable: 0

@@ -31,3 +31,6 @@ The command line options of this application are listed below:
 $ ./deepstream-pose-classification-app ../../../configs/app/deepstream_pose_classification_config.yaml
 ```
 
+## Tips
+
+1. if FPS is getting smaller and smaller when there are many objects in the sources, please increase scaling-buf-pool-size and tensor-buf-pool-size in config_preprocess_bodypose_classification.txt.

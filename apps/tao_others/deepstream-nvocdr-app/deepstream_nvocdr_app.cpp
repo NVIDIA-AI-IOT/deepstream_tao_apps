@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,7 @@
 #include "ds_yml_parse.h"
 #include <yaml-cpp/yaml.h>
 #include <math.h>
+#include "cuda_runtime_api.h"
 
 GstElement *pipeline = NULL;
 
@@ -248,7 +249,6 @@ int main (int argc, char *argv[]) {
   GstBus *bus = NULL;
   guint bus_watch_id;
   GstCaps *caps = NULL;
-  GstCapsFeatures *feature = NULL;
 
   static guint src_cnt = 0;
   guint tiler_rows, tiler_columns;
@@ -262,7 +262,12 @@ int main (int argc, char *argv[]) {
   GList* g_list = NULL;
   GList* iterator = NULL;
   bool isH264 = true;
+  int enc_type = ENCODER_TYPE_HW;
   gchar *filepath = NULL;
+  int current_device = -1;
+  cudaGetDevice(&current_device);
+  struct cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, current_device);
 
 
   /* Standard GStreamer initialization */
@@ -371,33 +376,27 @@ int main (int argc, char *argv[]) {
         filepath = g_strconcat(filename->str,".jpg",NULL);
     } else {
         mux = gst_element_factory_make ("qtmux", "mp4-mux");
-        isH264 = !(ds_parse_enc_type(argv[1], "output"));
+        isH264 = !(ds_parse_enc_codec(argv[1], "output"));
+        enc_type = ds_parse_enc_type(argv[1], "output");
 
-        if(!isH264) {
-          encparse = gst_element_factory_make ("h265parse", "h265-encparser");
-          outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h265enc");
-        } else {
-          encparse = gst_element_factory_make ("h264parse", "h264-encparser");
-          outenc = gst_element_factory_make ("nvv4l2h264enc" ,"nvvideo-h264enc");
-        }
+        create_video_encoder(isH264, enc_type, &capfilt, &outenc, &encparse, NULL);
         filepath = g_strconcat(filename->str,".mp4",NULL);
-        ds_parse_enc_config (outenc, argv[1], "output");
-        caps =
-            gst_caps_new_simple ("video/x-raw", "format", G_TYPE_STRING,
-            "I420", NULL);
-        feature = gst_caps_features_new ("memory:NVMM", NULL);
-        gst_caps_set_features (caps, 0, feature);
-        g_object_set (G_OBJECT (capfilt), "caps", caps, NULL);
+        if(enc_type == ENCODER_TYPE_HW)
+          ds_parse_enc_config (outenc, argv[1], "output");
     }
     sink = gst_element_factory_make ("filesink", "nvvideo-renderer");
   }
   else if (output_type == 2)
     sink = gst_element_factory_make ("fakesink", "fake-renderer");
   else if (output_type == 3) {
-#ifdef PLATFORM_TEGRA
-    sink = gst_element_factory_make ("nv3dsink", "nvvideo-renderer");
+    if(prop.integrated)
+      sink = gst_element_factory_make ("nv3dsink", "nvvideo-renderer");
+    else
+#ifdef __aarch64__
+      sink = gst_element_factory_make ("nv3dsink", "nvvideo-renderer");
+#else
+      sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
 #endif
-    sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
   }
 
   if (!nvvidconv || !nvocdr_template || !nvosd || !sink  || !capfilt) {

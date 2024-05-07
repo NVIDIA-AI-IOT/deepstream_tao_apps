@@ -41,7 +41,7 @@ This repository provides a DeepStream sample application based on [NVIDIA DeepSt
 - **post_processor**: include inference postprocessor for the models
 - **graphs**: DeepStream sample graphs based on the Graph Composer tools.
 - **models**: The models which will be used as samples.
-- **TRT-OSS**: The OSS nvinfer plugin build and download instructions. The OSS plugins are needed for some models with DeepStream 6.4 GA.
+- **TRT-OSS**: The OSS nvinfer plugin build and download instructions. The OSS plugins are needed for some models with DeepStream 7.0 GA.
 
 The pipeline of the sample:
 
@@ -55,7 +55,7 @@ uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
 
 ## Prerequisites
 
-* [DeepStream SDK 6.4 GA](https://developer.nvidia.com/deepstream-sdk)
+* [DeepStream SDK 7.0 GA](https://developer.nvidia.com/deepstream-sdk)
 
    Make sure deepstream-test1 sample can run successful to verify your installation. According to the
    [document](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_docker_containers.html),
@@ -95,7 +95,7 @@ For multi_task, refer to https://docs.nvidia.com/tao/tao-toolkit/text/multitask_
 
 For yolov5, refer to [yolov5_gpu_optimization](https://github.com/NVIDIA-AI-IOT/yolov5_gpu_optimization) to generate the onnx model
 
-**Note:** We deliver new trained SSD/DSSD/FasterRCNN models for the demo purpose with TAO 5.1 release. The output of the new models will not be excatly same as the previous models. For example, you will notice that more cars can be detected in the DeepStream sample video with the new SSD/DSSD.
+**Note:** We deliver new trained SSD/DSSD/FasterRCNN models for the demo purpose with TAO 5.0 release. The output of the new models will not be excatly same as the previous models. For example, you will notice that more cars can be detected in the DeepStream sample video with the new SSD/DSSD.
 
 ### 3. Download Pre-built TensorRT OSS nvinfer plugin library
 
@@ -111,8 +111,8 @@ The sample provides three inferencing methods. For the TensorRT based gst-nvinfe
 
 The DeepStream sample application can work as Triton client with the [Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server), one of the following two methods can be used to set up the Triton Inference Server before starting a gst-nvinferserver inferncing DeepStream application.
 
- - Native Triton Inference Server, please refer to [Triton Server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/triton_server.md)
- - Stand-alone Triton Inference server, please refer to [Triton grpc server](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/triton_server_grpc.md)
+ - Native Triton Inference Server, please refer to [Triton Server](https://gitlab-master.nvidia.com/CTSE-AI_Computing/deepstream/deepstream_tao_apps/-/blob/master/triton_server.md)
+ - Stand-alone Triton Inference server, please refer to [Triton grpc server](https://gitlab-master.nvidia.com/CTSE-AI_Computing/deepstream/deepstream_tao_apps/-/blob/master/triton_server_grpc.md)
 
 For the TAO sample applications, please enable Triton or Triton gRPC inferencing with the app YAML configurations.
 
@@ -173,7 +173,7 @@ note:
 |-----------|----------|----|
 |detector|dssd, peoplenet_transformer, efficientdet, frcnn, retinanet, retail_detector_100, retail_detector_binary, ssd, yolov3, yolov4-tiny, yolov4, yolov5|./apps/tao_detection/ds-tao-detection -c configs/dssd_tao/pgie_dssd_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml|
 |classifier|multi-task|./apps/tao_classifier/ds-tao-classifier -c configs/multi_task_tao/pgie_multi_task_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_classifier/ds-tao-classifier configs/app/multi_task_app_config.yml|
-|segmentation|peopleSemSegNet, unet, citySemSegFormer|./apps/tao_segmentation/ds-tao-segmentation -c configs/peopleSemSegNet_tao/pgie_peopleSemSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_segmentation/ds-tao-segmentation configs/app/seg_app_unet.yml|
+|segmentation|peopleSemSegNet, unet, citySemSegFormer|./apps/tao_segmentation/ds-tao-segmentation -c configs/peopleSemSegNet_tao/pgie_peopleSemSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4 -w 960 -e 544<br>or<br>./apps/tao_segmentation/ds-tao-segmentation configs/app/seg_app_unet.yml|
 |instance segmentation|peopleSegNet|export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection -c configs/peopleSegNet_tao/pgie_peopleSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection configs/app/ins_seg_app_peopleSegNet.yml|
 |others|FaceDetect, Facial Landmarks Estimation, EmotionNet, Gaze Estimation, GestureNet, HeartRateNet, BodyPoseNet,Re-identification, Retail Object Recognition, PoseClassificationNet, OCDNet, OCRNet|refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model|
 
@@ -238,6 +238,7 @@ The model has the following two outputs:
 - **argmax_1/output**: A [batchSize, H, W, 1] tensor containing the class id per pixel location
 
 #### 13. multi_task
+
 - refer detailed [README](./configs/nvinfer/multi_task_tao/README.md) for how to configure and run the model
 
 #### 14~15. EfficientDet / Retail Object Detection
@@ -250,6 +251,7 @@ Please note there are two `Retail Object Detection` models. These models have th
 - **detection_classes**: This is a [batch_size, max_output_boxes] tensor of data type int32, containing the classes for the boxes.
 
 #### 16~23. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet/ PoseClassification
+
 - refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model
 
 #### 24. PeopleNet Transformer
@@ -319,3 +321,4 @@ Some special models needs special deepstream pipeline for running. The deepstrea
 
 1. For some yolo models, some layers of the models should use FP32 precision. This is a network characteristics that the accuracy drops rapidly when maximum layers are run in INT8 precision. Please refer the [layer-device-precision](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvinfer.html) for more details.
 2. Currently the citySemSegFormer model only supports batch-size 1.
+3. If the segmentation results can't overlay the entire frame, please set SEG_OUTPUT_WIDTH/SEG_OUTPUT_HEIGHT to the model's width/height.

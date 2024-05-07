@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,12 @@ extern "C"
 #include <gst/rtsp-server/rtsp-server.h>
 #include "nvds_yml_parser.h"
 
+typedef enum
+{
+  ENCODER_TYPE_HW,
+  ENCODER_TYPE_SW
+} EncHwSwType;
+
 NvDsYamlParserStatus
 ds_parse_rtsp_output(GstElement *sink,
   GstRTSPServer *server, GstRTSPMediaFactory *factory,
@@ -47,6 +53,9 @@ ds_parse_group_type(gchar *cfg_file_path, const char* group);
 guint
 ds_parse_enc_type(gchar *cfg_file_path, const char* group);
 
+guint
+ds_parse_enc_codec(gchar *cfg_file_path, const char* group);
+
 GString *
 ds_parse_file_name(gchar *cfg_file_path, const char* group);
 
@@ -61,6 +70,9 @@ NvDsYamlParserStatus
 ds_parse_ocdr_videotemplate_config(GstElement *vtemplate, 
   gchar *cfg_file_path, const char* group);
 
+void
+create_video_encoder(bool isH264, int enc_type, GstElement** conv_capfilter,
+  GstElement** outenc, GstElement** encparse, GstElement** rtppay);
 
 #ifdef __cplusplus
 }

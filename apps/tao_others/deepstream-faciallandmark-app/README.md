@@ -26,7 +26,7 @@ Build the applications and run to inference one picture.
 ```
 make
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/deepstream/deepstream/lib/cvcore_libs
-./deepstream-faciallandmark-app 2 ../../../configs/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./landmarks
+./deepstream-faciallandmark-app 1 ../../../configs/nvinfer/facial_tao/sample_faciallandmarks_config.txt file:///usr/data/faciallandmarks_test.jpg ./landmarks
 ```
 
 ## Models with different landmarks numbers
