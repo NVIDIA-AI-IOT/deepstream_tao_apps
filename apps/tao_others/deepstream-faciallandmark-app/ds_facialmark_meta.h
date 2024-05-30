@@ -50,7 +50,7 @@ typedef struct {
     float width() { return right - left; }
     float height() { return bottom - top; }
     float center_x() { return left + width() / 2; }
-    float center_y() { return right + height() / 2; }
+    float center_y() { return top + height() / 2; }
 }BBox;
 
 typedef struct
