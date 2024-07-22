@@ -38,7 +38,7 @@ model-engine-file=../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shu
 #convert the etlt model to TensoRT engine first use tao-convert
 
 int8-calib-file=../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg_cache.txt
-onnx-file:=../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg.onnx
+onnx-file=../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg.onnx
 
 infer-dims=3;544;960
 batch-size=1
