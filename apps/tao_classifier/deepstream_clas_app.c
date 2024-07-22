@@ -719,7 +719,8 @@ main (int argc, char *argv[]) {
     if(useDisplay == FALSE) {
         if(isImage == FALSE){
             parser1 = gst_element_factory_make ("h264parse", "h264-parser1");
-            parse_filesink_yaml(&enc_type, argv[1]);
+            if (isYAML)
+              parse_filesink_yaml(&enc_type, argv[1]);
             if(enc_type == 0){
               enc = gst_element_factory_make ("nvv4l2h264enc", "h264-enc");
             } else {
