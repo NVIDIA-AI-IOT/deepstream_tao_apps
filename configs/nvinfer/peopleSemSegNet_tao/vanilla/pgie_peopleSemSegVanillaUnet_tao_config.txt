@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -32,13 +32,13 @@ labelfile-path=./peopleSemSegVanillaUnet_labels.txt
 
 ##Replace following path to your model file
 
-model-engine-file=../../../../models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8_fp16.onnx_b1_gpu0_in8.engine
+model-engine-file=../../../../models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_fp32.onnx_b1_gpu0_in8.engine
 
 #DS5.x cannot parse onnx etlt model, so you need to
 #convert the etlt model to TensoRT engine first use tao-convert
 
-int8-calib-file=../../../../models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8.cache
-onnx-file:=../../../../models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8_fp16.onnx
+int8-calib-file=../../../../models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_int8.txt
+onnx-file:=../../../../models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_fp32.onnx
 infer-dims=3;544;960
 batch-size=1
 

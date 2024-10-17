@@ -11,7 +11,6 @@ embedding vector from the primary GIE result.
 
 The TAO 4.0 pretrained models used in this sample application:
 
-* [Retail Object Detection 100 classes](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection).
 * [Retail Object Detection Binary](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection)
 * [Retail Object Recognition](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_recognition)
 * [ReIdentificationNet Model](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/reidentificationnet)

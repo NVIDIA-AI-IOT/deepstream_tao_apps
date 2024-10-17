@@ -257,13 +257,14 @@ std::vector<NvAR_Point3f> liftKeypoints25DTo3D(const float* p2d,
     // Set relative depth of root to be 0 as the relative depth is measure w.r.t the root.
     zRel[ROOT] = 0.f;
 
+/*  redundant logic
     for (int i = 0; i < XY1.rows(); i++) {
         float x = XY1(i, 0);
         float y = XY1(i, 1);
         float z = XY1(i, 2);
         XY1.row(i) << x, y, z;
     }
-
+*/
     XY1 = XY1 * KInv;
 
     for (int i = 0; i < idx0.size(); i++) {
@@ -507,10 +508,10 @@ gpointer copy_bodypose_meta (gpointer data, gpointer user_data)
   NvDsJoints *src_joints = (NvDsJoints *) user_meta->user_meta_data;
   NvDsJoints *dst_joints = NULL;
 
-  dst_joints = (NvDsJoints *)g_memdup ((gpointer)src_joints, sizeof(NvDsJoints));
+  dst_joints = (NvDsJoints *)g_memdup2 ((gpointer)src_joints, sizeof(NvDsJoints));
   dst_joints->num_joints = src_joints->num_joints;
   dst_joints->pose_type = src_joints->pose_type;
-  dst_joints->joints = (NvDsJoint *)g_memdup ((gpointer)src_joints->joints,
+  dst_joints->joints = (NvDsJoint *)g_memdup2 ((gpointer)src_joints->joints,
                                     sizeof(NvDsJoint)*src_joints->num_joints);
   return dst_joints;
 }
@@ -580,9 +581,9 @@ void parse_25dpose_from_tensor_meta(NvDsInferTensorMeta *tensor_meta,
 
     if (!strcmp(info->layerName, "pose25d")) {
       float *data = (float *)tensor_meta->out_buf_ptrs_host[m];
-      /*  for (int j =0 ; j < 34; j++){
-          printf ("a=%f b=%f c=%f d=%f\n",data[j*4],data[j*4+1],data[j*4+2], data[j*4+3]);
-          }*/
+      // for (int j =0 ; j < 34; j++) {
+      //   printf ("a=%f b=%f c=%f d=%f\n",data[j*4],data[j*4+1],data[j*4+2], data[j*4+3]);
+      // }
 
       // Initialize
       if (g_filter_pose25d.find(obj_meta->object_id) == g_filter_pose25d.end()) {
@@ -659,16 +660,21 @@ void parse_25dpose_from_tensor_meta(NvDsInferTensorMeta *tensor_meta,
       // Recover pose 3D
       std::vector<NvAR_Point3f> p3dLifted;
       p3dLifted = liftKeypoints25DTo3D(keypoints, keypointsZRel, numKeyPoints, m_K_inv_transpose, m_scale_ll);
-      float scale = recoverScale(p3dLifted, keypoints_confidence, m_mean_ll);
+      // float scale = recoverScale(p3dLifted, keypoints_confidence, m_mean_ll);
       // printf("scale = %f\n", scale);
+      // for (auto i = 0; i < p3dLifted.size(); i++) {
+      //   p3dLifted[i].x *= scale;
+      //   p3dLifted[i].y *= scale;
+      //   p3dLifted[i].z *= scale;
+      // }
 
       NvDsUserMeta *user_meta = nvds_acquire_user_meta_from_pool (bmeta);
-      NvDsJoints *ds_joints = (NvDsJoints *)g_malloc(numKeyPoints * sizeof(NvDsJoints));
+      NvDsJoints *ds_joints = (NvDsJoints *)g_malloc(sizeof(NvDsJoints));
       ds_joints->num_joints = numKeyPoints;
       ds_joints->pose_type = 1;// datapose3D
+      ds_joints->joints = (NvDsJoint *)g_malloc (numKeyPoints * sizeof(NvDsJoint));
 
-      ds_joints->joints = (NvDsJoint *)g_malloc (numKeyPoints * sizeof (NvDsJoint));
-        //attach 3D to the user meta data
+      //attach 3D to the user meta data
       for (int i = 0; i < numKeyPoints; i++) {
         ds_joints->joints[i].confidence = keypoints_confidence[i];
         ds_joints->joints[i].x = p3dLifted[i].x;
@@ -997,8 +1003,8 @@ osd_sink_pad_buffer_probe(GstPad *pad, GstPadProbeInfo *info,
     offset = snprintf(txt_params->display_text, MAX_DISPLAY_LEN, "Frame Number %d", frame_number);
     offset = snprintf(txt_params->display_text + offset, MAX_DISPLAY_LEN, " ");
 
-    txt_params->x_offset = 100;
-    txt_params->y_offset = 200;
+    txt_params->x_offset = 50;
+    txt_params->y_offset = 100;
 
     char font_name[] = "Mono";
     txt_params->font_params.font_name = font_name;
@@ -1376,7 +1382,7 @@ int main(int argc, char *argv[])
     gst_bin_add (GST_BIN (pipeline), source_struct[num_sources].source_bin);
       
     g_snprintf (pad_name_sink, 64, "sink_%d", num_sources);
-    sinkpad = gst_element_get_request_pad (streammux, pad_name_sink);
+    sinkpad = gst_element_request_pad_simple (streammux, pad_name_sink);
     if (!sinkpad) {
       g_printerr ("Streammux request sink pad failed. Exiting.\n");
       return -1;
@@ -1583,7 +1589,7 @@ int main(int argc, char *argv[])
   tiler_rows = (guint) sqrt (num_sources);
   tiler_columns = (guint) ceil (1.0 * num_sources / tiler_rows);
   g_object_set (G_OBJECT (nvtile), "rows", tiler_rows, "columns",
-      tiler_columns, "width", 1280, "height", 720, NULL);
+      tiler_columns, "width", MUXER_OUTPUT_WIDTH, "height", MUXER_OUTPUT_HEIGHT, NULL);
 
   /* Lets add probe to get informed of the meta data generated, we add probe to
    * the sink pad of the osd element, since by that time, the buffer would have

@@ -34,21 +34,18 @@ using std::vector;
 #define    _MAX_FRAME_                   300
 #define    _MAX_OBJECT_NUM_              20
 #define    _TIME_OUT_                    2
+#define    _KEYPOINTS_NUM                34
 #define FREE(p) (free(p), p=NULL)
 
 /*wrap keypoints*/
 struct   SObjectContex
 {
   uint64_t object_id;
-  float* x, *y, *z;
-  int frameIndex;
-  bool firstUse;
-  long  tv_sec;
+  float *x, *y, *z;
+  long tv_sec;
   SObjectContex() {
     object_id = UNTRACKED_OBJECT_ID;
     x = y = z = NULL;
-    frameIndex = 0;
-    firstUse = true;
     tv_sec = 0;
   };
   ~SObjectContex() {
@@ -64,12 +61,13 @@ struct CustomCtx
   /* vector for obejct context*/
   vector<SObjectContex*> multi_objects;
   int one_channel_element_num;
-  int two_channel_element_num;
+  int one_channel_bytes;
   int move_element_num;
+  int move_element_bytes;
   ~CustomCtx()
   {
     int size = multi_objects.size();
-    printf("size:%d\n", size);
+    printf("objects size:%d\n", size);
     for (int i = 0; i < size; i++)
     {
       delete multi_objects[i];
@@ -120,7 +118,6 @@ CreateObjectCtx(CustomCtx *ctx)
     pSObjectCtx->x = (float*)calloc(ctx->one_channel_element_num, sizeof(float));
     pSObjectCtx->y = (float*)calloc(ctx->one_channel_element_num, sizeof(float));
     pSObjectCtx->z = (float*)calloc(ctx->one_channel_element_num, sizeof(float));
-    pSObjectCtx->frameIndex = 0;
     ctx->multi_objects.push_back(pSObjectCtx);
   }
   return pSObjectCtx;
@@ -134,10 +131,9 @@ ResetObjectCtx(CustomCtx *ctx, SObjectContex *pSObjectCtx)
   {
     printf("ResetObjectCtx, object_id:%ld\n", pSObjectCtx->object_id);
     pSObjectCtx->object_id = UNTRACKED_OBJECT_ID;
-    memset(pSObjectCtx->x, 0, ctx->one_channel_element_num * sizeof(float));
-    memset(pSObjectCtx->y, 0, ctx->one_channel_element_num * sizeof(float));
-    memset(pSObjectCtx->z, 0, ctx->one_channel_element_num * sizeof(float));
-    pSObjectCtx->frameIndex = 0;
+    memset(pSObjectCtx->x, 0, ctx->one_channel_bytes);
+    memset(pSObjectCtx->y, 0, ctx->one_channel_bytes);
+    memset(pSObjectCtx->z, 0, ctx->one_channel_bytes);
     pSObjectCtx->tv_sec = 0;
   }
 }
@@ -167,9 +163,9 @@ sveKeypoints(CustomCtx *ctx, void *user_meta_data, SObjectContex *pSObjectCtx)
   {
     NvDsJoints *ds_joints = (NvDsJoints *) user_meta_data;
     //move from tail to head
-    memmove(pSObjectCtx->x, pSObjectCtx->x + 34, ctx->move_element_num * sizeof(float));
-    memmove(pSObjectCtx->y, pSObjectCtx->y + 34, ctx->move_element_num * sizeof(float));
-    memmove(pSObjectCtx->z, pSObjectCtx->z + 34, ctx->move_element_num * sizeof(float));
+    memmove(pSObjectCtx->x, pSObjectCtx->x + _KEYPOINTS_NUM, ctx->move_element_bytes);
+    memmove(pSObjectCtx->y, pSObjectCtx->y + _KEYPOINTS_NUM, ctx->move_element_bytes);
+    memmove(pSObjectCtx->z, pSObjectCtx->z + _KEYPOINTS_NUM, ctx->move_element_bytes);
 
     //save keypoints
     for(int i = 0; i < ds_joints->num_joints; i++){
@@ -255,11 +251,12 @@ CustomTensorPreparation(CustomCtx *ctx, NvDsPreProcessBatch *batch, NvDsPreProce
     /* copy to buffer, 3 X 300 X 34 X 1 (C T V M) */
     if(pSObjectCtx)
     {
-      int bufLen = ctx->one_channel_element_num*sizeof(float);
-      cudaMemcpy(pDst, pSObjectCtx->x, bufLen, cudaMemcpyHostToDevice);
-      cudaMemcpy(pDst + ctx->one_channel_element_num, pSObjectCtx->y, bufLen, cudaMemcpyHostToDevice);
-      cudaMemcpy(pDst + ctx->two_channel_element_num, pSObjectCtx->z, bufLen, cudaMemcpyHostToDevice);
-      pDst = pDst + 3*bufLen;
+      cudaMemcpy(pDst, pSObjectCtx->x, ctx->one_channel_bytes, cudaMemcpyHostToDevice);
+      pDst = pDst + ctx->one_channel_element_num;
+      cudaMemcpy(pDst, pSObjectCtx->y, ctx->one_channel_bytes, cudaMemcpyHostToDevice);
+      pDst = pDst + ctx->one_channel_element_num;
+      cudaMemcpy(pDst, pSObjectCtx->z, ctx->one_channel_bytes, cudaMemcpyHostToDevice);
+      pDst = pDst + ctx->one_channel_element_num;
     }
   }
 
@@ -287,9 +284,10 @@ CustomCtx *initLib(CustomInitParams initparams)
     printf("frameSeqLen iilegal, use default vaule 300\n");
     len = _MAX_FRAME_;
   }
-  ctx->one_channel_element_num = len * 34;
-  ctx->two_channel_element_num = 2 * len * 34;
-  ctx->move_element_num = (len-1) * 34;
+  ctx->one_channel_element_num = len*_KEYPOINTS_NUM;
+  ctx->one_channel_bytes = ctx->one_channel_element_num*sizeof(float);
+  ctx->move_element_num = (len-1)*_KEYPOINTS_NUM;
+  ctx->move_element_bytes = ctx->move_element_num*sizeof(float);
 
   /* initial vector for multi_keypoints*/
   for(int i = 0; i < _MAX_OBJECT_NUM_; i++){

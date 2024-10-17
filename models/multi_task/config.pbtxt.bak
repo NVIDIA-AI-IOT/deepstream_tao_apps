@@ -23,7 +23,7 @@
 name: "multi_task"
 platform: "tensorrt_plan"
 max_batch_size: 4
-default_model_filename: "abc.etlt_b4_gpu0_fp16.engine"
+default_model_filename: "multi_task.onnx_b4_gpu0_fp16.engine"
 input [
   {
     name: "input_1"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -73,6 +73,15 @@ ds_parse_ocdr_videotemplate_config(GstElement *vtemplate,
 void
 create_video_encoder(bool isH264, int enc_type, GstElement** conv_capfilter,
   GstElement** outenc, GstElement** encparse, GstElement** rtppay);
+
+guint
+ds_parse_group_enable(gchar *cfg_file_path, const char* group);
+guint
+ds_parse_group_car_mode(gchar *cfg_file_path, const char* group);
+
+void
+get_triton_yml(gint car_mode, gboolean use_triton_grpc, char* pgie_cfg_file_path,
+char* sgie1_cfg_file_path, char* sgie2_cfg_file_path, guint buf_len);
 
 #ifdef __cplusplus
 }

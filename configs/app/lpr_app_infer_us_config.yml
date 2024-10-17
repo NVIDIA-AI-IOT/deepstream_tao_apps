@@ -1,0 +1,52 @@
+source-list:
+  list: /home/us/car.mp4
+
+#If there is ROI
+analytics-config:
+  #filename: config_nvdsanalytics.txt
+
+triton:
+  ## 0:disable 1:enable
+  enable: 0
+  ##0:trtion-native 1:triton-grpc
+  type: 0
+  ##car mode, 1:US car plate model|2: Chinese car plate model
+  car-mode: 1
+
+output:
+  ## 1:file ouput  2:fake output 3:eglsink output
+  type: 1
+  ## 0: H264 encoder  1:H265 encoder
+  enc: 0
+  ## encoder type 0=Hardware 1=Software
+  enc_type: 0
+  bitrate: 4000000
+  ##The file name without suffix
+  filename: test
+
+primary-gie:
+  ##For car detection
+  config-file-path: ../nvinfer/trafficcamnet_tao/pgie_trafficcamnet_config.txt
+  unique-id: 1
+
+secondary-gie-0:
+  ##For lpd_DetectNet2
+  config-file-path: ../nvinfer/LPD_us_tao/sgie_lpd_DetectNet2_us.txt
+  unique-id: 2
+  process-mode: 2
+
+secondary-gie-1:
+  ##For US car plate recognization
+  config-file-path: ../nvinfer/lpr_us_tao/sgie_lpr_us_config.txt
+  unique-id: 3
+  process-mode: 2
+
+tracker:
+  tracker-width: 640
+  tracker-height: 384
+  gpu-id: 0
+  ll-lib-file: /opt/nvidia/deepstream/deepstream/lib/libnvds_nvmultiobjecttracker.so
+  ll-config-file: /opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app/config_tracker_NvDCF_perf.yml
+  enable-batch-process: 1
+
+

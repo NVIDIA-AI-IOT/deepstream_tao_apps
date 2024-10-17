@@ -36,7 +36,7 @@ CFLAGS+= -I$(DS_SRC_PATH)/sources/includes \
 
 CFLAGS+= -Wall -std=c++11 -shared -fPIC
 
-LIBS+= -lnvinfer -lnvparsers -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcublas
+LIBS+= -lnvinfer -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcublas
 
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 

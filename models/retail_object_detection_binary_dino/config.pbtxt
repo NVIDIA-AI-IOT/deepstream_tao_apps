@@ -28,7 +28,7 @@ input [
   {
     name: "inputs"
     data_type: TYPE_FP32
-    dims: [ 3, 544, 960 ]
+    dims: [ 3, 540, 960 ]
   }
 ]
 output [

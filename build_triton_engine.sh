@@ -4,123 +4,63 @@ IS_JETSON_PLATFORM=`uname -i | grep aarch64`
 
 export PATH=$PATH:/usr/src/tensorrt/bin
 
-
-if [ ! ${IS_JETSON_PLATFORM} ]; then
-    wget --content-disposition 'https://api.ngc.nvidia.com/v2/resources/org/nvidia/team/tao/tao-converter/v5.1.0_8.6.3.1_x86/files?redirect=true&path=tao-converter' -O tao-converter
-else
-    wget --content-disposition 'https://api.ngc.nvidia.com/v2/resources/org/nvidia/team/tao/tao-converter/v5.1.0_jp6.0_aarch64/files?redirect=true&path=tao-converter' -O tao-converter
-fi
-chmod 755 tao-converter
-
 #detection
-#dssd
-echo "Building Model dssd..."
-mkdir  -p  models/dssd/1
-trtexec --onnx=./models/dssd/dssd_resnet18_epoch_118.onnx --int8 --calib=./models/dssd/dssd_cal.bin --saveEngine=./models/dssd/1/dssd_resnet18_epoch_118.onnx_b4_gpu0_int8.engine --minShapes=Input:1x3x544x960 --optShapes=Input:2x3x544x960 --maxShapes=Input:4x3x544x960&
-
 #efficientdet
 echo "Building Model efficientdet..."
 mkdir  -p  models/efficientdet/1
-trtexec --onnx=./models/efficientdet/d0_avlp_544_960.onnx --int8 --calib=./models/efficientdet/d0_avlp_544_960.cal --saveEngine=./models/efficientdet/1/d0_avlp_544_960.onnx_b1_gpu0_int8.engine&
-
-
-#frcnn
-echo "Building Model frcnn..."
-mkdir  -p  models/frcnn/1
-trtexec --onnx=./models/frcnn/frcnn_kitti_resnet18.epoch24_trt8.onnx --int8 --calib=./models/frcnn/cal_frcnn_20230707_cal.bin --saveEngine=./models/frcnn/1/frcnn_kitti_resnet18.epoch24_trt8.onnx_b4_gpu0_int8.engine --minShapes=input_image:1x3x544x960 --optShapes=input_image:2x3x544x960 --maxShapes=input_image:4x3x544x960&
-
- #retinanet
-echo "Building Model retinanet..."
-mkdir  -p  models/retinanet/1
-trtexec --onnx=./models/retinanet/retinanet_resnet18_epoch_080_its.onnx --int8 --calib=./models/retinanet/retinanet_resnet18_epoch_080_its_tao5.cal --saveEngine=./models/retinanet/1/retinanet_resnet18_epoch_080_its.onnx_b4_gpu0_int8.engine --minShapes=Input:1x3x544x960 --optShapes=Input:2x3x544x960 --maxShapes=Input:4x3x544x960&
-
-#ssd
-echo "Building Model ssd..."
-mkdir  -p  models/ssd/1
-trtexec --onnx=./models/ssd/ssd_resnet18_epoch_074.onnx --int8 --calib=./models/ssd/ssd_cal.bin --saveEngine=./models/ssd/1/ssd_resnet18_epoch_074.onnx_b4_gpu0_int8.engine --minShapes=Input:1x3x544x960 --optShapes=Input:2x3x544x960 --maxShapes=Input:4x3x544x960&
-
-#yolov3
-echo "Building Model yolov3..."
-mkdir  -p  models/yolov3/1
-trtexec --onnx=./models/yolov3/yolov3_resnet18_398.onnx --int8 --calib=./models/yolov3/cal.bin.trt8517 --saveEngine=./models/yolov3/1/yolov3_resnet18_398.onnx_b4_gpu0_int8.engine --minShapes=Input:1x3x544x960 --optShapes=Input:2x3x544x960 --maxShapes=Input:4x3x544x960 --layerPrecisions=cls/Sigmoid:fp32,cls/Sigmoid_1:fp32,box/Sigmoid_1:fp32,box/Sigmoid:fp32,cls/Reshape_reshape:fp32,box/Reshape_reshape:fp32,Transpose2:fp32,sm_reshape:fp32,encoded_sm:fp32,conv_big_object:fp32,cls/mul:fp32,box/concat_concat:fp32,box/add_1:fp32,box/mul_4:fp32,box/add:fp32,box/mul_6:fp32,box/sub_1:fp32,box/add_2:fp32,box/add_3:fp32,yolo_conv1_6:fp32,yolo_conv1_6_lrelu:fp32,yolo_conv2:fp32,Resize1:fp32,yolo_conv1_5_lrelu:fp32,encoded_bg:fp32,yolo_conv4_lrelu:fp32,yolo_conv4:fp32&
-
-#yolov4
-echo "Building Model yolov4..."
-mkdir  -p  models/yolov4/1
-trtexec --onnx=./models/yolov4/yolov4_resnet18_epoch_080.onnx --best --calib=./models/yolov4/cal_trt861.bin --saveEngine=./models/yolov4/1/yolov4_resnet18_epoch_080.onnx_b4_gpu0_int8.engine --minShapes=Input:1x3x544x960 --optShapes=Input:2x3x544x960 --maxShapes=Input:4x3x544x960&
-
-#yolov4-tiny
-echo "Building Model yolov4-tiny..."
-mkdir  -p  models/yolov4-tiny/1
-trtexec --onnx=./models/yolov4-tiny/yolov4_cspdarknet_tiny_397.onnx --int8 --calib=./models/yolov4-tiny/cal.bin.trt8517 --saveEngine=./models/yolov4-tiny/1/yolov4_cspdarknet_tiny_397.onnx_b4_gpu0_int8.engine --minShapes=Input:1x3x544x960 --optShapes=Input:2x3x544x960 --maxShapes=Input:4x3x544x960&
+if [ ! ${IS_JETSON_PLATFORM} ]; then
+  trtexec --onnx=./models/efficientdet/d0_avlp_544_960.onnx --int8 --calib=./models/efficientdet/d0_avlp_544_960_x86.cal --saveEngine=./models/efficientdet/1/d0_avlp_544_960.onnx_b1_gpu0_int8.engine&
+else
+  trtexec --onnx=./models/efficientdet/d0_avlp_544_960.onnx --int8 --calib=./models/efficientdet/d0_avlp_544_960_jetson.cal --saveEngine=./models/efficientdet/1/d0_avlp_544_960.onnx_b1_gpu0_int8.engine&
+fi
 
 #yolov5
 #echo "Building Model yolov5..."
 #mkdir  -p  models/yolov5/1
 #/usr/src/tensorrt/bin/trtexec --fp16  --onnx=./models/yolov5/yolov5s.onnx  \
 # --saveEngine=./models/yolov5/1/yolov5s.onnx_b4_gpu0_fp16.engine --minShapes=images:1x3x672x672 \
-# --optShapes=images:4x3x672x672 --maxShapes=images:4x3x672x672 --shapes=images:4x3x672x672 --workspace=10000
+# --optShapes=images:4x3x672x672 --maxShapes=images:4x3x672x672 --shapes=images:4x3x672x672
 
 #for classifcaiton
 #multi_task
 #mkdir  -p  models/multi_task/1
-#./tao-converter -k nvidia_tlt -t fp16  -b 4 -d 3,80,60 -e models/multi_task/1/abc.etlt_b4_gpu0_fp16.engine \
-# models/multi_task/abc.etlt
+#trtexec --onnx=./models/multi_task/multi_task.onnx  --saveEngine=./models/multi_task/1/multi_task.onnx_b1_gpu0_fp16.engine \
+# --minShapes=input_1:1x3x80x60 --optShapes=input_1:4x3x80x60 --maxShapes=input_1:4x3x80x60&
 
 #for instance segmentation
-#for peopleSegNet
-echo "Building Model peopleSegNet..."
-mkdir  -p  models/peopleSegNet/1
-./tao-converter -k nvidia_tlt -t int8 -c models/peopleSegNet/peoplesegnet_resnet50_int8.txt -b 4 -d 3,576,960 \
- -e models/peopleSegNet/1/peoplesegnet_resnet50.etlt_b4_gpu0_int8.engine  models/peopleSegNet/peoplesegnet_resnet50.etlt&
+#for mask2former
+echo "Building Model mask2former..."
+mkdir  -p  models/mask2former/1
+trtexec --onnx=./models/mask2former/mask2former.onnx --fp16 --saveEngine=./models/mask2former/1/mask2former.onnx_b1_gpu0_fp16.engine \
+ --minShapes=inputs:1x3x800x800 --optShapes=inputs:1x3x800x800 --maxShapes=inputs:1x3x800x800&
+
 #for segmentation
 #peopleSemSegNet
 echo "Building Model peopleSemSegNet..."
 mkdir  -p  models/peopleSemSegNet_vanilla/1
-trtexec --onnx=./models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8_fp16.onnx --int8 \
- --calib=./models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8.cache --saveEngine=./models/peopleSemSegNet_vanilla/1/peoplesemsegnet_vanilla_unet_dynamic_etlt_int8_fp16.onnx_b4_gpu0_int8.engine \
+trtexec --onnx=./models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_dynamic_etlt_fp32.onnx --int8 \
+ --calib=./models/peopleSemSegNet_vanilla/peoplesemsegnet_vanilla_unet_int8.txt --saveEngine=./models/peopleSemSegNet_vanilla/1/peoplesemsegnet_vanilla_unet_dynamic_etlt_fp32.onnx_b4_gpu0_int8.engine \
  --minShapes="input_1:0":1x3x544x960 --optShapes="input_1:0":4x3x544x960 --maxShapes="input_1:0":4x3x544x960&
 
 mkdir  -p  models/peopleSemSegNet_shuffle/1
 trtexec --onnx=./models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg.onnx --int8 \
- --calib=./models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg_cache.txt --saveEngine=./models/peopleSemSegNet_shuffle/1/peoplesemsegnet_shuffleseg.onnx_b4_gpu0_int8.engine \
+ --calib=./models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg_int8.txt --saveEngine=./models/peopleSemSegNet_shuffle/1/peoplesemsegnet_shuffleseg.onnx_b4_gpu0_int8.engine \
  --minShapes="input_2:0":1x3x544x960 --optShapes="input_2:0":4x3x544x960 --maxShapes="input_2:0":4x3x544x960&
 
 #unet
 echo "Building Model unet..."
 mkdir  -p  models/unet/1
-trtexec --onnx=./models/unet/unet_resnet18.onnx --int8 --calib=./models/unet/unet_cal.bin --saveEngine=./models/unet/1/unet_resnet18.onnx_b4_gpu0_int8.engine --minShapes="input_1:0":1x3x320x320 --optShapes="input_1:0":2x3x320x320 --maxShapes="input_1:0":4x3x320x320&
-
+if [ ! ${IS_JETSON_PLATFORM} ]; then
+  trtexec --onnx=./models/unet/unet_resnet18.onnx --int8 --calib=./models/unet/unet_cal_x86.bin --saveEngine=./models/unet/1/unet_resnet18.onnx_b4_gpu0_int8.engine --minShapes="input_1:0":1x3x320x320 --optShapes="input_1:0":2x3x320x320 --maxShapes="input_1:0":4x3x320x320&
+else
+  trtexec --onnx=./models/unet/unet_resnet18.onnx --int8 --calib=./models/unet/unet_cal_jetson.bin --saveEngine=./models/unet/1/unet_resnet18.onnx_b4_gpu0_int8.engine --minShapes="input_1:0":1x3x320x320 --optShapes="input_1:0":2x3x320x320 --maxShapes="input_1:0":4x3x320x320&
+fi
 #citysemsegformer
 echo "Building Model citysemsegformer..."
 mkdir  -p  models/citysemsegformer/1  && \
 trtexec --onnx=./models/citysemsegformer/citysemsegformer.onnx --fp16 \
  --saveEngine=./models/citysemsegformer/1/citysemsegformer.onnx_b1_gpu0_fp16.engine \
  --minShapes="input":1x3x1024x1820 --optShapes="input":1x3x1024x1820 --maxShapes="input":1x3x1024x1820&
-
-#bodypose2d
-echo "Building Model bodypose2d..."
-mkdir  -p  models/bodypose2d/1
-./tao-converter -k nvidia_tlt -t fp16 -p  input_1:0,1x288x384x3,32x288x384x3,32x288x384x3 \
- -e models/bodypose2d/1/model.etlt_b32_gpu0_fp16.engine models/bodypose2d/model.etlt&
-
-#gesture
-echo "Building Model gesture..."
-mkdir  -p  models/gesture/1
-./tao-converter -k nvidia_tlt -t int8 -c models/gesture/int8_calibration.txt -p  \
- input_1,1x3x160x160,8x3x160x160,8x3x160x160 -e models/gesture/1/gesture.etlt_b8_gpu0_int8.engine models/gesture/gesture.etlt&
-
-#facenet
-echo "Building Model facenet..."
-mkdir  -p  models/facenet/1
-./tao-converter -k nvidia_tlt -t int8 -c models/facenet/facenet_cal.txt -b 16 -d 3,416,736   \
- -e models/facenet/1/facenet.etlt_b16_gpu0_int8.engine models/facenet/facenet.etlt&
-
-#gesture
-echo "Building Model faciallandmark..."
-mkdir  -p  models/faciallandmark/1
-./tao-converter -k nvidia_tlt -t int8 -c models/faciallandmark/fpenet_cal.txt -b 4  -p  \
- input_face_images,1x1x80x80,2x1x80x80,4x1x80x80 -e models/faciallandmark/1/faciallandmark.etlt_b4_gpu0_int8.engine models/faciallandmark/faciallandmark.etlt&
 
 #peoplenet_transformer
 echo "Building Model peoplenet_transformer"
@@ -129,58 +69,35 @@ trtexec --onnx=./models/peoplenet_transformer/resnet50_peoplenet_transformer_op1
  --saveEngine=./models/peoplenet_transformer/1/resnet50_peoplenet_transformer_op17.onnx_b1_gpu0_fp16.engine \
  --minShapes="inputs":1x3x544x960 --optShapes="inputs":1x3x544x960 --maxShapes="inputs":1x3x544x960&
 
-#retail_object_detection_100
-echo "Building Model retail_object_detection_100"
-mkdir -p models/retail_object_detection_100/1
-trtexec --minShapes=input:1x416x416x3 --optShapes=input:1x416x416x3 --maxShapes=input:1x416x416x3 \
- --fp16 --saveEngine=models/retail_object_detection_100/1/retail_detector_100.onnx_b1_gpu0_fp16.engine \
- --onnx=models/retail_object_detection_100/retail_detector_100.onnx --workspace=100000&
-
 #reidentificationnet
 echo "Building Model reidentificationnet"
 mkdir -p models/reidentificationnet/1
 trtexec --minShapes=input:1x3x256x128 --optShapes=input:8x3x256x128 --maxShapes=input:16x3x256x128 \
  --fp16 --saveEngine=models/reidentificationnet/1/resnet50_market1501_aicity156.onnx_b16_gpu0_fp16.engine \
- --onnx=models/reidentificationnet/resnet50_market1501_aicity156.onnx --workspace=100000&
-
-#retail_object_detection_binary_effdet
-echo "Building Model retail_object_detection_binary_effdet"
-mkdir -p models/retail_object_detection_binary_effdet/1
-trtexec --onnx=models/retail_object_detection_binary_effdet/retail_detector_binary.onnx \
- --saveEngine=models/retail_object_detection_binary_effdet/1/retail_detector_binary.onnx_b1_gpu0_fp16.engine \
- --minShapes=input:1x416x416x3 --optShapes=input:1x416x416x3 --maxShapes=input:1x416x416x3 --workspace=102400 \
- --fp16 --sparsity=enable
+ --onnx=models/reidentificationnet/resnet50_market1501_aicity156.onnx &
 
 #retail_object_detection_binary_dino
 echo "Building Model retail_object_detection_binary_dino"
 mkdir -p models/retail_object_detection_binary_dino/1
 trtexec --onnx=models/retail_object_detection_binary_dino/retail_object_detection_dino_binary.onnx \
  --saveEngine=models/retail_object_detection_binary_dino/1/retail_object_detection_dino_binary.onnx_b1_gpu0_fp32.engine \
- --minShapes=inputs:1x3x544x960 --optShapes=inputs:1x3x544x960 --maxShapes=inputs:1x3x544x960 --workspace=102400 \
+ --minShapes=inputs:1x3x540x960 --optShapes=inputs:1x3x540x960 --maxShapes=inputs:1x3x540x960 \
  --sparsity=enable&
-
-#retail_object_detection_meta
-echo "Building Model retail_object_detection_meta"
-mkdir -p models/retail_object_detection_meta/1
-trtexec --onnx=models/retail_object_detection_meta/retail_object_detection_dino_meta.onnx \
- --saveEngine=models/retail_object_detection_meta/1/retail_object_detection_dino_meta.onnx_b1_gpu0_fp16.engine \
- --minShapes=inputs:1x3x544x960 --optShapes=inputs:1x3x544x960 --maxShapes=inputs:1x3x544x960 --workspace=102400 \
- --fp16 --sparsity=enable&
 
 #retail_object_recognition
 echo "Building Model retail_object_recognition"
 mkdir -p models/retail_object_recognition/1
 trtexec --onnx=models/retail_object_recognition/retail_object_recognition.onnx \
  --saveEngine=models/retail_object_recognition/1/retail_object_recognition.onnx_b16_gpu0_fp16.engine \
- --minShapes=inputs:1x3x224x224 --optShapes=inputs:16x3x224x224 --maxShapes=inputs:16x3x224x224 --workspace=102400  \
+ --minShapes=inputs:1x3x224x224 --optShapes=inputs:16x3x224x224 --maxShapes=inputs:16x3x224x224 \
  --fp16 --sparsity=enable&
 
 #peoplenet
 echo "Building Model peoplenet..."
 mkdir  -p  models/peoplenet/1
 trtexec --onnx=./models/peoplenet/resnet34_peoplenet_int8.onnx --int8 \
---calib=./models/peoplenet/resnet34_peoplenet_int8.txt --saveEngine=./models/peoplenet/1/resnet34_peoplenet_int8.onnx_b1_gpu0_int8.engine \
---minShapes="input_1:0":1x3x544x960 --optShapes="input_1:0":1x3x544x960 --maxShapes="input_1:0":1x3x544x960&
+--calib=./models/peoplenet/resnet34_peoplenet_int8.txt --saveEngine=./models/peoplenet/1/resnet34_peoplenet_int8.onnx_b2_gpu0_int8.engine \
+--minShapes="input_1:0":1x3x544x960 --optShapes="input_1:0":2x3x544x960 --maxShapes="input_1:0":2x3x544x960&
 
 #poseclassificationnet
 echo "Building Model poseclassificationnet..."
@@ -192,11 +109,35 @@ trtexec --onnx=./models/poseclassificationnet/st-gcn_3dbp_nvidia.onnx --fp16 \
 #bodypose3dnet
 echo "Building Model bodypose3dnet..."
 mkdir -p models/bodypose3dnet/1
-./tao-converter -k tlt_encode -t fp16 -d 3,256,192 -b 8 \
--p input0,1x3x256x192,8x3x256x192,8x3x256x192 \
--p k_inv,1x3x3,8x3x3,8x3x3 \
--p t_form_inv,1x3x3,8x3x3,8x3x3 \
--p scale_normalized_mean_limb_lengths,1x36,8x36,8x36 \
--p mean_limb_lengths,1x36,8x36,8x36 \
--e models/bodypose3dnet/1/bodypose3dnet_accuracy.etlt_b8_gpu0_fp16.engine \
-models/bodypose3dnet/bodypose3dnet_accuracy.etlt&
+trtexec --onnx=models/bodypose3dnet/bodypose3dnet_accuracy.onnx --fp16 \
+	--saveEngine=models/bodypose3dnet/1/bodypose3dnet_accuracy.onnx_b8_gpu0_fp16.engine \
+	--minShapes="input0":1x3x256x192,k_inv:1x3x3,t_form_inv:1x3x3,scale_normalized_mean_limb_lengths:1x36,mean_limb_lengths:1x36 \
+	--optShapes="input0":8x3x256x192,k_inv:8x3x3,t_form_inv:8x3x3,scale_normalized_mean_limb_lengths:8x36,mean_limb_lengths:8x36 \
+	--maxShapes="input0":8x3x256x192,k_inv:8x3x3,t_form_inv:8x3x3,scale_normalized_mean_limb_lengths:8x36,mean_limb_lengths:8x36
+
+#LPD/LPR
+echo "Building Models for LPD/LPR..."
+mkdir -p models/trafficcamnet/1
+trtexec --onnx=models/trafficcamnet/resnet18_trafficcamnet_pruned.onnx --int8 --calib=models/trafficcamnet/resnet18_trafficcamnet_pruned_int8.txt \
+ --saveEngine=models/trafficcamnet/1/resnet18_trafficcamnet_pruned.onnx_b1_gpu0_int8.engine --minShapes="input_1:0":1x3x544x960 \
+ --optShapes="input_1:0":1x3x544x960 --maxShapes="input_1:0":1x3x544x960
+
+mkdir -p models/LPD_us/1
+trtexec --onnx=models/LPD_us/LPDNet_usa_pruned_tao5.onnx --int8 --calib=models/LPD_us/usa_cal_10.1.0.bin \
+ --saveEngine=models/LPD_us/1/LPDNet_usa_pruned_tao5.onnx_b16_gpu0_int8.engine --minShapes="input_1:0":1x3x480x640 \
+ --optShapes="input_1:0":16x3x480x640 --maxShapes="input_1:0":16x3x480x640
+
+mkdir -p models/LPD_ch/1
+trtexec --onnx=models/LPD_ch/LPDNet_CCPD_pruned_tao5.onnx --fp16 \
+ --saveEngine=models/LPD_ch/1/LPDNet_CCPD_pruned_tao5.onnx_b16_gpu0_fp16.engine --minShapes="input_1:0":1x3x1168x720 \
+ --optShapes="input_1:0":16x3x1168x720 --maxShapes="input_1:0":16x3x1168x720
+
+mkdir -p models/LPR_us/1
+ trtexec --onnx=models/LPR_us/us_lprnet_baseline18_deployable.onnx --fp16 \
+ --saveEngine=models/LPR_us/1/us_lprnet_baseline18_deployable.onnx_b16_gpu0_fp16.engine --minShapes="image_input":1x3x48x96 \
+ --optShapes="image_input":8x3x48x96 --maxShapes="image_input":16x3x48x96
+
+mkdir -p models/LPR_ch/1
+ trtexec --onnx=models/LPR_ch/ch_lprnet_baseline18_deployable.onnx --fp16 \
+ --saveEngine=models/LPR_ch/1/ch_lprnet_baseline18_deployable.onnx_b16_gpu0_fp16.engine --minShapes="image_input":1x3x48x96 \
+ --optShapes="image_input":8x3x48x96 --maxShapes="image_input":16x3x48x96

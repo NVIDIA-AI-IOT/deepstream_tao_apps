@@ -23,7 +23,7 @@ process-mode=1
 model-color-format=0
 ## 0=FP32, 1=INT8, 2=FP16 mode
 network-mode=1
-num-detected-classes=1
+num-detected-classes=3
 cluster-mode=2
 interval=0
 gie-unique-id=1

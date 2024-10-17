@@ -23,7 +23,7 @@
 name: "peopleSemSegNet_vanilla"
 platform: "tensorrt_plan"
 max_batch_size: 4
-default_model_filename: "peoplesemsegnet_vanilla_unet_dynamic_etlt_int8_fp16.onnx_b4_gpu0_int8.engine"
+default_model_filename: "peoplesemsegnet_vanilla_unet_dynamic_etlt_fp32.onnx_b4_gpu0_int8.engine"
 input [
   {
     name: "input_1:0"
@@ -34,7 +34,7 @@ input [
 output [
   {
     name: "argmax_1"
-    data_type: TYPE_INT32
+    data_type: TYPE_INT64
     dims: [ 544, 960, 1 ]
   }
 ]

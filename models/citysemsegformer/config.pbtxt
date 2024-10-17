@@ -34,7 +34,7 @@ input [
 output [
   {
     name: "output"
-    data_type: TYPE_INT32
+    data_type: TYPE_INT64
     dims: [ 1024, 1820, 1 ]
   }
 ]

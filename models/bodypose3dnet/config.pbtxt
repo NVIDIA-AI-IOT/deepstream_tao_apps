@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2023 NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2023-2024 NVIDIA Corporation.  All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 name: "bodypose3dnet"
 platform: "tensorrt_plan"
 max_batch_size: 8
-default_model_filename: "bodypose3dnet_accuracy.etlt_b8_gpu0_fp16.engine"
+default_model_filename: "bodypose3dnet_accuracy.onnx_b8_gpu0_fp16.engine"
 input [
   {
     name: "input0"

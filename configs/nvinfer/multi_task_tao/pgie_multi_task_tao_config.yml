@@ -26,9 +26,8 @@ property:
   offsets: 103.939;116.779;123.68
   model-color-format: 1
   labelfile-path: multi_task_labels.txt
-  tlt-encoded-model: ../../../models/multi_task/abc.etlt
-  tlt-model-key: nvidia_tlt
-  model-engine-file: ../../../models/multi_task/abc.etlt_b1_gpu0_fp16.engine
+  onnx-file: ../../../models/multi_task/multi_task.onnx
+  model-engine-file: ../../../models/multi_task/multi_task.onnx_b1_gpu0_fp16.engine
   infer-dims: 3;80;60
   uff-input-blob-name: input_1
   batch-size: 1
@@ -39,5 +38,5 @@ property:
   network-type: 1
   scaling-filter: 1
   scaling-compute-hw: 1
-  output-blob-names: base_color/Softmax;category/Softmax;season/Softmax
+  output-blob-names: base_color;category;season
   classifier-threshold: 0.5

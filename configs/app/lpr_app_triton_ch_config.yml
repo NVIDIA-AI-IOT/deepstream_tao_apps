@@ -1,0 +1,37 @@
+source-list:
+  list: /home/ch/car.mp4
+
+#If there is ROI
+analytics-config:
+        #filename: config_nvdsanalytics.txt
+
+triton:
+  ## 0:disable 1:enable
+  enable: 1
+  ##0:trtion-native 1:triton-grpc
+  type: 0
+  ##car mode, 1:US car plate model|2: Chinese car plate model
+  car-mode: 2
+
+output:
+  ## 1:file ouput  2:fake output 3:eglsink output
+  type: 1
+  ## 0: H264 encoder  1:H265 encoder
+  enc: 0
+  ## encoder type 0=Hardware 1=Software
+  enc_type: 0
+  bitrate: 4000000
+  ##The file name without suffix
+  filename: test
+
+#gie configuration is in triton/triton-gprc directory.
+
+tracker:
+  tracker-width: 640
+  tracker-height: 384
+  gpu-id: 0
+  ll-lib-file: /opt/nvidia/deepstream/deepstream/lib/libnvds_nvmultiobjecttracker.so
+  ll-config-file: /opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app/config_tracker_NvDCF_perf.yml
+  enable-batch-process: 1
+
+

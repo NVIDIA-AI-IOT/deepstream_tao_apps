@@ -129,18 +129,9 @@ primary-gie:
   bbox-border-color1: 0;1;1;1
   bbox-border-color2: 0;1;1;1
   bbox-border-color3: 0;1;0;1
-  config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_binary_effdet_tao_config.yml
-  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_binary_effdet_tao_config.yml
-  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_binary_effdet_tao_config.yml
-  #config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_binary_dino_tao_config.yml
+  config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_binary_dino_tao_config.yml
   #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_binary_dino_tao_config.yml
   #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_binary_dino_tao_config.yml
-  #config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_meta_dino_tao_config.yml
-  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_meta_dino_tao_config.yml
-  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_meta_dino_tao_config.yml
-  #config-file: ../nvinfer/retail_object_detection_tao/pgie_retail_object_detection_100_effdet_tao_config.yml
-  #config-file: ../triton/retail_object_detection_tao/pgie_retail_object_detection_100_effdet_tao_config.yml
-  #config-file: ../triton-grpc/retail_object_detection_tao/pgie_retail_object_detection_100_effdet_tao_config.yml
 
 tracker:
   enable: 1

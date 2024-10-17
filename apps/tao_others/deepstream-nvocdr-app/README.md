@@ -2,8 +2,8 @@
 The nvOCDR deepstream sample application for optical character detection and recognition.
 
 The TAO pretrained models used in the sample application are:
-* [OCDNet V2.3](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocdnet)
-* [OCRNet V2.0](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocrnet)
+* [OCDNet deployable_onnx_v2.4](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocdnet)
+* [OCRNet deployable_v2.1.1](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocrnet)
 
 ## Prerequisition
 * DeepStream SDK 6.2 GA and above
