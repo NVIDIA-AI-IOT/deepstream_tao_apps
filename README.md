@@ -17,14 +17,15 @@
     - [Model Outputs](#model-outputs)
       - [1~4. Yolov3 / YoloV4 / Yolov4-tiny / Yolov5](#14-yolov3--yolov4--yolov4-tiny--yolov5)
       - [5~8. RetinaNet / DSSD / SSD/ FasterRCNN](#58-retinanet--dssd--ssd-fasterrcnn)
-      - [9. PeopleSegNet](#9-peoplesegnet)
-      - [10~12. UNET/PeopleSemSegNet/CitySemSegFormer](#1012-unetpeoplesemsegnetcitysemsegformer)
-      - [13. multi_task](#13-multi_task)
-      - [14~15. EfficientDet / Retail Object Detection](#1415-efficientdet--retail-object-detection)
-      - [16~23. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet/ PoseClassification](#1623-facedetect--facial-landmarks-estimation--emotionnet--gaze-estimation--gesturenet--heartratenet--bodyposenet-poseclassification)
-      - [24. PeopleNet Transformer](#24-peoplenet-transformer)
-      - [25~26. Re-Identification / Retail Item Recognition](#2526-re-identification--retail-item-recognition)
-      - [27~28. OCDNet / OCRNet](#2728-ocdnet--ocrnet)
+      - [9~11. UNET/PeopleSemSegNet/CitySemSegFormer](#911-unetpeoplesemsegnetcitysemsegformer)
+      - [12. multi_task](#12-multi_task)
+      - [13. EfficientDet](#13-efficientdet)
+      - [14. PoseClassification](#14-poseclassification)
+      - [15. Retail Object Detection / PeopleNet Transformer](#15-retail-object-detection--peoplenet-transformer)
+      - [16~17. Re-Identification / Retail Item Recognition](#1617-re-identification--retail-item-recognition)
+      - [18~19. OCDNet / OCRNet](#1819-ocdnet--ocrnet)
+      - [2~21. LPDNet / LPRNet](#2021-lpdnet--lprnet)
+      - [22. Mask2Former](#22-mask2former)
   - [FAQ](#faq)
     - [Measure The Inference Perf](#measure-the-inference-perf)
     - [About misc folder](#about-misc-folder)
@@ -34,14 +35,14 @@
 
 ## Description
 
-This repository provides a DeepStream sample application based on [NVIDIA DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) to run eleven TAO models (**Faster-RCNN** / **YoloV3** / **YoloV4** / **YoloV5** /**SSD** / **DSSD** / **RetinaNet**/ **PeopleSegNet**/ **UNET**/ **multi_task**/ **peopleSemSegNet**) with below files:
+This repository provides a DeepStream sample application based on [NVIDIA DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) to run eleven TAO models (**Faster-RCNN** / **YoloV3** / **YoloV4** / **YoloV5** /**SSD** / **DSSD** / **RetinaNet** / **UNET**/ **multi_task**/ **peopleSemSegNet**) with below files:
 
 - **apps**: sample application for detection models and segmentation models
 - **configs**: DeepStream nvinfer configure file and label files
 - **post_processor**: include inference postprocessor for the models
 - **graphs**: DeepStream sample graphs based on the Graph Composer tools.
 - **models**: The models which will be used as samples.
-- **TRT-OSS**: The OSS nvinfer plugin build and download instructions. The OSS plugins are needed for some models with DeepStream 7.0 GA.
+- **TRT-OSS**: The OSS nvinfer plugin build and download instructions. The OSS plugins are needed for some models with DeepStream 7.1 GA.
 
 The pipeline of the sample:
 
@@ -55,7 +56,7 @@ uridecoderbin -->streammux-->nvinfer(detection)-->nvosd-->
 
 ## Prerequisites
 
-* [DeepStream SDK 7.0 GA](https://developer.nvidia.com/deepstream-sdk)
+* [DeepStream SDK 7.1 GA](https://developer.nvidia.com/deepstream-sdk)
 
    Make sure deepstream-test1 sample can run successful to verify your installation. According to the
    [document](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_docker_containers.html),
@@ -171,11 +172,11 @@ note:
 
 |Model Type|Tao Model|Demo|
 |-----------|----------|----|
-|detector|dssd, peoplenet_transformer, efficientdet, frcnn, retinanet, retail_detector_100, retail_detector_binary, ssd, yolov3, yolov4-tiny, yolov4, yolov5|./apps/tao_detection/ds-tao-detection -c configs/dssd_tao/pgie_dssd_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml|
-|classifier|multi-task|./apps/tao_classifier/ds-tao-classifier -c configs/multi_task_tao/pgie_multi_task_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_classifier/ds-tao-classifier configs/app/multi_task_app_config.yml|
-|segmentation|peopleSemSegNet, unet, citySemSegFormer|./apps/tao_segmentation/ds-tao-segmentation -c configs/peopleSemSegNet_tao/pgie_peopleSemSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4 -w 960 -e 544<br>or<br>./apps/tao_segmentation/ds-tao-segmentation configs/app/seg_app_unet.yml|
-|instance segmentation|peopleSegNet|export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection -c configs/peopleSegNet_tao/pgie_peopleSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection configs/app/ins_seg_app_peopleSegNet.yml|
-|others|FaceDetect, Facial Landmarks Estimation, EmotionNet, Gaze Estimation, GestureNet, HeartRateNet, BodyPoseNet,Re-identification, Retail Object Recognition, PoseClassificationNet, OCDNet, OCRNet|refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model|
+|detector|dssd, peoplenet_transformer, efficientdet, frcnn, retinanet, retail_detector_binary, ssd, yolov3, yolov4-tiny, yolov4, yolov5|./apps/tao_detection/ds-tao-detection -c configs/nvinfer/dssd_tao/pgie_dssd_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_detection/ds-tao-detection configs/app/det_app_frcnn.yml|
+|classifier|multi-task|./apps/tao_classifier/ds-tao-classifier -c configs/nvinfer/multi_task_tao/pgie_multi_task_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>./apps/tao_classifier/ds-tao-classifier configs/app/multi_task_app_config.yml|
+|segmentation|peopleSemSegNet, unet, citySemSegFormer|./apps/tao_segmentation/ds-tao-segmentation -c configs/nvinfer/peopleSemSegNet_tao/pgie_peopleSemSegNet_tao_config.txt -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4 -w 960 -e 544<br>or<br>./apps/tao_segmentation/ds-tao-segmentation configs/app/seg_app_unet.yml|
+|instance segmentation|Mask2Former|export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection -c configs/nvinfer/mask2former_tao/pgie_mask2former_tao_config.yml -i file:///$DS_SRC_PATH/samples/streams/sample_720p.mp4<br>or<br>export SHOW_MASK=1; ./apps/tao_detection/ds-tao-detection configs/app/ins_seg_app.yml|
+|others|Re-identification, Retail Object Recognition, PoseClassificationNet, OCDNet, OCRNet, LPDNet, LPRNet|refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model|
 
 Building the TensorRT engine of citySemSegFormer consumes a lot of device memory. Please `export CUDA_MODULE_LOADING=LAZY` to reduce device memory consumption. Please read [CUDA Environment Variables](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#env-vars) for details.
 
@@ -184,17 +185,11 @@ Building the TensorRT engine of citySemSegFormer consumes a lot of device memory
 If you want to do some customization, such as training your own TAO models, running the model in other DeepStream pipeline, you should read below sections.
 ### TAO Models
 
-To download the sample models that we have trained with [NVIDIA TAO Toolkit SDK](https://developer.nvidia.com/tao-toolkit) , run `wget https://nvidia.box.com/shared/static/hzrhk33vijf31w9nxb9c93gctu1w0spd -O models.zip`
+To download the sample models that we have trained with [NVIDIA TAO Toolkit SDK](https://developer.nvidia.com/tao-toolkit) , run `wget https://nvidia.box.com/shared/static/w0xxle5b3mjiv20wrq5q37v8u7b3u5tn -O models.zip`
 
-Refer [TAO Doc](https://docs.nvidia.com/tao/tao-toolkit/text/overview.html) for how to train the models, after training finishes, run `tao-export` to generate an `.etlt` model. This .etlt model can be deployed into DeepStream for fast inference as this sample shows.
-This DeepStream sample app also supports the TensorRT engine(plan) file generated by running the `tao-converter` tool on the `.etlt` model.
-The TensorRT engine file is hardware dependent, while the `.etlt` model is not. You may specify either a TensorRT engine file or a `.etlt` model in the DeepStream configuration file.
-
-Note, for Unet/peopleSemSegNet/yolov3/yolov4/yolov5 model, you can also convert the etlt model to TensorRT engine file using `tao-converter` like following:
-
-```
-tao-converter -e models/unet/unet_resnet18.etlt_b1_gpu0_fp16.engine -p input_1,1x3x608x960,1x3x608x960,1x3x608x960 -t fp16 -k tlt_encode -m 1 tlt_encode models/unet/unet_resnet18.etlt
-```
+Refer [TAO Doc](https://docs.nvidia.com/tao/tao-toolkit/text/overview.html) for how to train the models, after training finishes, run `tao-export` to generate an ONNX model. This ONNX model can be deployed into DeepStream for fast inference as this sample shows.
+This DeepStream sample app also supports the TensorRT engine(plan) file generated by running the `trtexec` tool on the ONNX model.
+The TensorRT engine file is hardware dependent, while the ONNX model is not. You may specify either a TensorRT engine file or a ONNX model in the DeepStream configuration file.
 ### Label Files
 
 The label file includes the list of class names for a model, which content varies for different models.  
@@ -226,35 +221,28 @@ These three models have the same output layer named NMS which implementation can
 * an output of shape [batchSize, 1, keepTopK, 7] which contains nmsed box class IDs(1 value), nmsed box scores(1 value) and nmsed box locations(4 value)
 * another output of shape [batchSize, 1, 1, 1] which contains the output nmsed box count.
 
-#### 9. PeopleSegNet
-
-The model has the following two outputs:
-
-- **generate_detections**: A [batchSize, keepTopK, C*6] tensor containing the bounding box, class id, score
-- **mask_head/mask_fcn_logits/BiasAdd**:  A [batchSize, keepTopK, C+1, 28*28] tensor containing the masks
-
-#### 10~12. UNET/PeopleSemSegNet/CitySemSegFormer
+#### 9~11. UNET/PeopleSemSegNet/CitySemSegFormer
 
 - **argmax_1/output**: A [batchSize, H, W, 1] tensor containing the class id per pixel location
 
-#### 13. multi_task
+#### 12. multi_task
 
 - refer detailed [README](./configs/nvinfer/multi_task_tao/README.md) for how to configure and run the model
 
-#### 14~15. EfficientDet / Retail Object Detection
+#### 13. EfficientDet
 
-Please note there are two `Retail Object Detection` models. These models have the following four outputs:
+These model have the following four outputs:
 
 - **num_detections**: This is a [batch_size, 1] tensor of data type int32. The last dimension is a scalar indicating the number of valid detections per batch image. It can be less than max_output_boxes. Only the top num_detections[i] entries in nms_boxes[i], nms_scores[i] and nms_classes[i] are valid.
 - **detection_boxes**: This is a [batch_size, max_output_boxes, 4] tensor of data type float32 or float16, containing the coordinates of non-max suppressed boxes. The output coordinates will always be in BoxCorner format, regardless of the input code type.
 - **detection_scores**: This is a [batch_size, max_output_boxes] tensor of data type float32 or float16, containing the scores for the boxes.
 - **detection_classes**: This is a [batch_size, max_output_boxes] tensor of data type int32, containing the classes for the boxes.
 
-#### 16~23. FaceDetect / Facial Landmarks Estimation / EmotionNet / Gaze Estimation / GestureNet / HeartRateNet / BodyPoseNet/ PoseClassification
+#### 14. PoseClassification
 
 - refer detailed [README](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/apps/tao_others/README.md) for how to configure and run the model
 
-#### 24. PeopleNet Transformer
+#### 15. Retail Object Detection / PeopleNet Transformer
 
 The model has the following two outputs:
 
@@ -263,7 +251,7 @@ tensor contains probability values of each class.
 - **pred_boxes**: This is a [batch_size, num_queries, 4] tensor of data type float32. The tensor
 represents the 2D bounding box coordinates in the format of [center_x, center_y, width, height].
 
-#### 25~26. Re-Identification / Retail Item Recognition
+#### 16~17. Re-Identification / Retail Item Recognition
 
 These models are trained to extract the embedding vector from an image. The image is the cropped area of a
 bounding box from a primary-gie task, like people detection by `PeopleNet Transformer` or retail item detection
@@ -280,7 +268,7 @@ The output layer is:
 - **outputs**: This is a [batch_size, 2048] tensor of data type float32. The tensor contains the embedding
 vector of size `2048`.
 
-#### 27~28. OCDNet / OCRNet
+#### 18~19. OCDNet / OCRNet
 
 ##### OCDNet output layer
 - **pred**:This is a [batchSize, H, W , 1] float tensor containing the probability of a pixel belongs to text
@@ -288,6 +276,20 @@ vector of size `2048`.
 - **output_prob**:This is a [batchSize, W/4] float tensor containing the confidence of each character in the text
 - **output_id**:This is a [batchSize, W/4] integer tensor containing each character index of the text. This index can be mapped to character through the OCRNet charater list
 
+#### 20~21. LPDNet / LPRNet
+
+##### LPDNet output
+- Category labels (lpd) and bounding-box coordinates for each detected license plate in the input image.
+
+##### LPRNet output
+- characters id sequence. (DeepStream post-process plugin is needed to get the final license plate)
+
+#### 22. Mask2Former
+The model has the following three outputs:
+
+- **pred_classes**: A [100] tensor containing the prediction classes
+- **pred_masks**:  A [100x800x800] tensor containing the prediction masks
+- **pred_scores**:  A [100] tensor containing the prediction scores
 ## FAQ
 
 ### Measure The Inference Perf
