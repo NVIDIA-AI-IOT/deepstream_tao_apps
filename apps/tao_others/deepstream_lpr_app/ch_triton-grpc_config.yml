@@ -1,0 +1,5 @@
+config:
+  pgie: ../../../configs/triton-grpc/trafficcamnet_tao/pgie_trafficcamnet_config.txt
+  lpd: ../../../configs/triton-grpc/LPD_ch_tao/sgie_lpd_DetectNet2_ch.txt
+  lpr: ../../../configs/triton-grpc/lpr_ch_tao/sgie_lpr_ch_config.txt
+

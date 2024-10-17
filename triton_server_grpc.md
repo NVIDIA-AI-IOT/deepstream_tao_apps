@@ -10,13 +10,13 @@ An immediate way to start a corresponding Triton Server is to use Triton contain
 * The Triton Server can be started in another machine as the server which is coonected to the machine for DeepStream applications through ehternet. 
 
 ## Prepare Triton Server For gRPC Connection
-The following steps take the DeepStream 7.0 GA as an example, if you use other DeepStream versions, the corresponding DeepStream Triton [image](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/deepstream) can be used.
+The following steps take the DeepStream 7.1 GA as an example, if you use other DeepStream versions, the corresponding DeepStream Triton [image](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/deepstream) can be used.
 
 To start Triton Server with DeepStream Triton container, the docker should be run in a new terminal and the following commands should be run in the same path as the deepstream_app_tao_configs codes are downloaded:
 * Start the Triton Inferece Server with DeepStream Triton docker under ./deepstream_tao_apps directory
 ```
     //start Triton docker, 10001:8001 is used to map docker container's 8000 port to host's 10000 port, these ports can be changed.
-    docker run --gpus all -it  --ipc=host --rm --privileged -v /tmp/.X11-unix:/tmp/.X11-unix  -p 10000:8000 -p 10001:8001 -p 10002:8002  -v $(pwd):/samples   -e DISPLAY=$DISPLAY -w /samples nvcr.io/nvidia/deepstream:7.0-gc-triton-devel
+    docker run --gpus all -it  --ipc=host --rm --privileged -v /tmp/.X11-unix:/tmp/.X11-unix  -p 10000:8000 -p 10001:8001 -p 10002:8002  -v $(pwd):/samples   -e DISPLAY=$DISPLAY -w /samples nvcr.io/nvidia/deepstream:7.1-gc-triton-devel
 ```
 
 For TensorRT 8.6, the OSS libnvinfer_plugin.so should be updated according to [OSS TRT x86 instruction](TRT-OSS/x86/README.md) or [OSS TRT Jetson instruction](TRT-OSS/Jetson/README.md).

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -330,6 +330,93 @@ bool NvDsInferParseCustomMrcnnTLTV2 (std::vector<NvDsInferLayerInfo> const &outp
 
 }
 
+void getMaskDimension(float* buf, int w, int h, int& left, int& top, int& width, int& height)
+{
+    int right, bottom;
+    right = bottom = 0;
+    left = top = width = height = 0;
+    for(int i = 0; i < w; i++) {
+        for(int j = 0; j < h; j++) {
+            if(*(buf + j*w + i) == 1) {
+                if(left == 0) left = i;
+                if(i < left) left = i;
+                if(i > right) right = i;
+                if(top == 0) top = j;
+                if(j < top) top = j;
+                if(j > bottom) bottom = j;
+            }
+            width = right - left;
+            height = bottom - top;
+        }
+    }
+}
+
+void copy_mask(float* dst, float* src, int w, int h,
+    int mask_left, int mask_top, int mask_width, int mask_height) {
+    int j = 0;
+    for(int i = mask_top; i < mask_top + mask_height; i++){
+        float* pSrc = src + i*w + mask_left;
+        memcpy(dst + (j++)*mask_width, pSrc, mask_width*sizeof(float));
+    }
+}
+
+extern "C"
+bool NvDsInferParseCustomMask2Former (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+                                   NvDsInferNetworkInfo  const &networkInfo,
+                                   NvDsInferParseDetectionParams const &detectionParams,
+                                   std::vector<NvDsInferInstanceMaskInfo> &objectList) {
+    auto layerFinder = [&outputLayersInfo](const std::string &name)
+        -> const NvDsInferLayerInfo *{
+        for (auto &layer : outputLayersInfo) {
+            if ((layer.dataType == FLOAT || layer.dataType == INT32 || layer.dataType == INT64) &&
+              (layer.layerName && name == layer.layerName)) {
+                return &layer;
+            }
+        }
+        return nullptr;
+    };
+
+    const NvDsInferLayerInfo *pred_classes = layerFinder("pred_classes");
+    const NvDsInferLayerInfo *pred_masks = layerFinder("pred_masks");
+    const NvDsInferLayerInfo *pred_scores = layerFinder("pred_scores");
+    const unsigned int det_max_instances = pred_masks->inferDims.d[0];
+
+    int width = pred_masks->inferDims.d[1];
+    int height = pred_masks->inferDims.d[2];
+    int* pclass = (int*)pred_classes->buffer;
+    float* pmask = (float*)pred_masks->buffer;
+    float* pscore = (float*)pred_scores->buffer;
+    assert(pclass != NULL && pmask != NULL && pscore != NULL);
+    float* tmp_pmask = NULL;
+    int mask_left, mask_top, mask_width, mask_height;
+
+    for(auto i = 0U; i < det_max_instances; i++) {
+        if(std::isnan(pscore[i]) || pscore[i] < detectionParams.perClassPreclusterThreshold[0])
+            continue;
+        mask_left = mask_top = mask_width = mask_height = 0;
+        tmp_pmask = pmask + i * width * height;
+        /* get rect from mask*/
+        getMaskDimension(pmask, width, height, mask_left, mask_top, mask_width, mask_height);
+        NvDsInferInstanceMaskInfo obj;
+        obj.left = mask_left;
+        obj.top = mask_top;
+        obj.width = mask_width;
+        obj.height = mask_height;
+        if(obj.width <= 0 || obj.height <= 0  || mask_width < 0|| mask_height <= 0)
+            continue;
+        obj.classId = pclass[i];
+        obj.detectionConfidence = pscore[i];
+        obj.mask_size = sizeof(float)*mask_width*mask_height;
+        obj.mask = new float[mask_width*mask_height];
+        obj.mask_width = mask_width;
+        obj.mask_height = mask_height;
+        copy_mask(obj.mask, tmp_pmask, width, height, mask_left, mask_top, mask_width, mask_height);
+
+        objectList.push_back(obj);
+    }
+    return true;
+}
+
 extern "C"
 bool NvDsInferParseCustomEfficientDetTAO (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
                                    NvDsInferNetworkInfo  const &networkInfo,
@@ -477,5 +564,6 @@ CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomNMSTLT);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomBatchedYoloV5NMSTLT);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomBatchedNMSTLT);
 CHECK_CUSTOM_INSTANCE_MASK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomMrcnnTLTV2);
+CHECK_CUSTOM_INSTANCE_MASK_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomMask2Former);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomEfficientDetTAO);
 CHECK_CUSTOM_PARSE_FUNC_PROTOTYPE(NvDsInferParseCustomDDETRTAO);

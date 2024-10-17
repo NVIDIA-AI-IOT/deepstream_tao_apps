@@ -1,0 +1,85 @@
+################################################################################
+# Copyright (c) 2020-2024, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+infer_config {
+  unique_id: 2
+  gpu_ids: 0
+  max_batch_size: 16
+  backend {
+    triton {
+      model_name: "LPD_ch"
+      version: -1
+      grpc {
+        url: "127.0.0.1:8001"
+      }
+    }
+  }
+
+  preprocess {
+    #network_format: IMAGE_FORMAT_BGR 
+    network_format: IMAGE_FORMAT_RGB
+    #tensor_order: TENSOR_ORDER_LINEAR
+    tensor_order: TENSOR_ORDER_NONE
+    maintain_aspect_ratio: 0
+    frame_scaling_hw: FRAME_SCALING_HW_DEFAULT
+    frame_scaling_filter: 1
+    normalize {
+      scale_factor: 0.0039215697906911373
+    }
+  }
+
+  postprocess {
+    labelfile_path: "../../../models/LPD_ch/ccpd_label.txt"
+    detection {
+      num_detected_classes: 4
+      per_class_params {
+        key: 0
+        value { pre_threshold: 0.4 }
+      }
+      nms {
+        confidence_threshold:0.2
+        topk:20
+        iou_threshold:0.5
+      }
+    }
+  }
+}
+
+input_control {
+  process_mode: PROCESS_MODE_CLIP_OBJECTS
+  operate_on_gie_id: 1
+  operate_on_class_ids: [0]
+  secondary_reinfer_interval: 0
+  async_mode: false
+  object_control {
+    bbox_filter {
+      #if scaling-compute-hw = VIC, input-object-min-width need to be even and greater than or equal to( model width)/16
+      min_width: 46
+      #if scaling-compute-hw = VIC, input-object-min-height need to be even and greater than or equal to (model height)/16
+      min_height: 74
+    }
+  }
+}
+
+output_control {
+  output_tensor_meta: true
+}

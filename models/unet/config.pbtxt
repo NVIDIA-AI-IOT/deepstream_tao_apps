@@ -34,7 +34,7 @@ input [
 output [
   {
     name: "argmax_1"
-    data_type: TYPE_INT32
+    data_type: TYPE_INT64
     dims: [ 320, 320, 1 ]
   }
 ]

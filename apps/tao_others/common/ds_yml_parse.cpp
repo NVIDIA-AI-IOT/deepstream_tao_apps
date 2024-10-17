@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 #include <iostream>
 #include <unordered_map>
 #include "ds_yml_parse.h"
+#include "cuda_runtime_api.h"
 
 NvDsYamlParserStatus
 ds_parse_rtsp_output(GstElement * sink,
@@ -304,6 +305,44 @@ ds_parse_group_type(gchar *cfg_file_path, const char* group)
   return 0;
 }
 
+static const char* dgpus_unsupport_hw_enc[] = {
+  "NVIDIA A100",
+  "NVIDIA A30",
+  "NVIDIA H100", // NVIDIA H100 SXM, NVIDIA H100 PCIe, NVIDIA H100 NVL
+  "NVIDIA T500",
+  "GeForce MX570 A",
+  "DGX A100"
+};
+
+static bool
+is_enc_hw_support() {
+  int current_device = -1;
+  cudaGetDevice(&current_device);
+  struct cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, current_device);
+  bool enc_hw_support = TRUE;
+  if (prop.integrated) {
+    char device_name[50];
+    FILE* ptr = fopen("/proc/device-tree/model", "r");
+
+    if (ptr) {
+      while (fgets(device_name, 50, ptr) != NULL) {
+        if (strstr(device_name,"Orin") && (strstr(device_name,"Nano")))
+          enc_hw_support = FALSE;
+        }
+    }
+    fclose(ptr);
+  } else {
+    for (int i = 0; i < sizeof(dgpus_unsupport_hw_enc)/sizeof(dgpus_unsupport_hw_enc[0]); i++) {
+      if (!strncasecmp(prop.name, dgpus_unsupport_hw_enc[i], strlen(dgpus_unsupport_hw_enc[i]))) {
+        enc_hw_support = FALSE;
+        break;
+      }
+    }
+  }
+  return enc_hw_support;
+}
+
 guint
 ds_parse_enc_type(gchar *cfg_file_path, const char* group)
 {
@@ -320,10 +359,15 @@ ds_parse_enc_type(gchar *cfg_file_path, const char* group)
   for (int i =0; i < total_docs;i++)
   {
     if (!docs[i][group].IsNull()) {
-
       if (docs[i][group]["enc-type"]) {
-          val= docs[i][group]["enc-type"].as<guint>();
-          return val;
+        val = docs[i][group]["enc-type"].as<guint>();
+        // If hardware encoding is configured but the hardware does not support it, 
+        // fallback to software encoding
+        if (val == 0 && !is_enc_hw_support()) {
+          g_print("** WARN: hardware encoding is not supported, fallback to software encoding \n");
+          val = 1;
+        }
+        return val;
       }
     }
   }
@@ -434,12 +478,105 @@ create_video_encoder(bool isH264, int enc_type, GstElement** conv_capfilter,
       *rtppay = gst_element_factory_make ("rtph264pay", "rtppay");
   } else {
     if(enc_type == ENCODER_TYPE_HW) {
-      *outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h264enc");
+      *outenc = gst_element_factory_make ("nvv4l2h265enc" ,"nvvideo-h265enc");
     } else {
       *outenc = gst_element_factory_make ("x265enc" ,"x265enc");
     }
     *encparse = gst_element_factory_make ("h265parse", "encparse");
     if(rtppay)
       *rtppay = gst_element_factory_make ("rtph265pay", "rtppay");
+  }
+}
+
+guint
+ds_parse_group_enable(gchar *cfg_file_path, const char* group)
+{
+  std::string paramKey = "";
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<int> docs_indx_vec;
+  std::unordered_map<std::string, int> docs_indx_umap;
+  int total_docs = docs.size();
+  guint val = 0;
+  for (int i =0; i < total_docs;i++)
+  {
+    if (!docs[i][group].IsNull()) {
+      if (docs[i][group]["enable"]) {
+          val= docs[i][group]["enable"].as<guint>();
+          return val;
+      }
+    }
+  }
+  return 0;
+}
+
+guint
+ds_parse_group_car_mode(gchar *cfg_file_path, const char* group)
+{
+  std::string paramKey = "";
+  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<int> docs_indx_vec;
+  std::unordered_map<std::string, int> docs_indx_umap;
+  int total_docs = docs.size();
+  guint val = 0;
+  for (int i =0; i < total_docs;i++)
+  {
+    if (!docs[i][group].IsNull()) {
+      if (docs[i][group]["car-mode"]) {
+          val= docs[i][group]["car-mode"].as<guint>();
+          return val;
+      }
+    }
+  }
+  return 0;
+}
+
+void
+get_triton_yml(gint car_mode, gboolean use_triton_grpc, char* pgie_cfg_file_path, 
+               char* sgie1_cfg_file_path, char* sgie2_cfg_file_path, guint buf_len) {
+  std::string prefix,yml_path;
+  char* pDst  = NULL;
+  if (!use_triton_grpc) {
+    if (car_mode == 1) //us mode
+      yml_path = "us_triton_config.yml";
+    else
+      yml_path = "ch_triton_config.yml";
+  } else {
+    if (car_mode == 1) //us mode
+      yml_path = "us_triton-grpc_config.yml";
+    else
+      yml_path = "ch_triton-grpc_config.yml";
+  }
+
+  prefix = "./";
+
+  g_printerr ("%s yml_path:%s", __func__, yml_path.c_str());
+
+  YAML::Node configyml = YAML::LoadFile(yml_path);
+  for(YAML::const_iterator itr = configyml.begin(); itr != configyml.end(); ++itr) {
+    std::string paramKey = itr->first.as<std::string>();
+    if (paramKey ==  "config") {
+      for(YAML::const_iterator itr = configyml["config"].begin();
+        itr != configyml["config"].end(); ++itr) {
+        pDst  = NULL;
+        std::string key = itr->first.as<std::string>();
+        if(key == "pgie") {
+          pDst = pgie_cfg_file_path;
+        } else if(key == "lpd") {
+          pDst = sgie1_cfg_file_path;
+        } else if(key == "lpr") {
+          pDst = sgie2_cfg_file_path;
+        } else {
+          g_printerr ("%s Unknown param found ", __func__);
+        }
+
+        if (pDst) {
+          std::string temp = itr->second.as<std::string>();
+          strncat (pDst, temp.c_str(), buf_len - prefix.size());
+                g_print("key:%s: %s\n", key.c_str(), pDst);
+        }
+      }
+    } else {
+      g_printerr ("%s not found config", __func__);
+    }
   }
 }

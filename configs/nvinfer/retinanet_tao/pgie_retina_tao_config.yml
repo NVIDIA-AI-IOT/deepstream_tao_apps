@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,8 @@ property:
   model-color-format: 1
   labelfile-path: retinanet_labels.txt
   model-engine-file: ../../../models/retinanet/retinanet_resnet18_epoch_080_its.onnx_b1_gpu0_int8.engine
-  int8-calib-file: ../../../models/retinanet/retinanet_resnet18_epoch_080_its_tao5.cal
+  ##For Jetson platform, change the retinanet_resnet18_epoch_080_its_trt10_jetson.cal
+  int8-calib-file: ../../../models/retinanet/retinanet_resnet18_epoch_080_its_trt10_x86.cal
   onnx-file: ../../../models/retinanet/retinanet_resnet18_epoch_080_its.onnx
   infer-dims: 3;544;960
   maintain-aspect-ratio: 0

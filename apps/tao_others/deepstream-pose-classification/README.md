@@ -16,7 +16,7 @@ Please follow instructions in the `/opt/nvidia/deepstream/deepstream/sources/app
 ```
 2. prepare the models  
   [PeopleNet](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/peoplenet)  
-  [BodyPose3DNet](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/bodypose3dnet)  
+  [BodyPose3DNet](https://ngc.nvidia.com/models/nvstaging:tao:bodypose3dnet)  
   [poseclassificationnet](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/poseclassificationnet)  
   [tracker model](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/reidentificationnet)   
 ## Build the applications

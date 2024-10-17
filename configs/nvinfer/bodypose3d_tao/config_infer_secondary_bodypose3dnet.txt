@@ -1,5 +1,5 @@
 ################################################################################
-# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 #
 # NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -14,9 +14,8 @@
 gpu-id=0
 net-scale-factor=0.00392156
 ## Accuracy mode: _mode0_; Performance mode: _mode1_
-tlt-model-key=tlt_encode
-tlt-encoded-model=../../../models/bodypose3dnet/bodypose3dnet_accuracy.etlt
-model-engine-file=../../../models/bodypose3dnet/bodypose3dnet_accuracy.etlt_b8_gpu0_fp16.engine
+onnx-file=../../../models/bodypose3dnet/bodypose3dnet_accuracy.onnx
+model-engine-file=../../../models/bodypose3dnet/bodypose3dnet_accuracy.onnx_b8_gpu0_fp16.engine
 infer-dims=3;256;192
 batch-size=8
 ## 0=FP32, 1=INT8, 2=FP16 mode

@@ -118,6 +118,15 @@ typedef struct
   float seg_alpha;
 } YamlParasStruct;
 
+static const char* dgpus_unsupport_hw_enc[] = {
+  "NVIDIA A100",
+  "NVIDIA A30",
+  "NVIDIA H100", // NVIDIA H100 SXM, NVIDIA H100 PCIe, NVIDIA H100 NVL
+  "NVIDIA T500",
+  "GeForce MX570 A",
+  "DGX A100"
+};
+
 /* Separate a config file entry with delimiters
  * into strings. */
 static std::vector<std::string>
@@ -358,7 +367,8 @@ pgie_pad_buffer_probe_network_type100 (GstPad * pad, GstPadProbeInfo * info, gpo
           NvDsInferTensorMeta *meta = (NvDsInferTensorMeta *)(of_user_meta->user_meta_data);
           if (!meta ||
               (meta->num_output_layers != 1) ||
-              (meta->output_layers_info[0].dataType != 3))// ||// INT32
+              !(meta->output_layers_info[0].dataType==NvDsInferDataType::INT32 ||
+               meta->output_layers_info[0].dataType==NvDsInferDataType::INT64))
             continue;
 
           NvDsInferLayerInfo *info = &meta->output_layers_info[0];
@@ -374,9 +384,24 @@ pgie_pad_buffer_probe_network_type100 (GstPad * pad, GstPadProbeInfo * info, gpo
           segmeta->height = meta->network_info.height;
           segmeta->width = meta->network_info.width;
 
-          // Output tensor is the class map already. There is nothing else to parse.
-          // Referencing instead of copying info->buffer causes SegV crash.
-          segmeta->class_map = (gint *) g_memdup(info->buffer, segmeta->width * segmeta->height * sizeof (gint));
+          printf("seg width %d seg height %d\n", segmeta->width, segmeta->height);
+
+          if(meta->output_layers_info[0].dataType == NvDsInferDataType::INT64) {
+            gint *tmp_buf = (gint *) g_malloc (segmeta->width * segmeta->height * sizeof (gint));
+            gint *ttmp_buf = tmp_buf;
+            for(int i = 0; i < segmeta->width * segmeta->height; i++) {
+              *tmp_buf = static_cast<gint> (*(static_cast<gint64 *>(info->buffer)));
+              tmp_buf++;
+              info->buffer = info->buffer+8; //int64
+            }
+
+            segmeta->class_map = (gint *) g_memdup(ttmp_buf, segmeta->width * segmeta->height * sizeof (gint));
+            g_free(ttmp_buf);
+          } else {
+            // Output tensor is the class map already. There is nothing else to parse.
+            // Referencing instead of copying info->buffer causes SegV crash.
+            segmeta->class_map = (gint *) g_memdup(info->buffer, segmeta->width * segmeta->height * sizeof (gint));
+          }
           segmeta->class_probabilities_map = NULL;
           segmeta->priv_data = NULL;
 
@@ -680,6 +705,35 @@ bus_call (GstBus * bus, GstMessage * msg, gpointer data) {
     return TRUE;
 }
 
+static bool
+is_enc_hw_support() {
+  int current_device = -1;
+  cudaGetDevice(&current_device);
+  struct cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, current_device);
+  bool enc_hw_support = TRUE;
+  if (prop.integrated) {
+    char device_name[50];
+    FILE* ptr = fopen("/proc/device-tree/model", "r");
+
+    if (ptr) {
+      while (fgets(device_name, 50, ptr) != NULL) {
+        if (strstr(device_name,"Orin") && (strstr(device_name,"Nano")))
+          enc_hw_support = FALSE;
+        }
+    }
+    fclose(ptr);
+  } else {
+    for (int i = 0; i < sizeof(dgpus_unsupport_hw_enc)/sizeof(dgpus_unsupport_hw_enc[0]); i++) {
+      if (!strncasecmp(prop.name, dgpus_unsupport_hw_enc[i], strlen(dgpus_unsupport_hw_enc[i]))) {
+        enc_hw_support = FALSE;
+        break;
+      }
+    }
+  }
+  return enc_hw_support;
+}
+
 /* Check for parsing error. */
 #define RETURN_ON_PARSER_ERROR(parse_expr) \
   if (NVDS_YAML_PARSER_SUCCESS != parse_expr) { \
@@ -980,8 +1034,12 @@ main (int argc, char *argv[]) {
     if(useDisplay == FALSE) {
         if(isImage == FALSE){
             parser1 = gst_element_factory_make ("h264parse", "h264-parser1");
-            if (isYAML)
+            if (isYAML) {
               parse_filesink_yaml(&enc_type, argv[1]);
+            } else {
+              // 0: HW 1: SW
+              enc_type = is_enc_hw_support() ? 0 : 1;
+            }
             if(enc_type == 0){
               enc = gst_element_factory_make ("nvv4l2h264enc", "h264-enc");
             } else {

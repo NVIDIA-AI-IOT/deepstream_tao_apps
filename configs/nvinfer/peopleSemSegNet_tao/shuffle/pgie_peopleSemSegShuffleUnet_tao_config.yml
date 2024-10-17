@@ -32,12 +32,12 @@ property:
 
   ##Replace following path to your model file
 
-  model-engine-file: ../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg_onnx_b1_gpu0_int8.engine
+  model-engine-file: ../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg.onnx_b1_gpu0_int8.engine
 
   #DS5.x cannot parse onnx etlt model, so you need to
   #convert the etlt model to TensoRT engine first use tao-convert
 
-  int8-calib-file: ../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg_cache.txt
+  int8-calib-file: ../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg_int8.txt
   onnx-file: ../../../../models/peopleSemSegNet_shuffle/peoplesemsegnet_shuffleseg.onnx
 
   infer-dims: 3;544;960

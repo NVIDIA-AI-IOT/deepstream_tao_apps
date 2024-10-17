@@ -16,7 +16,7 @@ CFLAGS:= -Wall -Werror -std=c++11 -shared -fPIC -Wno-error=deprecated-declaratio
 
 CFLAGS+= -I/opt/nvidia/deepstream/deepstream/sources/includes
 
-LIBS:= -lnvinfer -lnvparsers
+LIBS:= -lnvinfer
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
 SRCFILES:= infer_pose_classification_parser.cpp

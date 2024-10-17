@@ -94,6 +94,15 @@ typedef struct _DsSourceBin
     guint64 prev_accumulated_base;
 }DsSourceBinStruct;
 
+static const char* dgpus_unsupport_hw_enc[] = {
+  "NVIDIA A100",
+  "NVIDIA A30",
+  "NVIDIA H100", // NVIDIA H100 SXM, NVIDIA H100 PCIe, NVIDIA H100 NVL
+  "NVIDIA T500",
+  "GeForce MX570 A",
+  "DGX A100"
+};
+
 static void
 parse_tests_yaml (gint *file_loop, gchar *cfg_file_path)
 {
@@ -484,6 +493,35 @@ det_bus_call (GstBus * bus, GstMessage * msg, gpointer data) {
     return TRUE;
 }
 
+static bool
+is_enc_hw_support() {
+  int current_device = -1;
+  cudaGetDevice(&current_device);
+  struct cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, current_device);
+  bool enc_hw_support = TRUE;
+  if (prop.integrated) {
+    char device_name[50];
+    FILE* ptr = fopen("/proc/device-tree/model", "r");
+
+    if (ptr) {
+      while (fgets(device_name, 50, ptr) != NULL) {
+        if (strstr(device_name,"Orin") && (strstr(device_name,"Nano")))
+          enc_hw_support = FALSE;
+        }
+    }
+    fclose(ptr);
+  } else {
+    for (int i = 0; i < sizeof(dgpus_unsupport_hw_enc)/sizeof(dgpus_unsupport_hw_enc[0]); i++) {
+      if (!strncasecmp(prop.name, dgpus_unsupport_hw_enc[i], strlen(dgpus_unsupport_hw_enc[i]))) {
+        enc_hw_support = FALSE;
+        break;
+      }
+    }
+  }
+  return enc_hw_support;
+}
+
 /* Check for parsing error. */
 #define RETURN_ON_PARSER_ERROR(parse_expr) \
   if (NVDS_YAML_PARSER_SUCCESS != parse_expr) { \
@@ -688,7 +726,7 @@ main (int argc, char *argv[]) {
 
     /* Finally render the osd output */
 
-    if(isYAML) {
+    if (isYAML) {
         GstElement *eglsink = gst_element_factory_make ("nveglglessink", "test-egl-sink");
         GstElement *filesink = gst_element_factory_make ("filesink", "test-file-sink");
         GstElement *fakesink = gst_element_factory_make("fakesink", "test-fake-sink");
@@ -709,15 +747,19 @@ main (int argc, char *argv[]) {
     }
 
     const char* use_display = std::getenv("USE_DISPLAY");
-    if(use_display != NULL && std::stoi(use_display) == 1) {
+    if (use_display != NULL && std::stoi(use_display) == 1) {
         useDisplay = true;
     }
 
-    if(useDisplay == FALSE) {
+    if (useDisplay == FALSE) {
         if(isImage == FALSE){
             parser1 = gst_element_factory_make ("h264parse", "h264-parser1");
-            if (isYAML)
+            if (isYAML) {
               parse_filesink_yaml(&enc_type, argv[1]);
+            } else {
+              // 0: HW 1: SW
+              enc_type = is_enc_hw_support() ? 0 : 1;
+            }
             if(enc_type == 0){
               enc = gst_element_factory_make ("nvv4l2h264enc", "h264-enc");
             } else {
@@ -756,7 +798,7 @@ main (int argc, char *argv[]) {
             sink = gst_element_factory_make("nv3dsink", "nv3d-sink");
         else
 #ifdef __aarch64__
-	    sink = gst_element_factory_make("nv3dsink", "nv3d-sink");
+            sink = gst_element_factory_make("nv3dsink", "nv3d-sink");
 #else
             sink = gst_element_factory_make ("nveglglessink", "nvvideo-renderer");
 #endif
