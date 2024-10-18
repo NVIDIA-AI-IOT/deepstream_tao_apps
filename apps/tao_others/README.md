@@ -26,7 +26,7 @@ This sample is to show the following TAO models runing with DeepStream
 |------------|-----------|---------|
 | Retail Object Detection Binary | [link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_detection)|deployable_retail_object_detection_binary_v2.2.2.3|
 |PeopleNet Transformer | [link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/peoplenet_transformer)|deployable_v1.1|
-|Retail Object Recognition|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_recognition)|deployable_onnx_v1.0|
+|Retail Object Recognition|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/retail_object_recognition)|deployable_v2.0|
 |ReIdentificationNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/reidentificationnet)|deployable_v1.2|
 |PoseClassificationNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/poseclassificationnet)|deployable_onnx_v1.0|
 |OCDNet|[link](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/ocdnet)|deployable_onnx_v2.4|
