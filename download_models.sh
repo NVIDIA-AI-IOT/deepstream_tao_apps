@@ -104,7 +104,7 @@ echo "==================================================================="
 cd -
 mkdir -p ./models/retail_object_recognition
 cd ./models/retail_object_recognition
-wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_recognition/deployable_onnx_v1.0/files?redirect=true&path=retail_object_recognition.onnx' -O retail_object_recognition.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/retail_object_recognition/deployable_v2.0/files?redirect=true&path=FANDualHead_Base_NVIN_op16.onnx' -O retail_object_recognition.onnx
 wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/retail_object_recognition/versions/deployable_v2.0/files/recognitionv2_name_list.txt -O retail_object_recognition_labels.txt
 
 echo "==================================================================="

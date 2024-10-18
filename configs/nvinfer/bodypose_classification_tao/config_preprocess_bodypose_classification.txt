@@ -53,5 +53,6 @@ custom-input-transformation-function=CustomTransformation
 process-on-roi=1
 process-on-all-objects=1
 roi-params-src-0=0;0;100;100
+draw-roi=0
 input-object-min-width=100
 input-object-min-height=100
