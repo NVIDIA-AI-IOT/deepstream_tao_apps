@@ -33,19 +33,19 @@ input [
 ]
 output [
   {
-    name: "season/Softmax"
+    name: "base_color"
     data_type: TYPE_FP32
-    dims: [ 4, 1, 1 ]
+    dims: [ 11 ]
   },
   {
-    name: "category/Softmax"
+    name: "category"
     data_type: TYPE_FP32
-    dims: [ 10, 1, 1 ]
+    dims: [ 10 ]
   },
   {
-    name: "base_color/Softmax"
+    name: "season"
     data_type: TYPE_FP32
-    dims: [ 11, 1, 1 ]
+    dims: [ 4 ]
   }
 ]
 

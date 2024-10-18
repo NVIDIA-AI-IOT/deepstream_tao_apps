@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -60,8 +60,6 @@ primary-gie:
 
   #yolov5
   #config-file-path: ../nvinfer/yolov5_tao/pgie_yolov5_config.yml
-  #config-file-path: ../triton/yolov5_tao/pgie_yolov5_config.yml
-  #config-file-path: ../triton-grpc/yolov5_tao/pgie_yolov5_config.yml
 
   #peoplenet-transformer
   #config-file-path: ../nvinfer/peoplenet_transformer_tao/pgie_peoplenet_transformer_tao_config.yml
