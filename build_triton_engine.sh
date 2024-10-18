@@ -24,7 +24,7 @@ fi
 #for classifcaiton
 #multi_task
 #mkdir  -p  models/multi_task/1
-#trtexec --onnx=./models/multi_task/multi_task.onnx  --saveEngine=./models/multi_task/1/multi_task.onnx_b1_gpu0_fp16.engine \
+#trtexec --onnx=./models/multi_task/multi_task.onnx  --saveEngine=./models/multi_task/1/multi_task.onnx_b4_gpu0_fp16.engine \
 # --minShapes=input_1:1x3x80x60 --optShapes=input_1:4x3x80x60 --maxShapes=input_1:4x3x80x60&
 
 #for instance segmentation
