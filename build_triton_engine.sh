@@ -89,7 +89,7 @@ echo "Building Model retail_object_recognition"
 mkdir -p models/retail_object_recognition/1
 trtexec --onnx=models/retail_object_recognition/retail_object_recognition.onnx \
  --saveEngine=models/retail_object_recognition/1/retail_object_recognition.onnx_b16_gpu0_fp16.engine \
- --minShapes=inputs:1x3x224x224 --optShapes=inputs:16x3x224x224 --maxShapes=inputs:16x3x224x224 \
+ --minShapes=input:1x3x224x224 --optShapes=input:16x3x224x224 --maxShapes=input:16x3x224x224 \
  --fp16 --sparsity=enable&
 
 #peoplenet
