@@ -396,7 +396,7 @@ bool NvDsInferParseCustomMask2Former (std::vector<NvDsInferLayerInfo> const &out
         mask_left = mask_top = mask_width = mask_height = 0;
         tmp_pmask = pmask + i * width * height;
         /* get rect from mask*/
-        getMaskDimension(pmask, width, height, mask_left, mask_top, mask_width, mask_height);
+        getMaskDimension(tmp_pmask, width, height, mask_left, mask_top, mask_width, mask_height);
         NvDsInferInstanceMaskInfo obj;
         obj.left = mask_left;
         obj.top = mask_top;
