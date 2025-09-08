@@ -323,4 +323,4 @@ Some special models needs special deepstream pipeline for running. The deepstrea
 
 1. For some yolo models, some layers of the models should use FP32 precision. This is a network characteristics that the accuracy drops rapidly when maximum layers are run in INT8 precision. Please refer the [layer-device-precision](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvinfer.html) for more details.
 2. Currently the citySemSegFormer model only supports batch-size 1.
-3. If the segmentation results can't overlay the entire frame, please set SEG_OUTPUT_WIDTH/SEG_OUTPUT_HEIGHT to the model's width/height.
+3. If the segmentation results can't overlay the entire frame, please configure SEG_OUTPUT_WIDTH/SEG_OUTPUT_HEIGHT to the model's width/height.
