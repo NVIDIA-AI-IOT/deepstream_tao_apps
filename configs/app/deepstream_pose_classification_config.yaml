@@ -1,5 +1,5 @@
 ################################################################################
-# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 #
 # NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -34,6 +34,10 @@ secondary-gie0:
   config-file-path: ../nvinfer/bodypose3d_tao/config_infer_secondary_bodypose3dnet.txt
   #config-file-path: ../triton/bodypose3d_tao/config_infer_secondary_bodypose3dnet.yml
   #config-file-path: ../triton-grpc/bodypose3d_tao/config_infer_secondary_bodypose3dnet.yml
+
+secondary-postprocess0:
+  config-file-path: ../nvinfer/bodypose3d_tao/config_bodypose_post_process_sgie.yml
+  lib-name: ../../apps/tao_others/deepstream-pose-classification/postprocesslib_impl/libpostprocess_impl.so
 
 secondary-preprocess1:
   config-file-path: ../nvinfer/bodypose_classification_tao/config_preprocess_bodypose_classification.txt

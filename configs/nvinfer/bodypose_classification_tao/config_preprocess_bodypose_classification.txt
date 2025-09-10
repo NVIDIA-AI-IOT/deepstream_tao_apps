@@ -1,5 +1,5 @@
 ################################################################################
-# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 #
 # NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -34,7 +34,7 @@ tensor-name=input
     # 0=NVBUF_MEM_DEFAULT 1=NVBUF_MEM_CUDA_PINNED 2=NVBUF_MEM_CUDA_DEVICE 3=NVBUF_MEM_CUDA_UNIFIED
 scaling-pool-memory-type=0
     # 0=NvBufSurfTransformCompute_Default 1=NvBufSurfTransformCompute_GPU 2=NvBufSurfTransformCompute_VIC
-scaling-pool-compute-hw=0
+scaling-pool-compute-hw=1
     # Scaling Interpolation method
     # 0=NvBufSurfTransformInter_Nearest 1=NvBufSurfTransformInter_Bilinear 2=NvBufSurfTransformInter_Algo1
     # 3=NvBufSurfTransformInter_Algo2 4=NvBufSurfTransformInter_Algo3 5=NvBufSurfTransformInter_Algo4
@@ -53,6 +53,7 @@ custom-input-transformation-function=CustomTransformation
 process-on-roi=1
 process-on-all-objects=1
 roi-params-src-0=0;0;100;100
-draw-roi=0
+roi-params-src-1=0;0;100;100
 input-object-min-width=100
 input-object-min-height=100
+draw-roi=0

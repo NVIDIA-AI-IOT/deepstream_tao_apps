@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2020-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,133 +19,124 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-
-#include <string>
-#include <string.h>
-#include <stdio.h>
-#include <iostream>
-#include <vector>
 #include <assert.h>
-#include <locale>
 #include <codecvt>
-#include "nvdsinfer.h"
 #include <fstream>
+#include <iostream>
+#include <locale>
+#include <cstdio>
+#include <string>
+#include <cstring>
+#include <unordered_map>
+#include <vector>
 
-using namespace std;
-using std::string;
-using std::vector;
+#include "nvdsinfer.h"
 
-static bool dict_ready=false;
-std::vector<string> dict_table;
+static bool dict_ready = false;
+std::vector<std::string> dict_table;
 
-extern "C"
-{
+extern "C" bool NvDsInferParseCustomNVPlate(
+    std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
+    NvDsInferNetworkInfo const &networkInfo, float classifierThreshold,
+    std::vector<NvDsInferAttribute> &attrList, std::string &attrString) {
+  int *outputStrBuffer = NULL;
+  float *outputConfBuffer = NULL;
+  NvDsInferAttribute LPR_attr;
 
-bool NvDsInferParseCustomNVPlate(std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
-                                 NvDsInferNetworkInfo const &networkInfo, float classifierThreshold,
-                                 std::vector<NvDsInferAttribute> &attrList, std::string &attrString)
-{   
-    int *outputStrBuffer = NULL;
-    float *outputConfBuffer = NULL;
-    NvDsInferAttribute LPR_attr;
-   
-    int seq_len = 0; 
+  int seq_len = 0;
 
-    // Get list
-    vector<int> str_idxes;
-    int prev = 100;
+  // Get list
+  std::vector<int> str_idxes;
+  int prev = 100;
 
-    // For confidence
-    double bank_softmax_max[16] = {0.0};
-    unsigned int valid_bank_count = 0;
-    bool do_softmax = false;
-    ifstream fdict;
+  // For confidence
+  double bank_softmax_max[16] = {0.0};
+  unsigned int valid_bank_count = 0;
+  bool do_softmax = false;
+  std::ifstream fdict;
 
-    setlocale(LC_CTYPE, "");
+  setlocale(LC_CTYPE, "");
 
-    if(!dict_ready) {
-        fdict.open("dict.txt");
-        if(!fdict.is_open())
-        {
-            cout << "open dictionary file failed." << endl;
-	        return false;
-        }
-	    while(!fdict.eof()) {
-	        string strLineAnsi;
-	        if ( getline(fdict, strLineAnsi) ) {
-	            dict_table.push_back(strLineAnsi);
-	        }
-        }
-        dict_ready=true;
-        fdict.close();
+  if (!dict_ready) {
+    fdict.open("dict.txt");
+    if (!fdict.is_open()) {
+      printf("open dictionary file failed. %s \n", strerror(errno));
+      return false;
+    }
+    while (!fdict.eof()) {
+      std::string strLineAnsi;
+      if (getline(fdict, strLineAnsi)) {
+        dict_table.push_back(strLineAnsi);
+      }
+    }
+    dict_ready = true;
+    fdict.close();
+  }
+
+  int layer_size = outputLayersInfo.size();
+
+  LPR_attr.attributeConfidence = 1.0;
+
+  seq_len = networkInfo.width / 4;
+
+  for (int li = 0; li < layer_size; li++) {
+    if (!outputLayersInfo[li].isInput) {
+      if (outputLayersInfo[li].dataType == 0) {
+        if (!outputConfBuffer)
+          outputConfBuffer = static_cast<float *>(outputLayersInfo[li].buffer);
+      } else if (outputLayersInfo[li].dataType == 3) {
+        if (!outputStrBuffer)
+          outputStrBuffer = static_cast<int *>(outputLayersInfo[li].buffer);
+      }
+    }
+  }
+
+  for (int seq_id = 0; seq_id < seq_len; seq_id++) {
+    do_softmax = false;
+
+    int curr_data = outputStrBuffer[seq_id];
+    if (curr_data < 0 || curr_data > static_cast<int>(dict_table.size())) {
+      continue;
+    }
+    if (seq_id == 0) {
+      prev = curr_data;
+      str_idxes.push_back(curr_data);
+      if (curr_data != static_cast<int>(dict_table.size()))
+        do_softmax = true;
+    } else {
+      if (curr_data != prev) {
+        str_idxes.push_back(curr_data);
+        if (static_cast<unsigned long>(curr_data) != dict_table.size())
+          do_softmax = true;
+      }
+      prev = curr_data;
     }
 
-    int layer_size = outputLayersInfo.size();
-
-    LPR_attr.attributeConfidence = 1.0;
-
-    seq_len = networkInfo.width/4;
-
-    for( int li=0; li<layer_size; li++) {
-        if(!outputLayersInfo[li].isInput) {
-            if (outputLayersInfo[li].dataType == 0) {
-                if (!outputConfBuffer)
-                    outputConfBuffer = static_cast<float *>(outputLayersInfo[li].buffer);
-            }
-            else if (outputLayersInfo[li].dataType == 3) {
-                if(!outputStrBuffer)
-                    outputStrBuffer = static_cast<int *>(outputLayersInfo[li].buffer);
-            }
-        }
+    // Do softmax
+    if (do_softmax) {
+      do_softmax = false;
+      bank_softmax_max[valid_bank_count] = outputConfBuffer[seq_id];
+      valid_bank_count++;
     }
- 
-    for(int seq_id = 0; seq_id < seq_len; seq_id++) {
-       do_softmax = false;
+  }
 
-       int curr_data = outputStrBuffer[seq_id];
-           if(curr_data < 0 || curr_data > static_cast<int>(dict_table.size())){
-                   continue;
-           }
-       if (seq_id == 0) {
-           prev = curr_data;
-           str_idxes.push_back(curr_data);
-           if ( curr_data != static_cast<int>(dict_table.size()) ) do_softmax = true;
-       } else {
-           if (curr_data != prev) {
-               str_idxes.push_back(curr_data);
-               if (static_cast<unsigned long>(curr_data) != dict_table.size()) do_softmax = true;
-           }
-           prev = curr_data;
-       }
-
-       // Do softmax
-       if (do_softmax) {
-           do_softmax = false;
-           bank_softmax_max[valid_bank_count] = outputConfBuffer[seq_id];
-           valid_bank_count++;
-       }
+  attrString = "";
+  for (unsigned int id = 0; id < str_idxes.size(); id++) {
+    if (static_cast<unsigned int>(str_idxes[id]) != dict_table.size()) {
+      attrString += dict_table[str_idxes[id]];
     }
+  }
 
-    attrString = "";
-    for(unsigned int id = 0; id < str_idxes.size(); id++) {
-        if (static_cast<unsigned int>(str_idxes[id]) != dict_table.size()) {
-            attrString += dict_table[str_idxes[id]];
-        }
+  // Ignore the short string, it may be wrong plate string
+  if (valid_bank_count >= 3) {
+    LPR_attr.attributeIndex = 0;
+    LPR_attr.attributeValue = 1;
+    LPR_attr.attributeLabel = strdup(attrString.c_str());
+    for (unsigned int count = 0; count < valid_bank_count; count++) {
+      LPR_attr.attributeConfidence *= bank_softmax_max[count];
     }
+    attrList.push_back(LPR_attr);
+  }
 
-    //Ignore the short string, it may be wrong plate string
-    if (valid_bank_count >=  3) {
-
-        LPR_attr.attributeIndex = 0;
-        LPR_attr.attributeValue = 1;
-        LPR_attr.attributeLabel = strdup(attrString.c_str());
-        for (unsigned int count = 0; count < valid_bank_count; count++) {
-            LPR_attr.attributeConfidence *= bank_softmax_max[count];
-        }
-        attrList.push_back(LPR_attr);
-    }
-
-    return true;
+  return true;
 }
-
-}//end of extern "C"

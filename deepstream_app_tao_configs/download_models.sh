@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,51 +21,52 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-# Check following part for how to download the TAO 3.0 models:
-# https://docs.nvidia.com/tao/tao-toolkit/text/deepstream_tao_integration.html
-
-
-echo "==================================================================="
-echo "begin download models for Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/"
-echo "==================================================================="
-mkdir -p ../../models/tao_pretrained_models
-wget https://nvidia.box.com/shared/static/w0xxle5b3mjiv20wrq5q37v8u7b3u5tn -O models.zip
-unzip -o models.zip -d ../../models/tao_pretrained_models
-mv ../../models/tao_pretrained_models/models/* ../../models/tao_pretrained_models/
-rm -r ../../models/tao_pretrained_models/models
-rm models.zip
+# Check following part for how to download the TAO models:
+# https://docs.nvidia.com/tao/tao-toolkit/text/ds_tao/deepstream_tao_integration.html
 
 echo "==================================================================="
-echo "begin download models for dashcamnet / vehiclemakenet / vehicletypenet"
-echo " / trafficcamnet / facenet"
+echo "begin download models for vehiclemakenet / vehicletypenet"
+echo " / trafficcamnet"
 echo "==================================================================="
-mkdir -p ../../models/tao_pretrained_models/dashcamnet && \
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/dashcamnet/versions/pruned_onnx_v1.0.5/zip \
--O dashcamnet_pruned_onnx_v1.0.5.zip && unzip -o dashcamnet_pruned_onnx_v1.0.5.zip -d ../../models/tao_pretrained_models/dashcamnet \
-&& rm dashcamnet_pruned_onnx_v1.0.5.zip
 mkdir -p ../../models/tao_pretrained_models/vehiclemakenet && \
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/vehiclemakenet/versions/pruned_onnx_v1.1.0/zip \
--O vehiclemakenet_pruned_onnx_v1.1.0.zip && \
-unzip -o vehiclemakenet_pruned_onnx_v1.1.0.zip -d ../../models/tao_pretrained_models/vehiclemakenet && \
-rm vehiclemakenet_pruned_onnx_v1.1.0.zip
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/vehiclemakenet/pruned_onnx_v1.1.0/files?redirect=true&path=resnet18_pruned.onnx' \
+-O ../../models/tao_pretrained_models/vehiclemakenet/resnet18_pruned.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/vehiclemakenet/pruned_onnx_v1.1.0/files?redirect=true&path=resnet18_pruned_int8.txt' \
+-O ../../models/tao_pretrained_models/vehiclemakenet/resnet18_pruned_int8.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/vehiclemakenet/pruned_onnx_v1.1.0/files?redirect=true&path=labels.txt' \
+-O ../../models/tao_pretrained_models/vehiclemakenet/labels.txt
 mkdir -p ../../models/tao_pretrained_models/vehicletypenet && \
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/vehicletypenet/versions/pruned_onnx_v1.1.0/zip \
--O vehicletypenet_pruned_onnx_v1.1.0.zip && \
-unzip -o vehicletypenet_pruned_onnx_v1.1.0.zip -d ../../models/tao_pretrained_models/vehicletypenet && \
-rm vehicletypenet_pruned_onnx_v1.1.0.zip
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/vehicletypenet/pruned_onnx_v1.1.0/files?redirect=true&path=resnet18_pruned.onnx' \
+-O ../../models/tao_pretrained_models/vehicletypenet/resnet18_pruned.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/vehicletypenet/pruned_onnx_v1.1.0/files?redirect=true&path=labels.txt' \
+-O ../../models/tao_pretrained_models/vehicletypenet/labels.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/vehicletypenet/pruned_onnx_v1.1.0/files?redirect=true&path=resnet18_pruned_int8.txt' \
+-O ../../models/tao_pretrained_models/vehicletypenet/resnet18_pruned_int8.txt
 mkdir -p ../../models/tao_pretrained_models/trafficcamnet && \
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/trafficcamnet/versions/pruned_onnx_v1.0.4/zip -O trafficcamnet_pruned_onnx_v1.0.4.zip && \
-unzip -o trafficcamnet_pruned_onnx_v1.0.4.zip -d ../../models/tao_pretrained_models/trafficcamnet && \
-rm trafficcamnet_pruned_onnx_v1.0.4.zip
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/trafficcamnet/pruned_onnx_v1.0.4/files?redirect=true&path=labels.txt' \
+-O ../../models/tao_pretrained_models/trafficcamnet/labels.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/trafficcamnet/pruned_onnx_v1.0.4/files?redirect=true&path=resnet18_trafficcamnet_pruned.onnx' \
+-O ../../models/tao_pretrained_models/trafficcamnet/resnet18_trafficcamnet_pruned.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/trafficcamnet/pruned_onnx_v1.0.4/files?redirect=true&path=resnet18_trafficcamnet_pruned_int8.txt' \
+-O ../../models/tao_pretrained_models/trafficcamnet/resnet18_trafficcamnet_pruned_int8.txt
 
 echo "==================================================================="
 echo "begin download models for peopleNet "
 echo "==================================================================="
 mkdir -p ../../models/tao_pretrained_models/peopleNet/
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet/versions/pruned_quantized_decrypted_v2.3.4/zip \
--O peoplenet_pruned_quantized_decrypted_v2.3.4.zip && \
-unzip -o peoplenet_pruned_quantized_decrypted_v2.3.4.zip -d ../../models/tao_pretrained_models/peopleNet/ && \
-rm peoplenet_pruned_quantized_decrypted_v2.3.4.zip
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet/pruned_quantized_decrypted_v2.3.4/files?redirect=true&path=labels.txt' \
+-O ../../models/tao_pretrained_models/peopleNet/labels.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet/pruned_quantized_decrypted_v2.3.4/files?redirect=true&path=resnet34_peoplenet_int8.onnx' \
+-O ../../models/tao_pretrained_models/peopleNet/resnet34_peoplenet_int8.onnx
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet/pruned_quantized_decrypted_v2.3.4/files?redirect=true&path=resnet34_peoplenet_int8.txt' \
+-O ../../models/tao_pretrained_models/peopleNet/resnet34_peoplenet_int8.txt
+
+echo "==================================================================="
+echo "begin download models for peoplenet_transformer_v2 "
+echo "==================================================================="
+mkdir -p ../../models/tao_pretrained_models/peoplenet_transformer_v2/
+wget https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet_transformer/versions/deployable_v1.0/files/labels.txt -O ../../models/tao_pretrained_models/peoplenet_transformer_v2/labels.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet_transformer_v2/deployable_v1.0/files?redirect=true&path=dino_fan_small_astro_delta.onnx' -O ../../models/tao_pretrained_models/peoplenet_transformer_v2/dino_fan_small_astro_delta.onnx
 
 echo "==================================================================="
 echo "Download models successfully "

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -51,8 +51,7 @@ property:
   net-scale-factor: 0.0039215697906911373
   model-color-format: 0
   labelfile-path: ../../../models/LPD_ch/ccpd_label.txt
-  odel-engine-file: ../../../models/LPD_ch/LPDNet_CCPD_pruned_tao5.onnx_b16_gpu0_fp16.engine
-  #int8-calib-file: ../../../models/LPD_ch/ccpd_cal_10.1.0.bin
+  model-engine-file: ../../../models/LPD_ch/LPDNet_CCPD_pruned_tao5.onnx_b16_gpu0_fp16.engine
   onnx-file: ../../../models/LPD_ch/LPDNet_CCPD_pruned_tao5.onnx
   infer-dims: 3;1168;720
   uff-input-order: 0
@@ -75,7 +74,7 @@ property:
   input-object-min-height: 73
   input-object-min-width: 45
   #GPU:1  VIC:2(Jetson only)
-  #scaling-compute-hw: 2
+  scaling-compute-hw: 1 
   #enable-dla: 1
 
 class-attrs-all:

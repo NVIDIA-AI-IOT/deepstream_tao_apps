@@ -30,23 +30,49 @@ DS_VER = $(shell deepstream-app -v | awk '$$1~/DeepStreamSDK/ {print substr($$2,
 DS_SRC_PATH := /opt/nvidia/deepstream/deepstream-$(DS_VER)
 CC:= g++
 
-# Change to your deepstream SDK includes
+# Base CFLAGS
+CFLAGS+= -Wall -std=c++11 -shared -fPIC
+
+# Deepstream SDK includes and CUDA includes
+# Change to your path if needed
 CFLAGS+= -I$(DS_SRC_PATH)/sources/includes \
 	  -I/usr/local/cuda-$(CUDA_VER)/include
 
-CFLAGS+= -Wall -std=c++11 -shared -fPIC
+# Debug logger header
+CFLAGS+= -I.
 
+# Libraries
 LIBS+= -lnvinfer -L/usr/local/cuda-$(CUDA_VER)/lib64 -lcudart -lcublas
-
 LFLAGS:= -Wl,--start-group $(LIBS) -Wl,--end-group
 
+# Source files and targets
 SRCFILES:= nvdsinfer_custombboxparser_tao.cpp
+SRCFILES+= debug_logger_raii.cpp debug_logger_tensor.hpp
 TARGET_LIB:= libnvds_infercustomparser_tao.so
+TARGET_LIB_DEBUG:= libnvds_infercustomparser_tao_debug.so
 
+# Release build flags (default)
+# = $(CFLAGS) -O2
+CFLAGS_RELEASE = $(CFLAGS)
+
+# Debug build flags
+CFLAGS_DEBUG = $(CFLAGS) -g -DDEBUG -O0
+
+# Default target
 all: $(TARGET_LIB)
 
+# Debug target
+debug: $(TARGET_LIB_DEBUG)
+
+# Release build
 $(TARGET_LIB) : $(SRCFILES)
-	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS_RELEASE) $(LFLAGS)
+
+# Debug build
+$(TARGET_LIB_DEBUG): $(SRCFILES)
+	$(CC) -o $@ $^ $(CFLAGS_DEBUG) $(LFLAGS)
 
 clean:
-	rm -rf $(TARGET_LIB)
+	rm -rf $(TARGET_LIB) $(TARGET_LIB_DEBUG)
+
+.PHONY: all debug clean

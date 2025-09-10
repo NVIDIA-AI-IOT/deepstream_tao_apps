@@ -41,7 +41,7 @@ infer_config {
     tensor_order: TENSOR_ORDER_LINEAR
     tensor_name: "inputs"
     maintain_aspect_ratio: 0
-    frame_scaling_hw: FRAME_SCALING_HW_DEFAULT
+    frame_scaling_hw: FRAME_SCALING_HW_GPU
     frame_scaling_filter: 1
     normalize {
       scale_factor: 0.017507

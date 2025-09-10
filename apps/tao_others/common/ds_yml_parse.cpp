@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,8 +25,35 @@
 #include <cstring>
 #include <iostream>
 #include <unordered_map>
+#include <cuda_runtime_api.h>
 #include "ds_yml_parse.h"
-#include "cuda_runtime_api.h"
+#include "nvds_yml_parser.h"
+
+static gchar *get_absolute_file_path(gchar *cfg_file_path, const gchar *file_path) {
+  gchar abs_cfg_path[PATH_MAX + 1];
+  gchar *abs_file_path;
+  gchar *delim;
+
+  if (file_path && file_path[0] == '/') {
+    return (gchar *)file_path;
+  }
+
+  if (!realpath(cfg_file_path, abs_cfg_path)) {
+    return NULL;
+  }
+
+  /* Return absolute path of config file if file_path is NULL. */
+  if (!file_path) {
+    abs_file_path = g_strdup(abs_cfg_path);
+    return abs_file_path;
+  }
+
+  delim = g_strrstr(abs_cfg_path, "/");
+  *(delim + 1) = '\0';
+
+  abs_file_path = g_strconcat(abs_cfg_path, file_path, NULL);
+  return abs_file_path;
+}
 
 NvDsYamlParserStatus
 ds_parse_rtsp_output(GstElement * sink,
@@ -268,7 +295,7 @@ ds_parse_ocdr_videotemplate_config(GstElement *vtemplate,
 
   if(docs["customlib-props"]) {
     auto listNode = docs["customlib-props"];
-    for(int i = 0; i < listNode.size(); i++) {
+    for(uint32_t i = 0; i < listNode.size(); i++) {
       std::string tmpProb = listNode[i].as<std::string>();
       g_object_set(G_OBJECT(vtemplate), "customlib-props",
                    tmpProb.c_str(), NULL);
@@ -305,6 +332,80 @@ ds_parse_group_type(gchar *cfg_file_path, const char* group)
   return 0;
 }
 
+NvDsYamlParserStatus ds_parse_nvdsanalytics(GstElement *element, gchar *cfg_file_path, const char* group)
+{
+  NvDsYamlParserStatus ret = NVDS_YAML_PARSER_SUCCESS;
+  GstElementFactory *factory = GST_ELEMENT_GET_CLASS(element)->elementfactory;
+  if (g_strcmp0(GST_OBJECT_NAME(factory), "nvdsanalytics")) {
+    std::cerr << "[ERROR] Passed element is not nvdsanalytics" << std::endl;
+    ret = NVDS_YAML_PARSER_ERROR;
+    return ret;
+  }
+
+  std::string paramKey = "";
+  auto docs = YAML::LoadAllFromFile(cfg_file_path);
+  std::vector<int> docs_indx_vec;
+  std::unordered_map<std::string, int> docs_indx_umap;
+  int total_docs = docs.size();
+
+  for (int i =0; i < total_docs;i++)
+  {
+    if (docs[i][group].Type() != YAML::NodeType::Null) {
+      if (docs[i][group]["enable"]) {
+        gboolean val= docs[i][group]["enable"].as<gboolean>();
+        if(val == FALSE) {
+          g_print("!! [WARNING]  \"analytics\" group not enabled.\n");
+          g_object_set(G_OBJECT(element), "enable", val, NULL);
+        }
+      }
+
+      YAML::const_iterator itr = docs[i].begin();
+      std::string group_name = itr->first.as<std::string>();
+      docs_indx_umap[group_name] = i;
+      docs_indx_vec.push_back(i);
+    }
+  }
+
+  int docs_indx_vec_size = docs_indx_vec.size();
+  int docs_indx_umap_size = docs_indx_umap.size();
+  if (docs_indx_umap_size != docs_indx_vec_size) {
+    std::cerr << "[ERROR] Duplicate group names in the config file : " << group << std::endl;
+    ret = NVDS_YAML_PARSER_ERROR;
+    return ret;
+  }
+
+  for (int i = 0; i< docs_indx_vec_size; i++)
+  {
+    int indx = docs_indx_vec [i];
+    for(YAML::const_iterator itr = docs[indx][group].begin(); itr != docs[indx][group].end(); ++itr)
+    {
+      paramKey = itr->first.as<std::string>();
+
+      if (paramKey == "enable" && docs[indx][group]["enable"].as<gboolean>() == TRUE) {
+        continue;
+      } else if(paramKey == "config-file") {
+        std::string temp = itr->second.as<std::string>();
+        if (temp.empty()) {
+          g_printerr ("Error: Could not parse config-file-path in %s.\n", group);
+          return NVDS_YAML_PARSER_ERROR;
+        }
+        char *config_file_path = get_absolute_file_path(cfg_file_path, temp.c_str());
+        if (!config_file_path) {
+          g_printerr ("Error: Could not get absolute path for config-file-path in %s.\n", group);
+          return NVDS_YAML_PARSER_ERROR;
+        }
+        g_print("Setting config-file for nvdsanalytics: %s\n", config_file_path);
+        g_object_set(G_OBJECT(element), "config-file", config_file_path, NULL);
+        g_free(config_file_path);
+      } else {
+        std::cerr << "!! [WARNING] Unknown param found for nvdsanalytics: " << paramKey << std::endl;
+      }
+    }
+  }
+
+  return ret;
+}
+
 static const char* dgpus_unsupport_hw_enc[] = {
   "NVIDIA A100",
   "NVIDIA A30",
@@ -333,7 +434,7 @@ is_enc_hw_support() {
     }
     fclose(ptr);
   } else {
-    for (int i = 0; i < sizeof(dgpus_unsupport_hw_enc)/sizeof(dgpus_unsupport_hw_enc[0]); i++) {
+    for (uint32_t i = 0; i < sizeof(dgpus_unsupport_hw_enc)/sizeof(dgpus_unsupport_hw_enc[0]); i++) {
       if (!strncasecmp(prop.name, dgpus_unsupport_hw_enc[i], strlen(dgpus_unsupport_hw_enc[i]))) {
         enc_hw_support = FALSE;
         break;
@@ -509,74 +610,197 @@ ds_parse_group_enable(gchar *cfg_file_path, const char* group)
   return 0;
 }
 
-guint
-ds_parse_group_car_mode(gchar *cfg_file_path, const char* group)
+/** Function to get the absolute path of a file.*/
+gboolean
+get_absolute_file_path_yaml (
+    const gchar * cfg_file_path, const gchar * file_path,
+    char *abs_path_str)
 {
-  std::string paramKey = "";
-  std::vector<YAML::Node> docs = YAML::LoadAllFromFile(cfg_file_path);
-  std::vector<int> docs_indx_vec;
-  std::unordered_map<std::string, int> docs_indx_umap;
-  int total_docs = docs.size();
-  guint val = 0;
-  for (int i =0; i < total_docs;i++)
+  gchar abs_cfg_path[PATH_MAX + 1];
+  gchar abs_real_file_path[PATH_MAX + 1];
+  gchar *abs_file_path;
+  gchar *delim;
+
+  /* Absolute path. No need to resolve further. */
+  if (file_path[0] == '/') {
+    /* Check if the file exists, return error if not. */
+    if (!realpath (file_path, abs_real_file_path)) {
+      /* Ignore error if file does not exist and use the unresolved path. */
+      if (errno != ENOENT)
+        return FALSE;
+    }
+    g_strlcpy (abs_path_str, abs_real_file_path, _PATH_MAX);
+    return TRUE;
+  }
+
+  /* Get the absolute path of the config file. */
+  if (!realpath (cfg_file_path, abs_cfg_path)) {
+    return FALSE;
+  }
+
+  /* Remove the file name from the absolute path to get the directory of the
+   * config file. */
+  delim = g_strrstr (abs_cfg_path, "/");
+  *(delim + 1) = '\0';
+
+  /* Get the absolute file path from the config file's directory path and
+   * relative file path. */
+  abs_file_path = g_strconcat (abs_cfg_path, file_path, nullptr);
+
+  /* Resolve the path.*/
+  if (realpath (abs_file_path, abs_real_file_path) == nullptr) {
+    /* Ignore error if file does not exist and use the unresolved path. */
+    if (errno == ENOENT)
+      g_strlcpy (abs_real_file_path, abs_file_path, _PATH_MAX);
+    else
+      return FALSE;
+  }
+
+  g_free (abs_file_path);
+
+  g_strlcpy (abs_path_str, abs_real_file_path, _PATH_MAX);
+  return TRUE;
+}
+
+NvDsYamlParserStatus
+nvds_parse_postprocess (GstElement *element, gchar* app_cfg_file_path, const char* group)
+{
+  NvDsYamlParserStatus ret = NVDS_YAML_PARSER_SUCCESS;
+  GstElementFactory *factory = GST_ELEMENT_GET_CLASS(element)->elementfactory;
+  if (g_strcmp0(GST_OBJECT_NAME(factory), "nvdspostprocess")) {
+    std::cerr << "[ERROR] Passed element is not nvdspostprocess" << std::endl;
+    return NVDS_YAML_PARSER_ERROR;
+  }
+
+  if (!app_cfg_file_path) {
+    printf("Config file not provided.\n");
+    return NVDS_YAML_PARSER_ERROR;
+  }
+
+  YAML::Node configyml = YAML::LoadFile(app_cfg_file_path);
+  for(YAML::const_iterator itr = configyml[group].begin();
+     itr != configyml[group].end(); ++itr)
   {
-    if (!docs[i][group].IsNull()) {
-      if (docs[i][group]["car-mode"]) {
-          val= docs[i][group]["car-mode"].as<guint>();
-          return val;
+    std::string paramKey = itr->first.as<std::string>();
+    if (paramKey == "config-file-path") {
+      std::string temp = itr->second.as<std::string>();
+      char* str = (char*) malloc(sizeof(char) * 1024);
+      std::strncpy (str, temp.c_str(), 1024);
+      char *path = (char*) malloc(sizeof(char) * 1024);
+      if (!get_absolute_file_path_yaml (app_cfg_file_path, str,
+            path)) {
+            ret = NVDS_YAML_PARSER_ERROR;
       }
+      g_object_set(G_OBJECT(element), "postprocesslib-config-file",
+         path, NULL);
+         printf("postprocesslib-config-file:%s\n", path);
+      g_free (str);
+      g_free(path);
+    } else if (paramKey == "lib-name") {
+      std::string temp = itr->second.as<std::string>();
+      char* str = (char*) malloc(sizeof(char) * 1024);
+      std::strncpy (str, temp.c_str(), 1024);
+      char *path = (char*) malloc(sizeof(char) * 1024);
+      if (!get_absolute_file_path_yaml (app_cfg_file_path, str,
+            path)) {
+            ret = NVDS_YAML_PARSER_ERROR;
+      }
+      g_object_set(G_OBJECT(element), "postprocesslib-name",
+         path, NULL);
+         printf("postprocesslib-name:%s\n", path);
+      g_free (str);
+      g_free(path);
+    } else {
+      printf("[WARNING] Unknown param found in postprocess: %s\n", paramKey.c_str());
     }
   }
-  return 0;
+  return ret;
+}
+
+NvDsYamlParserStatus
+nvds_parse_preprocess (GstElement *element, gchar* app_cfg_file_path, const char* group)
+{
+  NvDsYamlParserStatus ret = NVDS_YAML_PARSER_SUCCESS;
+  GstElementFactory *factory = GST_ELEMENT_GET_CLASS(element)->elementfactory;
+  if (g_strcmp0(GST_OBJECT_NAME(factory), "nvdspreprocess")) {
+    std::cerr << "[ERROR] Passed element is not nvdspreprocess" << std::endl;
+    return NVDS_YAML_PARSER_ERROR;
+  }
+
+  if (!app_cfg_file_path) {
+    printf("Config file not provided.\n");
+    return NVDS_YAML_PARSER_ERROR;
+  }
+
+  YAML::Node configyml = YAML::LoadFile(app_cfg_file_path);
+  for(YAML::const_iterator itr = configyml[group].begin();
+     itr != configyml[group].end(); ++itr)
+  {
+    std::string paramKey = itr->first.as<std::string>();
+    if (paramKey == "config-file-path") {
+      std::string temp = itr->second.as<std::string>();
+      char* str = (char*) malloc(sizeof(char) * 1024);
+      std::strncpy (str, temp.c_str(), 1024);
+      char *config_file_path = (char*) malloc(sizeof(char) * 1024);
+      if (!get_absolute_file_path_yaml (app_cfg_file_path, str,
+            config_file_path)) {
+            ret = NVDS_YAML_PARSER_ERROR;
+      }
+       g_object_set(G_OBJECT(element), "config-file",
+         config_file_path, NULL);
+         printf("config_file_path:%s\n", config_file_path);
+      g_free (str);
+      g_free(config_file_path);
+    } else {
+      printf("[WARNING] Unknown param found in preprocess: %s\n", paramKey.c_str());
+    }
+  }
+  return ret;
 }
 
 void
-get_triton_yml(gint car_mode, gboolean use_triton_grpc, char* pgie_cfg_file_path, 
-               char* sgie1_cfg_file_path, char* sgie2_cfg_file_path, guint buf_len) {
-  std::string prefix,yml_path;
-  char* pDst  = NULL;
-  if (!use_triton_grpc) {
-    if (car_mode == 1) //us mode
-      yml_path = "us_triton_config.yml";
-    else
-      yml_path = "ch_triton_config.yml";
-  } else {
-    if (car_mode == 1) //us mode
-      yml_path = "us_triton-grpc_config.yml";
-    else
-      yml_path = "ch_triton-grpc_config.yml";
-  }
+parse_streammux_width_height_yaml (gint *width, gint *height, gchar *cfg_file_path)
+{
+  YAML::Node configyml = YAML::LoadFile(cfg_file_path);
 
-  prefix = "./";
-
-  g_printerr ("%s yml_path:%s", __func__, yml_path.c_str());
-
-  YAML::Node configyml = YAML::LoadFile(yml_path);
-  for(YAML::const_iterator itr = configyml.begin(); itr != configyml.end(); ++itr) {
+  for(YAML::const_iterator itr = configyml["streammux"].begin();
+     itr != configyml["streammux"].end(); ++itr) {
     std::string paramKey = itr->first.as<std::string>();
-    if (paramKey ==  "config") {
-      for(YAML::const_iterator itr = configyml["config"].begin();
-        itr != configyml["config"].end(); ++itr) {
-        pDst  = NULL;
-        std::string key = itr->first.as<std::string>();
-        if(key == "pgie") {
-          pDst = pgie_cfg_file_path;
-        } else if(key == "lpd") {
-          pDst = sgie1_cfg_file_path;
-        } else if(key == "lpr") {
-          pDst = sgie2_cfg_file_path;
-        } else {
-          g_printerr ("%s Unknown param found ", __func__);
-        }
+    if (paramKey == "width") {
+      *width = itr->second.as<gint>();
+    } else if(paramKey == "height"){
+      *height = itr->second.as<gint>();
+    }
+  }
+}
 
-        if (pDst) {
-          std::string temp = itr->second.as<std::string>();
-          strncat (pDst, temp.c_str(), buf_len - prefix.size());
-                g_print("key:%s: %s\n", key.c_str(), pDst);
-        }
-      }
-    } else {
-      g_printerr ("%s not found config", __func__);
+void
+parse_sink_type_yaml (gint *type, gchar *cfg_file_path)
+{
+  YAML::Node configyml = YAML::LoadFile(cfg_file_path);
+
+  for(YAML::const_iterator itr = configyml["sink"].begin();
+     itr != configyml["sink"].end(); ++itr) {
+    std::string paramKey = itr->first.as<std::string>();
+    if (paramKey == "sink-type") {
+      *type = itr->second.as<gint>();
+    }
+  }
+}
+
+void
+parse_sink_enc_type_yaml (gint *enc_type, gchar *cfg_file_path)
+{
+  YAML::Node configyml = YAML::LoadFile(cfg_file_path);
+
+  for(YAML::const_iterator itr = configyml["sink"].begin();
+     itr != configyml["sink"].end(); ++itr) {
+    std::string paramKey = itr->first.as<std::string>();
+    if (paramKey == "enc-type") {
+       int value = itr->second.as<gint>();
+       if(value == 0 || value == 1){
+        *enc_type = value;
+       }
     }
   }
 }

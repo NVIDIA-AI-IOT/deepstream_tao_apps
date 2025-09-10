@@ -51,17 +51,19 @@ Below table shows the end-to-end performance of processing 1080p videos with thi
 ## Download
 
 1. Download Project with SSH or HTTPS
-```
-    // SSH
+
+```shell
+    # SSH
     git clone git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
-    // or HTTPS
+    # or HTTPS
     git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 ```
+
 2. Prepare Models
 
 All models can be downloaded with the following commands:
 
-```
+```shell
     cd deepstream_tao_apps/
     ./download_models.sh
 ```
@@ -81,92 +83,29 @@ The Triton Inference Server libraries are required to be installed if the DeepSt
 * Setting up Triton Inference Server for gRPC inferencing, please refer to [triton_server_grpc.md](https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps/blob/master/triton_server_grpc.md). 
 
 ## Build and Run
-```
+
+```shell
+    # Build
     cd apps/tao_others/deepstream_lpr_app
     make
 ```
-For US car plate recognition
-```
+
+A sample of US car plate recognition:
+
+```shell
     cp dict_us.txt dict.txt
+    # nvinfer is used by default, please modify the configuration file 
+    # for nvinferserver capi/nvinferserver grpc
+    ./deepstream-lpr-app ../../../configs/app/lpr_app_us_config.yml
 ```
-For Chinese car plate recognition
-```
+
+A sample of Chinese car plate recognition:
+
+```shell
     cp dict_ch.txt dict.txt
-```
-Start to run the application
-```
-    ./deepstream-lpr-app/deepstream-lpr-app <1:US car plate model|2: Chinese car plate model> \
-         <1: output as h264 file| 2:fakesink 3:display output> <0:ROI disable|1:ROI enable> <infer|triton|tritongrpc> \
-         <input mp4 file name> ... <input mp4 file name> <output file name>
-```
-Or run with YAML config file.
-```
-    ./deepstream-lpr-app/deepstream-lpr-app <app YAML config file>
-```
-
-### Samples
-
-1. Application works with nvinfer
-
-A sample of US car plate recognition:
-
-```
-    ./deepstream-lpr-app/deepstream-lpr-app 1 2 0 infer us_car_test2.mp4 us_car_test2.mp4 output.264
-```
-
-Or run with YAML config file.
-```
-    ./deepstream-lpr-app/deepstream-lpr-app ../../../configs/app/lpr_app_infer_us_config.yml
-```
-
-A sample of Chinese car plate recognition:
-
-```
-    ./deepstream-lpr-app/deepstream-lpr-app 2 2 0 infer ch_car_test.mp4 ch_car_test.mp4 output.264
- ```
-
-2. Application works with nvinferserver(Triton native samples)
-
-A sample of US car plate recognition:
-```
-    ./deepstream-lpr-app/deepstream-lpr-app 1 2 0 triton us_car_test2.mp4 us_car_test2.mp4 output.264
-```
-
-Or run with YAML config file after modify triton part in yml file.
-```
-    ./deepstream-lpr-app/deepstream-lpr-app ../../../configs/app/lpr_app_triton_us_config.yml
-```
-
-A sample of Chinese car plate recognition:
-```
-    ./deepstream-lpr-app/deepstream-lpr-app 2 2 0 triton ch_car_test2.mp4 ch_car_test2.mp4 output.264
-```
-
-Or run with YAML config file after modify triton part in yml file.
-```
-    ./deepstream-lpr-app/deepstream-lpr-app ../../../configs/app/lpr_app_triton_ch_config.yml
-```
-
-3. Application works with nvinferserver(Triton gRPC samples)
-
-A sample of US car plate recognition:
-```
-    ./deepstream-lpr-app/deepstream-lpr-app 1 2 0 tritongrpc us_car_test2.mp4 us_car_test2.mp4 output.264
-```
-
-Or run with YAML config file after modify triton part in yml file.
-```
-    ./deepstream-lpr-app/deepstream-lpr-app ../../../configs/app/lpr_app_tritongrpc_us_config.yml
-```
-
-A sample of Chinese car plate recognition:
-```
-    ./deepstream-lpr-app/deepstream-lpr-app 2 2 0 tritongrpc ch_car_test2.mp4 ch_car_test2.mp4 output.264
-```
-
-Or run with YAML config file after modify triton part in yml file.
-```
-    ./deepstream-lpr-app/deepstream-lpr-app ../../../configs/app/lpr_app_tritongrpc_ch_config.yml
+    # nvinfer is used by default, please modify the configuration file 
+    # for nvinferserver capi/nvinferserver grpc
+    ./deepstream-lpr-app ../../../configs/app/lpr_app_ch_config.yml
 ```
 
 ## Notice
@@ -176,13 +115,15 @@ Or run with YAML config file after modify triton part in yml file.
 4. The trafficcamnet and LPD models are all INT8 models, the LPR model is FP16 model.
 5. There is a bug for Triton gprc mode: the first two character can't be recognized.
 6. For some yolo models, some layers of the models should use FP32 precision. This is a network characteristics that the accuracy drops rapidly when maximum layers are run in INT8 precision. Please refer the [layer-device-precision](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvinfer.html) for more details.
-7. For Chinese plate recognition, please make sure the Chinese language support is in the OS.
-For example:
-With Ubuntu
+7. For Chinese plate recognition, please make sure the Chinese language support is in the OS. `Take Ubuntu as an example :`
+
  - Install Chinese Language package . 
+   ```bash
    sudo apt-get install language-pack-zh-hans
+   ```
+
  - Set the Chinese language enviroment
-   ``
+   ```bash
    export LANG=zh_CN.UTF-8
    export LANGUAGE="zh_CN:zh:en_US:en"
-   ``
+   ```

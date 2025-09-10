@@ -1,5 +1,5 @@
 ################################################################################
-# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -42,7 +42,7 @@ ifeq ($(TARGET_DEVICE),aarch64)
   CFLAGS:= -DPLATFORM_TEGRA
 endif
 
-SRCS:= deepstream_pose_classification_app.cpp
+SRCS:= deepstream_pose_classification_app.cpp    ../common/ds_yml_parse.cpp
 
 INCS:= $(wildcard *.h)
 
@@ -55,10 +55,11 @@ CFLAGS+= \
 	-I$(DEEPSTREAM_HOME)/sources/includes \
 	-I$(DEEPSTREAM_HOME)/sources/apps/apps-common/includes \
 	-I$(DEEPSTREAM_HOME)/sources/apps/sample_apps/deepstream-app \
+	-I../common
 
 LIBS+= \
 	-L$(CUDA_HOME)/lib64 -lcudart -lcuda -lnvds_yml_parser -lyaml-cpp\
-	-L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvds_utils -lgstapp-1.0 \
+	-L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta -lnvds_utils -lgstapp-1.0 -lgstrtspserver-1.0 \
 	-lpthread -lm -ldl -Wl,-rpath,$(LIB_INSTALL_DIR)
 
 CFLAGS+= $(shell pkg-config --cflags $(PKGS))
@@ -69,6 +70,7 @@ all: $(APP)
 	make -C nvdsinfer_custom_impl_BodyPose3DNet
 	make -C nvdspreprocess_lib
 	make -C infer_pose_classification_parser
+	make -C postprocesslib_impl
 
 debug: CXXFLAGS += -DDEBUG -ggdb
 debug: CCFLAGS += -DDEBUG -ggdb
@@ -92,5 +94,6 @@ clean:
 	make clean -C nvdsinfer_custom_impl_BodyPose3DNet
 	make clean -C nvdspreprocess_lib
 	make clean -C infer_pose_classification_parser
+	make clean -C postprocesslib_impl
 
 

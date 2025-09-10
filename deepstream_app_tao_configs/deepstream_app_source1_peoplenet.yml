@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -72,6 +72,7 @@ primary-gie:
   bbox-border-color3: 0;1;0;1
   gie-unique-id: 1
   config-file: nvinfer/config_infer_primary_peoplenet.yml
+  #config-file: nvinfer/config_infer_primary_peoplenet_transformer_v2.yml
 
 sink1:
   enable: 0

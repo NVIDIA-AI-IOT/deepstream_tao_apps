@@ -9,30 +9,23 @@ The TAO pretrained models used in the sample application are:
 * DeepStream SDK 6.2 GA and above
 
 #### **Set up the development environment**:
-$git lfs pull
+$ git lfs pull
 
-$sudo apt update && sudo apt install -y libopencv-dev
+$ sudo apt update && sudo apt install -y libopencv-dev
 
 #### **Prepare the nvocdr library**:
 Refer to [NVIDIA-Optical-Character-Detection-and-Recognition-Solution](https://github.com/NVIDIA-AI-IOT/NVIDIA-Optical-Character-Detection-and-Recognition-Solution/tree/main)
 
-1.prepare the libnvocdr.so lib
-```shell
-$ git clone https://github.com/NVIDIA-AI-IOT/NVIDIA-Optical-Character-Detection-and-Recognition-Solution.git
-$ cd NVIDIA-Optical-Character-Detection-and-Recognition-Solution
-$ make
-$ cp libnvocdr.so ../nvocdr_libs/x86/
-# On Jetson platform:
-# $ cp libnvocdr.so ../nvocdr_libs/aarch64/
-```
+1.prepare the libnvocdr.so/libnvocdr_impl.so lib
 
-2.prepare the libnvocdr_impl.so
 ```shell
-$ cd deepstream
-$ make
-$ cp libnvocdr_impl.so ../../nvocdr_libs/x86/
-# On Jetson platform:
-# $ cp libnvocdr_impl.so ../../nvocdr_libs/aarch64/
+# git clone https://github.com/NVIDIA-AI-IOT/NVIDIA-Optical-Character-Detection-and-Recognition-Solution.git nvocdr
+$ git submodule update --init --recursive
+$ make -C nvocdr
+$ make -C nvocdr/deepstream CUDA_VER=xx.x # (For Jetpack 7.0 xx.x is 12.9)
+$ cp nvocdr/libnvocdr.so /opt/nvidia/deepstream/deepstream/lib/
+$ cp nvocdr/deepstream/libnvocdr_impl.so /opt/nvidia/deepstream/deepstream/lib/
+$ sudo ldconfig
 ```
 
 #### **Get the TensorRT OSS plugin library (Optional)**:
@@ -75,26 +68,19 @@ cp libnvinfer_plugin.so.8.6.x /usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.
 ## Build And Run
 The application can be build and run seperately.
 
-```
-1.
-Go to the deepstream-nvocdr-app directory
-
-2.
+Prepare OCDNet/OCRNet engine file
+```bash
 #Generate OCDNet engine with dynmaic batch size and max batch size is 4:
 /usr/src/tensorrt/bin/trtexec --onnx=../../../models/nvocdr/ocdnet.onnx --minShapes=input:1x3x736x1280 --optShapes=input:1x3x736x1280 --maxShapes=input:1x3x736x1280 --fp16 --saveEngine=../../../models/nvocdr/ocdnet.fp16.engine
 
 #Generate OCRNet engine with dynamic batch size and max batch size is 32:
 /usr/src/tensorrt/bin/trtexec --onnx=../../../models/nvocdr/ocrnet.onnx --minShapes=input:1x1x64x200 --optShapes=input:32x1x64x200 --maxShapes=input:32x1x64x200 --fp16 --saveEngine=../../../models/nvocdr/ocrnet.fp16.engine
+```
 
-3.
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./nvocdr_libs/x86
-# On Jetson platform:
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./nvocdr_libs/aarch64
+```bash
+# Go to the deepstream-nvocdr-app directory
 make
 
-4.
 # Set the 'source-list' as the path of your sources in the nvocdr_app_config.yml
-# On Jetson platform:
-# modify the 'customlib-name' field in the nvocdr_app_config.yml first
-./deepstream-nvocdr-app nvocdr_app_config.yml
+./deepstream-nvocdr-app ../../../configs/app/nvocdr_app_config.yml
 ```

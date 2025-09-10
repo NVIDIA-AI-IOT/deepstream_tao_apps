@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,23 +21,9 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-# Check following part for how to download the TLT 3.0 models:
-
-# For Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ EfficientDet0/ UNET/:
-# wget https://nvidia.box.com/shared/static/w0xxle5b3mjiv20wrq5q37v8u7b3u5tn -O models.zip
-
-# For peopleSemSegNet:
-# wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_v1.0/zip \
-# -O peoplesemsegnet_deployable_v1.0.zip
+# Check following part for how to download the TAO models:
 
 set -e
-
-echo "==================================================================="
-echo "begin download models for Faster-RCNN / YoloV3 / YoloV4 /SSD / DSSD / RetinaNet/ UNET/"
-echo "==================================================================="
-wget https://nvidia.box.com/shared/static/w0xxle5b3mjiv20wrq5q37v8u7b3u5tn -O models.zip
-unzip -o models.zip
-rm models.zip
 
 echo "==================================================================="
 echo "begin download models for Mask2Former "
@@ -48,24 +34,9 @@ wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team
 -O mask2former.onnx
 
 echo "==================================================================="
-echo "begin download models for peopleSemSegNet "
-echo "==================================================================="
-cd -
-mkdir -p models/peopleSemSegNet_vanilla
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_vanilla_unet_onnx_v2.0.2/zip \
--O deployable_vanilla_unet_onnx_v2.0.2.zip
-unzip -o deployable_vanilla_unet_onnx_v2.0.2.zip -d models/peopleSemSegNet_vanilla
-rm deployable_vanilla_unet_onnx_v2.0.2.zip
-
-mkdir -p models/peopleSemSegNet_shuffle
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesemsegnet/versions/deployable_shuffleseg_unet_onnx_v1.0.1/zip \
--O peoplesemsegnet_deployable_shuffleseg_unet_onnx_v1.0.1.zip
-unzip -o peoplesemsegnet_deployable_shuffleseg_unet_onnx_v1.0.1.zip -d models/peopleSemSegNet_shuffle
-rm peoplesemsegnet_deployable_shuffleseg_unet_onnx_v1.0.1.zip
-
-echo "==================================================================="
 echo "begin downloading CitySemSegFormer model "
 echo "==================================================================="
+cd -
 mkdir -p ./models/citysemsegformer
 cd ./models/citysemsegformer
 wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/citysemsegformer/deployable_onnx_v1.0/files?redirect=true&path=citysemsegformer.onnx' -O citysemsegformer.onnx && \

@@ -54,9 +54,8 @@ Please enable Triton or Triton gRPC inferencing with the app YAML configurations
 ```
 2. Prepare Models and TensorRT engine
 
-There are pre-trained TAO models available in [NGC](https://ngc.nvidia.com/catalog/models) for faciallandmarks, emotion, gesture, gaze and heart rate.
-
-Please run the following script to download pre-trained models and generate GazeNet and Gesture engines with tao-converter tool:
+There are pre-trained TAO models available in [NGC](https://ngc.nvidia.com/catalog/models).
+Please run the following script to download pre-trained models.
 
 ```
     cd deepstream_tao_apps
@@ -93,7 +92,7 @@ OR
 ```
 
 Start to run the car license plate recognition sample application
-```
+```shell
     cd deepstream_lpr_app
     ##For US car plate recognition
     cp dict_us.txt dict.txt
@@ -101,10 +100,17 @@ Start to run the car license plate recognition sample application
     cp dict_ch.txt dict.txt
     ##Run the sample app
     ./deepstream-lpr-app/deepstream-lpr-app <1:US car plate model|2: Chinese car plate model> \
-         <1: output as h264 file| 2:fakesink 3:display output> <0:ROI disable|1:ROI enable> <infer|triton|tritongrpc> \
+         <1: output as mp4 file| 2:fakesink| 3:display output> <0:ROI disable|1:ROI enable> <infer|triton|tritongrpc> \
          <input mp4 file name> ... <input mp4 file name> <output file name>
-OR
+    ##OR
     ./deepstream-lpr-app/deepstream-lpr-app <app YAML config file>
+```
+
+Start to run the custom preprocessing sample application
+```shell
+    cd deepstream_custom_preprocessing_app
+    #Run "nvdspreprocess + pgie" pipeline
+    gst-launch-1.0 filesrc location=/opt/nvidia/deepstream/deepstream/samples/streams/sample_720p.mp4 ! qtdemux ! h264parse ! nvv4l2decoder ! mux.sink_0  filesrc location=/opt/nvidia/deepstream/deepstream/samples/streams/sample_720p.mp4 ! qtdemux ! h264parse ! nvv4l2decoder ! mux.sink_1 nvstreammux name=mux batch-size=2 width=1920 height=1080 ! nvdspreprocess config-file=config_preprocess_frame.txt ! nvinfer input-tensor-meta=true config-file-path=/opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app/config_infer_primary.yml ! nvmultistreamtiler ! nvvideoconvert ! 'video/x-raw(memory:NVMM),format=RGBA' ! nvdsosd ! nvvideoconvert ! nvv4l2h264enc ! h264parse ! qtmux ! filesink location=out.mp4
 ```
 
 A sample of mdx perception:
@@ -122,7 +128,7 @@ A sample of pose classification:
 
 A sample of the car license plate recognition:
 
-`./deepstream-lpr-app/deepstream-lpr-app 1 1 1 infer /opt/nvidia/deepstream/deepstream/samples/streams/sample_qHD.mp4 out`
+`./deepstream-lpr-app/deepstream-lpr-app 1 1 1 infer /opt/nvidia/deepstream/deepstream/samples/streams/sample_qHD.mp4 out.mp4`
 
 or
 `./deepstream-lpr-app/deepstream-lpr-app ../../../configs/app/lpr_app_infer_us_config.yml`

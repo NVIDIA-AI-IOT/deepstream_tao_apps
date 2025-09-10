@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -305,120 +305,6 @@ restart_stream_buf_prob (GstPad * pad, GstPadProbeInfo * info,
         break;
     }
   }
-  return GST_PAD_PROBE_OK;
-}
-
-static void
-release_segmentation_meta (gpointer data, gpointer user_data)
-{
-  NvDsUserMeta *user_meta = (NvDsUserMeta *) data;
-  NvDsInferSegmentationMeta *meta = (NvDsInferSegmentationMeta *) user_meta->user_meta_data;
-  if (meta->priv_data) {
-    gst_mini_object_unref (GST_MINI_OBJECT (meta->priv_data));
-  }
-  else {
-    g_free (meta->class_map);
-    g_free (meta->class_probabilities_map);
-  }
-  delete meta;
-}
-
-static gpointer
-copy_segmentation_meta (gpointer data, gpointer user_data)
-{
-  NvDsUserMeta *src_user_meta = (NvDsUserMeta *) data;
-  NvDsInferSegmentationMeta *src_meta = (NvDsInferSegmentationMeta *) src_user_meta->user_meta_data;
-  NvDsInferSegmentationMeta *meta = (NvDsInferSegmentationMeta *) g_malloc (sizeof (NvDsInferSegmentationMeta));
-
-  meta->classes = src_meta->classes;
-  meta->width = src_meta->width;
-  meta->height = src_meta->height;
-  meta->class_map = (gint *) g_memdup(src_meta->class_map, meta->width * meta->height * sizeof (gint));
-  // meta->class_probabilities_map = (gfloat *) g_memdup(src_meta->class_probabilities_map, meta->classes * meta->width * meta->height * sizeof (gfloat));
-  meta->class_probabilities_map = NULL;
-  meta->priv_data = NULL;
-
-  return meta;
-}
-
-static GstPadProbeReturn
-pgie_pad_buffer_probe_network_type100 (GstPad * pad, GstPadProbeInfo * info, gpointer u_data)
-{
-  NvDsMetaList *l_frame = NULL;
-  NvDsMetaList *l_obj = NULL;
-  NvDsMetaList *l_user = NULL;
-
-  GstBuffer *buf = (GstBuffer *)(info->data);
-  NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta(buf);
-
-  /* Iterate each frame metadata in batch */
-  for (NvDsMetaList * l_frame = batch_meta->frame_meta_list;
-      l_frame != NULL; l_frame = l_frame->next) {
-    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *) l_frame->data;
-
-    if (frame_meta && frame_meta->frame_user_meta_list) {
-      NvDsFrameMetaList *fmeta_list = NULL;
-      NvDsUserMeta *of_user_meta = NULL;
-
-      for (fmeta_list = frame_meta->frame_user_meta_list;
-        fmeta_list != NULL; fmeta_list = fmeta_list->next) {
-        of_user_meta = (NvDsUserMeta *)fmeta_list->data;
-        if (of_user_meta && of_user_meta->base_meta.meta_type == NVDSINFER_TENSOR_OUTPUT_META) {
-          NvDsInferTensorMeta *meta = (NvDsInferTensorMeta *)(of_user_meta->user_meta_data);
-          if (!meta ||
-              (meta->num_output_layers != 1) ||
-              !(meta->output_layers_info[0].dataType==NvDsInferDataType::INT32 ||
-               meta->output_layers_info[0].dataType==NvDsInferDataType::INT64))
-            continue;
-
-          NvDsInferLayerInfo *info = &meta->output_layers_info[0];
-          info->buffer = meta->out_buf_ptrs_host[0];// cudaMemcpyDeviceToHost is already performed.
-
-          //---Fill NvDsInferSegmentationMeta structure---
-          // Acquire a new NvDsUserMeta object from frame_meta.
-          NvDsUserMeta *user_meta = nvds_acquire_user_meta_from_pool (frame_meta->base_meta.batch_meta);
-          NvDsInferSegmentationMeta *segmeta = (NvDsInferSegmentationMeta *) g_malloc (sizeof (NvDsInferSegmentationMeta));
-
-          segmeta->classes = numDetectedClasses;
-          // Segmentation model ALWAYS has the same W/H as the input tensor.
-          segmeta->height = meta->network_info.height;
-          segmeta->width = meta->network_info.width;
-
-          printf("seg width %d seg height %d\n", segmeta->width, segmeta->height);
-
-          if(meta->output_layers_info[0].dataType == NvDsInferDataType::INT64) {
-            gint *tmp_buf = (gint *) g_malloc (segmeta->width * segmeta->height * sizeof (gint));
-            gint *ttmp_buf = tmp_buf;
-            for(int i = 0; i < segmeta->width * segmeta->height; i++) {
-              *tmp_buf = static_cast<gint> (*(static_cast<gint64 *>(info->buffer)));
-              tmp_buf++;
-              info->buffer = info->buffer+8; //int64
-            }
-
-            segmeta->class_map = (gint *) g_memdup(ttmp_buf, segmeta->width * segmeta->height * sizeof (gint));
-            g_free(ttmp_buf);
-          } else {
-            // Output tensor is the class map already. There is nothing else to parse.
-            // Referencing instead of copying info->buffer causes SegV crash.
-            segmeta->class_map = (gint *) g_memdup(info->buffer, segmeta->width * segmeta->height * sizeof (gint));
-          }
-          segmeta->class_probabilities_map = NULL;
-          segmeta->priv_data = NULL;
-
-          // Assign NvDsInferSegmentationMeta to the fields of NvDsUserMeta
-          user_meta->user_meta_data = segmeta;
-          user_meta->base_meta.meta_type = (NvDsMetaType) NVDSINFER_SEGMENTATION_META;
-          user_meta->base_meta.release_func = release_segmentation_meta;
-          user_meta->base_meta.copy_func = copy_segmentation_meta;
-
-          nvds_add_user_meta_to_frame (frame_meta, user_meta);
-          //---Fill NvDsInferSegmentationMeta structure---
-        }
-      }
-    }
-  }
-
-  // use_device_mem = 1 - use_device_mem;
   return GST_PAD_PROBE_OK;
 }
 
@@ -1184,18 +1070,6 @@ main (int argc, char *argv[]) {
       gst_pad_add_probe(streammux_src_pad, GST_PAD_PROBE_TYPE_BUFFER,
           buf_probe, &str, NULL);
     gst_object_unref (streammux_src_pad);
-
-    /*post-process for network-type = 100,
-     *nvinferser native postprocess can't process int output datatype.*/
-    if (networkType == 100 || pgie_type == NVDS_GIE_PLUGIN_INFER_SERVER) {
-        GstPad *pgie_src_pad = gst_element_get_static_pad (pgie, "src");
-        if (!pgie_src_pad)
-          g_print ("Unable to get streammux src pad\n");
-        else
-          gst_pad_add_probe(pgie_src_pad, GST_PAD_PROBE_TYPE_BUFFER,
-              pgie_pad_buffer_probe_network_type100, NULL, NULL);
-        gst_object_unref (pgie_src_pad);
-    }
 
     /* Set the pipeline to "playing" state */
     g_print ("Now playing: %s\n", pgie_config.c_str());

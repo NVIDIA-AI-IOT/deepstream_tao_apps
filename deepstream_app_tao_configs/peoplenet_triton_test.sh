@@ -27,13 +27,13 @@ echo "==================================================================="
 echo "begin download models for peopleNet "
 echo "==================================================================="
 mkdir -p ./triton/peopleNet/
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet/versions/pruned_quantized_decrypted_v2.3.4/zip \
--O peoplenet_pruned_quantized_decrypted_v2.3.4.zip && \
-unzip -o peoplenet_pruned_quantized_decrypted_v2.3.4.zip -d ./triton/peopleNet/ && \
-rm peoplenet_pruned_quantized_decrypted_v2.3.4.zip
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet/pruned_quantized_decrypted_v2.3.4/files?redirect=true&path=labels.txt' \
+-O ./triton/peopleNet/labels.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet/pruned_quantized_decrypted_v2.3.4/files?redirect=true&path=resnet34_peoplenet_int8.onnx' \
+-O ./triton/peopleNet/resnet34_peoplenet_int8.onnx
 
 mkdir -p ./triton/peopleNet/1
-trtexec --onnx=./triton/peopleNet/resnet34_peoplenet_int8.onnx --int8 --calib=./triton/peopleNet/resnet34_peoplenet_int8.txt --saveEngine=./triton/peopleNet/1/resnet34_peoplenet_int8.onnx_b1_gpu0_int8.engine --minShapes="input_1:0":1x3x544x960 --optShapes="input_1:0":1x3x544x960 --maxShapes="input_1:0":1x3x544x960 
+trtexec --onnx=./triton/peopleNet/resnet34_peoplenet_int8.onnx --fp16 --saveEngine=./triton/peopleNet/1/resnet34_peoplenet_int8.onnx_b1_gpu0_fp16.engine --minShapes="input_1:0":1x3x544x960 --optShapes="input_1:0":1x3x544x960 --maxShapes="input_1:0":1x3x544x960 
 cp triton/peopleNet_config.pbtxt ./triton/peopleNet/config.pbtxt
 
 echo "==================================================================="

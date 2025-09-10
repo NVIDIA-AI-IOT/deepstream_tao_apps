@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2020-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,7 @@
 ################################################################################
 CC:= g++
 
-CFLAGS:= -Wall -Werror -std=c++11 -shared -fPIC -Wno-error=deprecated-declarations
+CFLAGS:= -Wall -Werror -std=c++11 -shared -fPIC
 
 CFLAGS+= -I/opt/nvidia/deepstream/deepstream/sources/includes
 
