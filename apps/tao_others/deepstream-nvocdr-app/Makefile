@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -28,23 +28,19 @@ TARGET_DEVICE = $(shell gcc -dumpmachine | cut -f1 -d -)
 
 LIB_INSTALL_DIR?=/opt/nvidia/deepstream/deepstream/lib/
 
-##SRCS:= $(wildcard *.c)
+SRCS:= deepstream_nvocdr_app.cpp \
+       ../common/ds_yml_parse.cpp
 
-INCS:= $(wildcard *.h)
+OBJS:= $(SRCS:.cpp=.o)
 
 PKGS:= gstreamer-1.0
 
-OBJS:= deepstream_nvocdr_app.o ds_yml_parse.o
+CFLAGS:= $(shell pkg-config --cflags $(PKGS))
+CFLAGS+= -I/opt/nvidia/deepstream/deepstream/sources/includes \
+         -I/usr/local/cuda/include \
+         -I../common
 
-CFLAGS+= -I /opt/nvidia/deepstream/deepstream/sources/includes \
-     -I /usr/local/cuda/include -I ../common \
-
-CFLAGS+= `pkg-config --cflags $(PKGS)`
-
-CFLAGS+= -D_GLIBCXX_USE_CXX11_ABI=1 -Wno-sign-compare -Wno-deprecated-declarations
-
-LIBS:= `pkg-config --libs $(PKGS)`
-
+LIBS:= $(shell pkg-config --libs $(PKGS))
 LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta \
        -lm -lstdc++ -lnvds_yml_parser -lgstrtspserver-1.0\
        -L/usr/local/cuda/lib64/ -lcudart -lcuda -lyaml-cpp \
@@ -52,17 +48,11 @@ LIBS+= -L$(LIB_INSTALL_DIR) -lnvdsgst_meta -lnvds_meta \
 
 all: $(APP)
 
-%.o: %.c $(INCS) Makefile
-	$(CC) -c -o $@ $(CFLAGS) $<
-
-deepstream_nvocdr_app.o: deepstream_nvocdr_app.cpp $(INCS) Makefile
-	$(CXX) -c -o $@ -fpermissive -Wall -Werror $(CFLAGS) $<
-
-ds_yml_parse.o: ../common/ds_yml_parse.cpp $(INCS) Makefile
-	$(CXX) -c -o $@ -Wall -Werror $(CFLAGS) $<
+%.o: %.cpp $(INCS) Makefile
+	$(CXX) -c -o $@ $(CFLAGS) $<
 
 $(APP): $(OBJS) Makefile
-	$(CC) -o $(APP) $(OBJS) $(LIBS)
+	$(CXX) -o $(APP) $(OBJS) $(LIBS)
 
 clean:
-	rm -rf $(OBJS) $(APP)
+	rm -rf *.o $(OBJS) $(APP)

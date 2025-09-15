@@ -23,7 +23,7 @@
 name: "vehicletypenet"
 platform: "tensorrt_plan"
 max_batch_size: 4
-default_model_filename: "resnet18_pruned.onnx_b4_gpu0_int8.engine"
+default_model_filename: "resnet18_pruned.onnx_b4_gpu0_fp16.engine"
 input [
   {
     name: "input_1:0"

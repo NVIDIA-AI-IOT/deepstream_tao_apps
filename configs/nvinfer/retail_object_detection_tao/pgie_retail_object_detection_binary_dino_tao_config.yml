@@ -18,6 +18,7 @@ property:
   output-blob-names: pred_boxes;pred_logits
   parse-bbox-func-name: NvDsInferParseCustomDDETRTAO
   custom-lib-path: ../../../post_processor/libnvds_infercustomparser_tao.so
+  scaling-compute-hw: 1
 
 
 #Use the config params below for NMS clustering mode

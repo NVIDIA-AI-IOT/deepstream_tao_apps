@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@ extern "C"
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
 #include "nvds_yml_parser.h"
+#define _PATH_MAX 1024
 
 typedef enum
 {
@@ -70,18 +71,38 @@ NvDsYamlParserStatus
 ds_parse_ocdr_videotemplate_config(GstElement *vtemplate, 
   gchar *cfg_file_path, const char* group);
 
+NvDsYamlParserStatus
+ds_parse_nvdsanalytics(GstElement *element, gchar *cfg_file_path, const char* group);
+
 void
 create_video_encoder(bool isH264, int enc_type, GstElement** conv_capfilter,
   GstElement** outenc, GstElement** encparse, GstElement** rtppay);
 
-guint
-ds_parse_group_enable(gchar *cfg_file_path, const char* group);
-guint
-ds_parse_group_car_mode(gchar *cfg_file_path, const char* group);
+  /** Function to get the absolute path of a file.*/
+gboolean
+get_absolute_file_path_yaml (
+    const gchar * cfg_file_path, const gchar * file_path,
+    char *abs_path_str);
 
+/** Parse preprocess configurations. */
+NvDsYamlParserStatus
+nvds_parse_preprocess (GstElement *element, gchar* app_cfg_file_path, const char* group);
+
+/** Parse postprocess configurations. */
+NvDsYamlParserStatus
+nvds_parse_postprocess (GstElement *element, gchar* app_cfg_file_path, const char* group);
+
+/** Parse width and height of nvstreammux. */
 void
-get_triton_yml(gint car_mode, gboolean use_triton_grpc, char* pgie_cfg_file_path,
-char* sgie1_cfg_file_path, char* sgie2_cfg_file_path, guint buf_len);
+parse_streammux_width_height_yaml (gint *width, gint *height, gchar *cfg_file_path);
+
+/** Parse type of sink. */
+void
+parse_sink_type_yaml (gint *type, gchar *cfg_file_path);
+
+/** Parse enc type of sink. */
+void
+parse_sink_enc_type_yaml (gint *enc_type, gchar *cfg_file_path);
 
 #ifdef __cplusplus
 }

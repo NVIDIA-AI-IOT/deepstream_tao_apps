@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,7 @@ workspace-size=1048576
 cluster-mode=4
 parse-bbox-func-name=NvDsInferParseCustomDDETRTAO
 custom-lib-path=../../../post_processor/libnvds_infercustomparser_tao.so
+scaling-compute-hw=1
 
 [class-attrs-all]
 pre-cluster-threshold=0.5

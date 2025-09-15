@@ -27,10 +27,10 @@ echo "==================================================================="
 echo "begin download models for peopleNet "
 echo "==================================================================="
 mkdir -p ../../models/tao_pretrained_models/peopleNet/
-wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplenet/versions/pruned_quantized_decrypted_v2.3.4/zip \
--O peoplenet_pruned_quantized_decrypted_v2.3.4.zip && \
-unzip -o peoplenet_pruned_quantized_decrypted_v2.3.4.zip -d ../../models/tao_pretrained_models/peopleNet/ && \
-rm peoplenet_pruned_quantized_decrypted_v2.3.4.zip
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet/pruned_quantized_decrypted_v2.3.4/files?redirect=true&path=labels.txt' \
+-O ../../models/tao_pretrained_models/peopleNet/labels.txt
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/models/org/nvidia/team/tao/peoplenet/pruned_quantized_decrypted_v2.3.4/files?redirect=true&path=resnet34_peoplenet_int8.onnx' \
+-O ../../models/tao_pretrained_models/peopleNet/resnet34_peoplenet_int8.onnx
 
 echo "==================================================================="
 echo "Run deepstream-app"

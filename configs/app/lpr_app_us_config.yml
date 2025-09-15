@@ -1,0 +1,76 @@
+################################################################################
+# Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+source-list:
+  list: /root/deepstream_tao_apps/apps/tao_others/deepstream_lpr_app/us.mp4
+
+analytics:
+  enable: 1
+  config-file: config_nvdsanalytics.txt
+
+output:
+  ## 1:file ouput  2:fake output 3:eglsink output
+  type: 1
+  ## 0: H264 encoder  1:H265 encoder
+  enc: 0
+  ## encoder type 0=Hardware 1=Software
+  enc-type: 0
+  bitrate: 4000000
+  ##The file name without suffix
+  filename: test
+
+primary-gie:
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 0
+  ##For car detection
+  config-file-path: ../nvinfer/trafficcamnet_tao/pgie_trafficcamnet_config.txt
+  # config-file-path: ../triton/trafficcamnet_tao/pgie_trafficcamnet_config.txt
+  # config-file-path: ../triton-grpc/trafficcamnet_tao/pgie_trafficcamnet_config.txt
+  unique-id: 1
+
+secondary-gie0:
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 0
+  ##For lpd_DetectNet2
+  config-file-path: ../nvinfer/LPD_us_tao/sgie_lpd_DetectNet2_us.txt
+  # config-file-path: ../triton/LPD_us_tao/sgie_lpd_DetectNet2_us.txt
+  # config-file-path: ../triton-grpc/LPD_us_tao/sgie_lpd_DetectNet2_us.txt
+  unique-id: 2
+  process-mode: 2
+
+secondary-gie1:
+  #0:nvinfer, 1:nvinfeserver
+  plugin-type: 0
+  ##For US car plate recognization
+  config-file-path: ../nvinfer/lpr_us_tao/sgie_lpr_us_config.txt
+  # config-file-path: ../triton/lpr_us_tao/sgie_lpr_us_config.txt
+  # config-file-path: ../triton-grpc/lpr_us_tao/sgie_lpr_us_config.txt
+  unique-id: 3
+  process-mode: 2
+
+tracker:
+  tracker-width: 640
+  tracker-height: 384
+  gpu-id: 0
+  ll-lib-file: /opt/nvidia/deepstream/deepstream/lib/libnvds_nvmultiobjecttracker.so
+  ll-config-file: /opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app/config_tracker_NvDCF_perf.yml
+

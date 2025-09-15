@@ -1,0 +1,61 @@
+################################################################################
+# Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+source-list:
+  list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_720p.mp4
+
+streammux:
+  batch-size: 1
+  width: 1280
+  height: 720
+  batched-push-timeout: 40000
+
+primary-gie:
+  plugin-type: 0
+  #0:nvinfer, 1:nvinfeserver
+
+  #citysemsegformer
+  config-file-path: ../nvinfer/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
+  #config-file-path: ../triton/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
+  #config-file-path: ../triton-grpc/citysemsegformer_tao/pgie_citysemsegformer_tao_config.yml
+
+segvisual:
+  gpu-id: 0
+  #The segvisual width and height should be set as the same as the segmentation modle output resolution
+  width: 1820
+  height: 1024
+  orig_background: 1
+  alpha: 0.5
+
+eglsink:
+  enable: 0
+
+filesink:
+  enable: 1
+  #encoder type 0=Hardware 1=Software
+  enc-type: 0
+
+fakesink:
+  enable: 0
+
+tests:
+  file-loop: 0

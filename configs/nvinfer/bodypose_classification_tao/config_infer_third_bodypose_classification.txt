@@ -1,5 +1,5 @@
 ################################################################################
-# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 #
 # NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -70,6 +70,7 @@ network-type=1
 parse-classifier-func-name=NvDsParseCustomPoseClassification
 custom-lib-path=../../../apps/tao_others/deepstream-pose-classification/infer_pose_classification_parser/libnvdsinfer_pose_classfication_parser.so
 classifier-threshold=0.51
+scaling-compute-hw=1
 
 [class-attrs-all]
 pre-cluster-threshold=0.2

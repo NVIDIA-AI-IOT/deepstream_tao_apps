@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -37,13 +37,14 @@ property:
   gie-unique-id: 1
   cluster-mode: 2
   ## 0=Detector, 1=Classifier, 2=Semantic Segmentation, 3=Instance Segmentation, 100=Other
-  network-type: 100 # Skip nvinfer post-processing, use pgie_pad_buffer_probe_network_type100() instead.
+  network-type: 2
   ## num-detected-classes= is required to set NvDsInferSegmentationMeta::classes.
   num-detected-classes: 19 
-  ## Allow post-processing to access output tensors.
-  output-tensor-meta: 1
   ## Specify the output tensor order, 0(default value) for CHW and 1 for HWC
   segmentation-output-order: 1
+  parse-segmentation-func-name: NvDsInferParseCustomSegformerTAO
+  custom-lib-path: ../../../post_processor/libnvds_infercustomparser_tao.so
+  scaling-compute-hw: 1
 
 source-list:
   list: file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4

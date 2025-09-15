@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -43,3 +43,5 @@ property:
   maintain-aspect-ratio: 0
   # operate-on-class-ids: 0;1;2;3
   output-blob-names: probs;embeddings
+  scaling-compute-hw: 1
+  gie-unique-id: 2

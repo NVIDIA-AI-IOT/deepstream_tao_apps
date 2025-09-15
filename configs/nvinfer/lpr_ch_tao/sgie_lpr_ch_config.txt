@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2020-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -68,7 +68,7 @@ net-scale-factor=0.00392156862745098
 #0=RGB 1=BGR 2=GRAY
 model-color-format=0
 maintain-aspect-ratio=0
-#scaling-compute-hw=2
+scaling-compute-hw=1
 
 [class-attrs-all]
 threshold=0.5

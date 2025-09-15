@@ -14,30 +14,28 @@ The following steps take the DeepStream 7.1 GA as an example, if you use other D
 
 To start Triton Server with DeepStream Triton container, the docker should be run in a new terminal and the following commands should be run in the same path as the deepstream_app_tao_configs codes are downloaded:
 * Start the Triton Inferece Server with DeepStream Triton docker
-```
-    //start Triton docker, 10001:8001 is used to map docker container's 8000 port to host's 10000 port, these ports can be changed.
-    docker run --gpus all -it  --ipc=host --rm --privileged -v /tmp/.X11-unix:/tmp/.X11-unix  -p 10000:8000 -p 10001:8001 -p 10002:8002  -v $(pwd):/samples   -e DISPLAY=$DISPLAY -w /samples nvcr.io/nvidia/deepstream:7.1-gc-triton-devel
-```
 
-Then the model engines should be generated in the server, the [tao-converter links](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/resources/tao-converter) inside the prepare_triton_models.sh script can be changed to proper versions according to the actual TensorRT version:
+```bash
+# start Triton docker, 10001:8001 is used to map docker container's 8000 port to host's 10000 port, these ports can be changed.
+$ sudo docker run --gpus all -it --ipc=host --rm --privileged -v /tmp/.X11-unix:/tmp/.X11-unix  -p 10000:8000 -p 10001:8001 -p 10002:8002 -v $(pwd):/samples -e DISPLAY=$DISPLAY -w /samples nvcr.io/nvidia/deepstream:7.1-gc-triton-devel
 
-```
-    ./prepare_triton_models.sh
+$ ./prepare_triton_models.sh
 ```
 
 If the server is running in the same machine as the DeepStream application, the following command can be used directly. If it is not, please set the gRPC url as the IP address of the server machine in all the configuration files in deepstream_app_tao_configs/triton-grpc:
 
 The gRPC url setting looks like:
-```
+
+```proto
 grpc {
-        url: "192.168.0.51:10001"
-    }
+    url: "192.168.0.51:10001"
+}
 ```
 
 Then the Triton Server service can be started with the following command:
-```
-    tritonserver --model-repository=/samples/triton --strict-model-config=false --grpc-infer-allocation-pool-size=16 --log-verbose=1 --exit-on-error=false
 
+```bash
+$ tritonserver --model-repository=/samples/triton --strict-model-config=false --grpc-infer-allocation-pool-size=16 --log-verbose=1 --exit-on-error=false
 ```
 
-The DeepStream sample application should run in another terminal with the Triton Inference client libraries installed. It is recommend to run the application in the DeepStream Triton container, please refer to [triton_server.md](9) for how to start a DeepStream Triton container.
+The DeepStream sample application should run in another terminal with the Triton Inference client libraries installed. It is recommend to run the application in the DeepStream Triton container, please refer to [triton_server](triton_server.md) for how to start a DeepStream Triton container.

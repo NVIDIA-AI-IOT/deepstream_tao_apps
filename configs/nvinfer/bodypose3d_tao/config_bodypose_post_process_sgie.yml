@@ -1,0 +1,27 @@
+################################################################################
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+################################################################################
+
+property:
+  gpu-id: 0
+  process-mode: 2
+  num-detected-classes: 17
+  gie-unique-id: 1  #Operate on gie-unique-id's output
+  ## 1=DBSCAN, 2=NMS, 3= DBSCAN+NMS Hybrid, 4 = None(No clustering)
+  output-blob-names: output_0
+  #only support 4=Bodypose
+  network-type: 4
+  #release-tensor-meta: 1
+
+#Use the config params below for NMS clustering mode
+class-attrs-all:
+  classifier-threshold: 0.2
+

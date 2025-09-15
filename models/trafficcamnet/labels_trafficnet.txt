@@ -1,4 +1,0 @@
-car
-bicycle
-person
-road_sign

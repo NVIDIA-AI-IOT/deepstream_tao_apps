@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -269,7 +269,6 @@ int main (int argc, char *argv[]) {
   struct cudaDeviceProp prop;
   cudaGetDeviceProperties(&prop, current_device);
 
-
   /* Standard GStreamer initialization */
   gst_init (&argc, &argv);
   /* setup singal handler */
@@ -323,7 +322,7 @@ int main (int argc, char *argv[]) {
     gst_bin_add (GST_BIN (pipeline), source_struct[src_cnt].source_bin);
       
     g_snprintf (pad_name_sink, 64, "sink_%d", src_cnt);
-    sinkpad = gst_element_get_request_pad (streammux, pad_name_sink);
+    sinkpad = gst_element_request_pad_simple (streammux, pad_name_sink);
     if (!sinkpad) {
       g_printerr ("Streammux request sink pad failed. Exiting.\n");
       return -1;
