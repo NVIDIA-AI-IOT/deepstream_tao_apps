@@ -77,9 +77,9 @@ sudo apt update
 sudo apt install git-lfs
 git lfs install --skip-repo
 // SSH
-git clone -b tao_ds8.0ga git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone git@github.com:NVIDIA-AI-IOT/deepstream_tao_apps.git
 // or HTTPS
-git clone -b tao_ds8.0ga https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
+git clone https://github.com/NVIDIA-AI-IOT/deepstream_tao_apps.git
 //download submoudle
 git submodule update --init --recursive
 ```
