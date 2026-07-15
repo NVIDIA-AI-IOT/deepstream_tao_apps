@@ -429,8 +429,8 @@ bool NvDsInferParseCustomMask2Former (std::vector<NvDsInferLayerInfo> const &out
     const NvDsInferLayerInfo *pred_scores = layerFinder("pred_scores");
     const unsigned int det_max_instances = pred_masks->inferDims.d[0];
 
-    int width = pred_masks->inferDims.d[1];
-    int height = pred_masks->inferDims.d[2];
+    int width = pred_masks->inferDims.d[2];
+    int height = pred_masks->inferDims.d[1];
     int* pclass = (int*)pred_classes->buffer;
     float* pmask = (float*)pred_masks->buffer;
     float* pscore = (float*)pred_scores->buffer;
