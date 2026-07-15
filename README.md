@@ -1,3 +1,5 @@
+# This repository has ceased updates, please refer to https://github.com/NVIDIA/deepstream for latest DeepStream TAO sample applications.
+
 # Integrate TAO model with DeepStream SDK
 
 - [Integrate TAO model with DeepStream SDK](#integrate-tao-model-with-deepstream-sdk)
